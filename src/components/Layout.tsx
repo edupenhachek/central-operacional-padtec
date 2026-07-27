@@ -51,7 +51,7 @@ export default function Layout() {
     <div className="min-h-screen flex bg-background text-foreground transition-colors duration-200">
       <aside
         className={cn(
-          'hidden lg:flex flex-col border-r border-border bg-card/60 backdrop-blur-md justify-between select-none transition-all duration-300',
+          'relative hidden lg:flex flex-col border-r border-border bg-card/60 backdrop-blur-md justify-between select-none transition-all duration-300',
           collapsed ? 'w-16' : 'w-64',
         )}
       >
@@ -171,6 +171,13 @@ export default function Layout() {
             )}
           </div>
         </div>
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="absolute top-20 -right-3 w-6 h-12 z-30 bg-card border border-border rounded-r-lg shadow-md hover:shadow-lg flex items-center justify-center hover:bg-muted transition-all duration-200"
+          title={collapsed ? 'Expandir menu' : 'Recolher menu'}
+        >
+          {collapsed ? <ChevronsRight className="w-4 h-4" /> : <ChevronsLeft className="w-4 h-4" />}
+        </button>
       </aside>
 
       <div className="lg:hidden fixed top-0 inset-x-0 h-16 bg-card border-b border-border z-40 flex items-center justify-between px-4">

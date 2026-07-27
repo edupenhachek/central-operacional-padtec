@@ -1,47 +1,26 @@
-import { useState } from 'react'
-import { Bot, Send, Sparkles } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Bot, Send, Sparkles, AlertCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { askGutenbergStream } from '@/services/gutenberg'
+import { MarkdownRenderer } from '@/components/MarkdownRenderer'
+import { useGutenbergChatStore, sendGutenbergMessage } from '@/stores/gutenberg-chat'
 
 export default function GutenbergChat() {
-  const [messages, setMessages] = useState<Array<{ sender: 'user' | 'bot'; text: string }>>([
-    {
-      sender: 'bot',
-      text: 'Olá! Sou a **Gutenberg AI**, o núcleo de inteligência da Central Operacional. Como posso ajudar nas suas rotinas de BKO, NOC ou COPE hoje?',
-    },
-  ])
+  const { messages, isLoading, error } = useGutenbergChatStore()
   const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [conversationId, setConversationId] = useState<string | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [messages, isLoading])
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return
     const text = input.trim()
     setInput('')
-
-    setMessages((prev) => [...prev, { sender: 'user', text }, { sender: 'bot', text: '' }])
-
-    setIsLoading(true)
-
-    try {
-      const res = await askGutenbergStream({
-        message: text,
-        conversationId,
-        onChunk: (_chunk, accumulated) => {
-          setMessages((prev) => {
-            const updated = [...prev]
-            updated[updated.length - 1] = { sender: 'bot', text: accumulated }
-            return updated
-          })
-        },
-      })
-      if (res.conversationId) setConversationId(res.conversationId)
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setIsLoading(false)
-    }
+    await sendGutenbergMessage(text)
   }
 
   return (
@@ -58,10 +37,10 @@ export default function GutenbergChat() {
         </div>
       </div>
 
-      <div className="flex-1 p-6 overflow-y-auto space-y-4">
-        {messages.map((m, idx) => (
+      <div className="flex-1 p-6 overflow-y-auto space-y-4" ref={scrollRef}>
+        {messages.map((m) => (
           <div
-            key={idx}
+            key={m.id}
             className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
@@ -71,10 +50,37 @@ export default function GutenbergChat() {
                   : 'bg-muted text-foreground rounded-bl-none border border-border'
               }`}
             >
-              {m.text || 'Processando resposta...'}
+              {m.sender === 'bot' ? (
+                m.text ? (
+                  <MarkdownRenderer content={m.text} />
+                ) : (
+                  <span className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Processando resposta...
+                  </span>
+                )
+              ) : (
+                <p className="whitespace-pre-wrap">{m.text}</p>
+              )}
+              {m.citations && m.citations.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-border/50 text-xs text-muted-foreground">
+                  <span className="font-semibold">Fontes:</span>
+                  <ul className="list-disc list-inside mt-1 space-y-0.5">
+                    {m.citations.map((c, i) => (
+                      <li key={i} className="truncate" title={c.excerpt}>
+                        {c.excerpt}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         ))}
+        {error && (
+          <div className="p-3 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 rounded-lg text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" /> {error}
+          </div>
+        )}
       </div>
 
       <div className="p-4 border-t border-border bg-card">
