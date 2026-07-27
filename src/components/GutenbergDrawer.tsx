@@ -2,16 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import { Bot, Send, X, Loader2, Sparkles, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { askGutenbergStream } from '@/services/gutenberg'
-import { AgentCitation } from '@/lib/skipAi'
-
-interface Message {
-  id: string
-  sender: 'user' | 'bot'
-  text: string
-  citations?: AgentCitation[]
-}
+import { MarkdownRenderer } from '@/components/MarkdownRenderer'
+import { useGutenbergChatStore, sendGutenbergMessage } from '@/stores/gutenberg-chat'
 
 interface GutenbergDrawerProps {
   isOpen: boolean
@@ -19,17 +11,8 @@ interface GutenbergDrawerProps {
 }
 
 export function GutenbergDrawer({ isOpen, onClose }: GutenbergDrawerProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'welcome',
-      sender: 'bot',
-      text: 'Olá! Sou o **Gutenberg**, seu assistente operacional Padtec. Como posso te ajudar hoje?',
-    },
-  ])
+  const { messages, isLoading, error } = useGutenbergChatStore()
   const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [conversationId, setConversationId] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -42,49 +25,13 @@ export function GutenbergDrawer({ isOpen, onClose }: GutenbergDrawerProps) {
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return
-    const userText = input.trim()
+    const text = input.trim()
     setInput('')
-    setError(null)
-
-    const userMsgId = Date.now().toString()
-    const botMsgId = (Date.now() + 1).toString()
-
-    setMessages((prev) => [
-      ...prev,
-      { id: userMsgId, sender: 'user', text: userText },
-      { id: botMsgId, sender: 'bot', text: '' },
-    ])
-
-    setIsLoading(true)
-
-    try {
-      const res = await askGutenbergStream({
-        message: userText,
-        conversationId,
-        onChunk: (_chunk, accumulated) => {
-          setMessages((prev) =>
-            prev.map((msg) => (msg.id === botMsgId ? { ...msg, text: accumulated } : msg)),
-          )
-        },
-        onCitations: (citations) => {
-          setMessages((prev) =>
-            prev.map((msg) => (msg.id === botMsgId ? { ...msg, citations } : msg)),
-          )
-        },
-      })
-
-      if (res.conversationId) setConversationId(res.conversationId)
-    } catch (err: any) {
-      setError(err.message || 'Erro ao obter resposta do Gutenberg')
-      setMessages((prev) => prev.filter((m) => m.id !== botMsgId))
-    } finally {
-      setIsLoading(false)
-    }
+    await sendGutenbergMessage(text)
   }
 
   return (
     <div className="fixed inset-y-0 right-0 w-full sm:w-[420px] bg-background border-l border-border shadow-2xl z-50 flex flex-col animate-fade-in-up">
-      {/* Header */}
       <div className="p-4 border-b border-border bg-[#0B0E14] text-white flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white">
@@ -107,7 +54,6 @@ export function GutenbergDrawer({ isOpen, onClose }: GutenbergDrawerProps) {
         </Button>
       </div>
 
-      {/* Chat Messages */}
       <div className="flex-1 p-4 overflow-y-auto" ref={scrollRef}>
         <div className="space-y-4">
           {messages.map((m) => (
@@ -122,9 +68,17 @@ export function GutenbergDrawer({ isOpen, onClose }: GutenbergDrawerProps) {
                     : 'bg-muted text-foreground rounded-bl-none border border-border'
                 }`}
               >
-                <p className="whitespace-pre-wrap leading-relaxed">
-                  {m.text || (isLoading && m.sender === 'bot' ? 'Pensando...' : '')}
-                </p>
+                {m.sender === 'bot' ? (
+                  m.text ? (
+                    <MarkdownRenderer content={m.text} />
+                  ) : (
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="w-4 h-4 animate-spin text-blue-600" /> Pensando...
+                    </span>
+                  )
+                ) : (
+                  <p className="whitespace-pre-wrap leading-relaxed">{m.text}</p>
+                )}
                 {m.citations && m.citations.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-border/50 text-xs text-muted-foreground">
                     <span className="font-semibold">Fontes:</span>
@@ -154,7 +108,6 @@ export function GutenbergDrawer({ isOpen, onClose }: GutenbergDrawerProps) {
         </div>
       </div>
 
-      {/* Input Form */}
       <div className="p-3 border-t border-border bg-background">
         <form
           onSubmit={(e) => {
