@@ -19,7 +19,7 @@ import {
   UserRole,
 } from '@/services/users'
 import { useRealtime } from '@/hooks/use-realtime'
-import { extractFieldErrors, type FieldErrors } from '@/lib/pocketbase/errors'
+import { extractFieldErrors, getErrorMessage, type FieldErrors } from '@/lib/pocketbase/errors'
 import { toast } from 'sonner'
 
 const ROLE_OPTIONS: UserRole[] = ['ADMIN', 'USUARIO', 'FOCAL BKO', 'FOCAL NOC', 'FOCAL COPE']
@@ -114,6 +114,9 @@ export default function Usuarios() {
       loadUsers()
     } catch (err) {
       setEditErrors(extractFieldErrors(err))
+      toast.error('Erro ao atualizar usuário', {
+        description: getErrorMessage(err),
+      })
     } finally {
       setSaving(false)
     }
