@@ -4,15 +4,15 @@ migrate(
     const roleField = usersCol.fields.getByName('role')
 
     if (roleField) {
-      usersCol.fields.remove('role')
+      roleField.values = ['ADMIN', 'USUARIO', 'FOCAL BKO', 'FOCAL NOC', 'FOCAL COPE']
+    } else {
+      usersCol.fields.add(
+        new SelectField({
+          name: 'role',
+          values: ['ADMIN', 'USUARIO', 'FOCAL BKO', 'FOCAL NOC', 'FOCAL COPE'],
+        }),
+      )
     }
-
-    usersCol.fields.add(
-      new SelectField({
-        name: 'role',
-        values: ['ADMIN', 'USUARIO', 'FOCAL BKO', 'FOCAL NOC', 'FOCAL COPE'],
-      }),
-    )
     app.save(usersCol)
 
     try {
@@ -25,14 +25,15 @@ migrate(
     const usersCol = app.findCollectionByNameOrId('users')
     const roleField = usersCol.fields.getByName('role')
     if (roleField) {
-      usersCol.fields.remove('role')
+      roleField.values = ['NOC', 'COPE', 'BKO', 'ADMIN']
+    } else {
+      usersCol.fields.add(
+        new SelectField({
+          name: 'role',
+          values: ['NOC', 'COPE', 'BKO', 'ADMIN'],
+        }),
+      )
     }
-    usersCol.fields.add(
-      new SelectField({
-        name: 'role',
-        values: ['NOC', 'COPE', 'BKO', 'ADMIN'],
-      }),
-    )
     app.save(usersCol)
   },
 )
