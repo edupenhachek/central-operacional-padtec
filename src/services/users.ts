@@ -38,6 +38,7 @@ export const createUser = (data: {
   pb.collection('users').create<UserItem>({
     name: data.name,
     email: data.email,
+    emailConfirm: data.email,
     password: data.password,
     passwordConfirm: data.passwordConfirm,
     role: data.role,
@@ -49,7 +50,10 @@ export const updateUser = (
 ) => {
   const payload: Record<string, any> = {}
   if (data.name !== undefined) payload.name = data.name
-  if (data.email !== undefined) payload.email = data.email
+  if (data.email !== undefined) {
+    payload.email = data.email
+    payload.emailConfirm = data.email
+  }
   if (data.role !== undefined) payload.role = data.role
   return pb.collection('users').update<UserItem>(id, payload)
 }
