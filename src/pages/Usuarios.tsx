@@ -144,11 +144,11 @@ export default function Usuarios() {
                 <div key={u.id} className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center font-bold text-xs">
-                      {(u.name || u.email).charAt(0).toUpperCase()}
+                      {(u.name || u.email || 'U').charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-xs font-bold">{u.name || 'Sem Nome'}</p>
-                      <p className="text-[11px] text-muted-foreground">{u.email}</p>
+                      <p className="text-xs font-bold text-foreground">{u.name || 'Sem Nome'}</p>
+                      <p className="text-[11px] text-muted-foreground">{u.email || 'Sem e-mail'}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
