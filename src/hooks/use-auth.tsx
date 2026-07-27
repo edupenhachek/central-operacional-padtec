@@ -1,11 +1,13 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import pb from '@/lib/pocketbase/client'
 
+export type UserRole = 'ADMIN' | 'USUARIO' | 'FOCAL BKO' | 'FOCAL NOC' | 'FOCAL COPE'
+
 export interface UserRecord {
   id: string
   email: string
   name?: string
-  role?: 'NOC' | 'COPE' | 'BKO' | 'ADMIN'
+  role?: UserRole
   avatar?: string
 }
 
@@ -77,7 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         password,
         passwordConfirm: password,
         name: name || email.split('@')[0],
-        role: 'BKO',
+        role: 'USUARIO',
       })
       const res = await pb.collection('users').authWithPassword(email, password)
       setUser(res.record as unknown as UserRecord)

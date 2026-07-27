@@ -44,11 +44,9 @@ export default function Login() {
         <div className="flex flex-col items-center text-center mb-8">
           <PadtecEmblem className="w-12 h-12 text-2xl mb-4 shadow-lg" />
           <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-            Central Operacional BKO
+            Central Operacional Padtec
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Faça login para acessar o sistema
-          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">NOC • COPE • BKO</p>
         </div>
 
         {/* Error Notification */}
