@@ -78,13 +78,19 @@ export function UserFormDialog({
             {fieldErrors.name && <p className="text-xs text-red-500">{fieldErrors.name}</p>}
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">E-mail</Label>
+            <Label className="text-xs font-semibold">
+              {mode === 'edit' ? 'E-mail (Apenas Leitura)' : 'E-mail'}
+            </Label>
             <Input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="usuario@padtec.com.br"
-              className="h-10 text-sm"
+              className={`h-10 text-sm ${
+                mode === 'edit'
+                  ? 'bg-muted/60 text-muted-foreground cursor-not-allowed opacity-90'
+                  : ''
+              }`}
               disabled={mode === 'edit'}
               readOnly={mode === 'edit'}
             />
