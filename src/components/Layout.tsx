@@ -47,98 +47,95 @@ export default function Layout() {
     navigate('/login')
   }
 
+  const ThemeToggle = ({ className }: { className?: string }) => (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={toggleTheme}
+      title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+      className={cn('text-muted-foreground hover:text-foreground', className)}
+    >
+      {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+    </Button>
+  )
+
   return (
-    <div className="min-h-screen flex bg-background text-foreground transition-colors duration-200">
+    <div className="h-screen flex bg-slate-50 dark:bg-background text-foreground transition-colors duration-200 overflow-hidden">
       <aside
         className={cn(
-          'relative hidden lg:flex flex-col border-r border-border bg-card/60 backdrop-blur-md justify-between select-none transition-all duration-300',
+          'relative hidden lg:flex flex-col h-screen border-r border-border bg-card justify-between select-none transition-all duration-300 shrink-0',
           collapsed ? 'w-16' : 'w-64',
         )}
       >
-        <div>
+        <div className="flex flex-col overflow-hidden">
           <div
             className={cn(
-              'border-b border-border/50 flex items-center',
-              collapsed ? 'justify-center p-4' : 'gap-3 p-6',
+              'border-b border-border/50 flex items-center gap-2',
+              collapsed ? 'justify-center p-4' : 'p-4',
             )}
           >
-            <PadtecEmblem />
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors shrink-0"
+              title={collapsed ? 'Expandir menu' : 'Recolher menu'}
+            >
+              {collapsed ? (
+                <ChevronsRight className="w-5 h-5" />
+              ) : (
+                <ChevronsLeft className="w-5 h-5" />
+              )}
+            </button>
             {!collapsed && (
-              <div>
-                <h1 className="font-bold text-sm tracking-tight text-foreground">
-                  Central Operacional Padtec
-                </h1>
-                <p className="text-xs text-muted-foreground font-medium">NOC • COPE • BKO</p>
+              <div className="flex items-center gap-2 overflow-hidden">
+                <PadtecEmblem />
+                <div className="overflow-hidden">
+                  <h1 className="font-bold text-sm tracking-tight text-foreground dark:text-white truncate">
+                    Central Operacional
+                  </h1>
+                  <p className="text-xs text-muted-foreground dark:text-gray-400 font-medium">
+                    NOC • COPE • BKO
+                  </p>
+                </div>
               </div>
             )}
+            {collapsed && <PadtecEmblem className="hidden" />}
           </div>
 
-          <nav className={cn('space-y-1', collapsed ? 'p-2' : 'p-4')}>
-            {navItems.map((item) => {
-              const Icon = item.icon
-              const isActive = location.pathname === item.path
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  title={collapsed ? item.label : undefined}
-                  className={cn(
-                    'flex items-center rounded-lg text-sm font-medium transition-all duration-150',
-                    collapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3.5 py-2.5',
-                    isActive
-                      ? 'bg-muted text-foreground font-semibold shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
-                  )}
-                >
-                  <Icon className={cn('w-4 h-4 shrink-0', isActive && 'text-blue-600')} />
-                  {!collapsed && item.label}
-                </Link>
-              )
-            })}
+          <nav className={cn('flex-1 overflow-y-auto', collapsed ? 'p-2' : 'p-4')}>
+            <div className="space-y-1">
+              {navItems.map((item) => {
+                const Icon = item.icon
+                const isActive = location.pathname === item.path
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    title={collapsed ? item.label : undefined}
+                    className={cn(
+                      'flex items-center rounded-lg text-sm font-medium transition-all duration-150',
+                      collapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3.5 py-2.5',
+                      isActive
+                        ? 'bg-muted text-foreground dark:text-white font-semibold shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted/50',
+                    )}
+                  >
+                    <Icon className={cn('w-4 h-4 shrink-0', isActive && 'text-blue-600')} />
+                    {!collapsed && item.label}
+                  </Link>
+                )
+              })}
+            </div>
           </nav>
         </div>
 
-        <div className="border-t border-border/50">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setCollapsed(!collapsed)}
-            className={cn(
-              'w-full text-muted-foreground hover:text-foreground text-xs',
-              collapsed ? 'justify-center px-2 py-2' : 'justify-start gap-2 px-4 py-2',
-            )}
-            title={collapsed ? 'Expandir menu' : 'Recolher menu'}
-          >
-            {collapsed ? (
-              <ChevronsRight className="w-4 h-4" />
-            ) : (
-              <>
-                <ChevronsLeft className="w-4 h-4" /> Recolher
-              </>
-            )}
-          </Button>
-
-          <div
-            className={cn(
-              'border-t border-border/30',
-              collapsed ? 'p-2 flex flex-col items-center gap-1' : 'p-4',
-            )}
-          >
-            <Button
-              variant="ghost"
-              size={collapsed ? 'icon' : 'sm'}
-              onClick={toggleTheme}
-              title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-              className={cn(
-                'text-muted-foreground hover:text-foreground',
-                !collapsed && 'w-full justify-start gap-2.5 text-xs',
-              )}
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              {!collapsed && (theme === 'dark' ? 'Light Mode' : 'Dark Mode')}
-            </Button>
-
-            {collapsed ? (
+        <div
+          className={cn(
+            'border-t border-border/50',
+            collapsed ? 'p-2 flex flex-col items-center gap-1' : 'p-4',
+          )}
+        >
+          {collapsed ? (
+            <>
               <Button
                 variant="ghost"
                 size="icon"
@@ -148,124 +145,119 @@ export default function Layout() {
               >
                 <LogOut className="w-4 h-4" />
               </Button>
-            ) : (
-              <div className="pt-2 mt-2 border-t border-border/30 flex items-center justify-between">
-                <div className="truncate">
-                  <p className="font-semibold text-xs text-foreground truncate">
-                    {user?.name || user?.email || 'Administrador BKO'}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground capitalize">
-                    {user?.role || 'Administrador'}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleLogout}
-                  title="Sair"
-                  className="text-muted-foreground hover:text-destructive shrink-0"
-                >
-                  <LogOut className="w-4 h-4" />
-                </Button>
+            </>
+          ) : (
+            <div className="flex items-center justify-between">
+              <div className="truncate">
+                <p className="font-semibold text-xs text-foreground dark:text-white truncate">
+                  {user?.name || user?.email || 'Administrador BKO'}
+                </p>
+                <p className="text-[11px] text-muted-foreground dark:text-gray-400 capitalize">
+                  {user?.role || 'Administrador'}
+                </p>
               </div>
-            )}
-          </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleLogout}
+                title="Sair"
+                className="text-muted-foreground hover:text-destructive shrink-0"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
         </div>
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="absolute top-20 -right-3 w-6 h-12 z-30 bg-card border border-border rounded-r-lg shadow-md hover:shadow-lg flex items-center justify-center hover:bg-muted transition-all duration-200"
-          title={collapsed ? 'Expandir menu' : 'Recolher menu'}
-        >
-          {collapsed ? <ChevronsRight className="w-4 h-4" /> : <ChevronsLeft className="w-4 h-4" />}
-        </button>
       </aside>
 
-      <div className="lg:hidden fixed top-0 inset-x-0 h-16 bg-card border-b border-border z-40 flex items-center justify-between px-4">
-        <div className="flex items-center gap-2">
-          <PadtecEmblem className="w-8 h-8 text-lg" />
-          <span className="font-bold text-sm">Central Operacional</span>
-        </div>
-        <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
-          {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </Button>
-      </div>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <header className="hidden lg:flex items-center justify-end px-6 h-14 border-b border-border bg-card/60 backdrop-blur-md shrink-0">
+          <ThemeToggle />
+        </header>
 
-      {mobileOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-
-      <div
-        className={cn(
-          'lg:hidden fixed inset-y-0 left-0 w-64 bg-card z-50 transform transition-transform duration-300 ease-in-out flex flex-col justify-between p-4',
-          mobileOpen ? 'translate-x-0' : '-translate-x-full',
-        )}
-      >
-        <div>
-          <div className="p-2 flex items-center gap-3 border-b border-border/50 pb-4">
-            <PadtecEmblem />
-            <div>
-              <h1 className="font-bold text-sm">Central Operacional Padtec</h1>
-              <p className="text-xs text-muted-foreground">NOC • COPE • BKO</p>
-            </div>
+        <div className="lg:hidden flex items-center justify-between h-16 px-4 bg-card border-b border-border shrink-0">
+          <div className="flex items-center gap-2">
+            <PadtecEmblem className="w-8 h-8 text-lg" />
+            <span className="font-bold text-sm dark:text-white">Central Operacional</span>
           </div>
-          <nav className="mt-4 space-y-1">
-            {navItems.map((item) => {
-              const Icon = item.icon
-              const isActive = location.pathname === item.path
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setMobileOpen(false)}
-                  className={cn(
-                    'flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium',
-                    isActive
-                      ? 'bg-muted text-foreground font-semibold'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
-                  )}
-                >
-                  <Icon className="w-4 h-4" />
-                  {item.label}
-                </Link>
-              )
-            })}
-          </nav>
-        </div>
-        <div className="space-y-3 pt-4 border-t border-border">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleTheme}
-            className="w-full justify-start gap-2 text-muted-foreground text-xs"
-          >
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-          </Button>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-semibold text-xs">{user?.name || 'Administrador BKO'}</p>
-              <p className="text-[10px] text-muted-foreground capitalize">
-                {user?.role || 'Administrador'}
-              </p>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleLogout}
-              className="text-muted-foreground"
-            >
-              <LogOut className="w-4 h-4" />
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
+              {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </Button>
           </div>
         </div>
-      </div>
 
-      <main className="flex-1 lg:p-8 p-4 pt-20 lg:pt-8 overflow-y-auto max-w-7xl mx-auto w-full">
-        <Outlet />
-      </main>
+        {mobileOpen && (
+          <div
+            className="lg:hidden fixed inset-0 bg-black/50 z-40"
+            onClick={() => setMobileOpen(false)}
+          />
+        )}
+
+        <div
+          className={cn(
+            'lg:hidden fixed inset-y-0 left-0 w-64 bg-card z-50 transform transition-transform duration-300 ease-in-out flex flex-col justify-between p-4',
+            mobileOpen ? 'translate-x-0' : '-translate-x-full',
+          )}
+        >
+          <div>
+            <div className="p-2 flex items-center gap-3 border-b border-border/50 pb-4">
+              <PadtecEmblem />
+              <div>
+                <h1 className="font-bold text-sm dark:text-white">Central Operacional Padtec</h1>
+                <p className="text-xs text-muted-foreground dark:text-gray-400">NOC • COPE • BKO</p>
+              </div>
+            </div>
+            <nav className="mt-4 space-y-1">
+              {navItems.map((item) => {
+                const Icon = item.icon
+                const isActive = location.pathname === item.path
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setMobileOpen(false)}
+                    className={cn(
+                      'flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium',
+                      isActive
+                        ? 'bg-muted text-foreground dark:text-white font-semibold'
+                        : 'text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted/50',
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {item.label}
+                  </Link>
+                )
+              })}
+            </nav>
+          </div>
+          <div className="pt-4 border-t border-border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-xs dark:text-white">
+                  {user?.name || 'Administrador BKO'}
+                </p>
+                <p className="text-[10px] text-muted-foreground dark:text-gray-400 capitalize">
+                  {user?.role || 'Administrador'}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleLogout}
+                className="text-muted-foreground"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <main className="flex-1 lg:p-8 p-4 overflow-y-auto max-w-7xl mx-auto w-full">
+          <Outlet />
+        </main>
+      </div>
 
       <button
         onClick={() => setDrawerOpen(true)}

@@ -22,12 +22,16 @@ const WELCOME_MESSAGE: ChatMessage = {
   text: 'Olá! Sou o **Gutenberg AI**, o núcleo de inteligência da Central Operacional. Como posso ajudar nas suas rotinas de BKO, NOC ou COPE hoje?',
 }
 
-let state: GutenbergChatState = {
-  conversationId: null,
-  messages: [WELCOME_MESSAGE],
-  isLoading: false,
-  error: null,
+function createInitialState(): GutenbergChatState {
+  return {
+    conversationId: null,
+    messages: [WELCOME_MESSAGE],
+    isLoading: false,
+    error: null,
+  }
 }
+
+let state: GutenbergChatState = createInitialState()
 
 const listeners = new Set<() => void>()
 
@@ -101,6 +105,10 @@ export async function sendGutenbergMessage(text: string) {
 
 export function clearGutenbergError() {
   setState({ error: null })
+}
+
+export function clearChat() {
+  setState(createInitialState())
 }
 
 export default useGutenbergChatStore
