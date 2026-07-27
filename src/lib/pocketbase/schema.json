@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-27T19:42:24.929Z",
+  "generatedAt": "2026-07-27T19:44:33.409Z",
   "collections": [
     {
       "name": "users",
@@ -43,7 +43,7 @@
           "type": "select",
           "required": false,
           "system": false,
-          "selectValues": ["NOC", "COPE", "BKO", "ADMIN"]
+          "selectValues": ["ADMIN", "USUARIO", "FOCAL BKO", "FOCAL NOC", "FOCAL COPE"]
         }
       ],
       "indexes": [
