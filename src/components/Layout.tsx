@@ -11,8 +11,8 @@ import {
   Menu,
   X,
   Bot,
-  ChevronLeft,
-  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   CalendarDays,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
@@ -107,12 +107,13 @@ export default function Layout() {
               'w-full text-muted-foreground hover:text-foreground text-xs',
               collapsed ? 'justify-center px-2 py-2' : 'justify-start gap-2 px-4 py-2',
             )}
+            title={collapsed ? 'Expandir menu' : 'Recolher menu'}
           >
             {collapsed ? (
-              <ChevronRight className="w-4 h-4" />
+              <ChevronsRight className="w-4 h-4" />
             ) : (
               <>
-                <ChevronLeft className="w-4 h-4" /> Recolher
+                <ChevronsLeft className="w-4 h-4" /> Recolher
               </>
             )}
           </Button>
