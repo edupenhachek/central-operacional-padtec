@@ -140,7 +140,7 @@ export default function Usuarios() {
     setSaving(true)
     setEditErrors({})
     try {
-      await updateUser(editUser.id, { name: data.name, email: data.email, role: data.role })
+      await updateUser(editUser.id, { name: data.name, role: data.role })
       toast.success('Usuário atualizado com sucesso')
       setEditUser(null)
       loadUsers()

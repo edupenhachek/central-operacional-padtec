@@ -85,8 +85,10 @@ export function UserFormDialog({
               onChange={(e) => setEmail(e.target.value)}
               placeholder="usuario@padtec.com.br"
               className="h-10 text-sm"
+              disabled={mode === 'edit'}
+              readOnly={mode === 'edit'}
             />
-            {(fieldErrors.email || fieldErrors.emailConfirm) && (
+            {mode === 'create' && (fieldErrors.email || fieldErrors.emailConfirm) && (
               <p className="text-xs text-red-500">
                 {fieldErrors.email || fieldErrors.emailConfirm}
               </p>
