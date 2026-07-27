@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Users, UserPlus, Pencil, Search } from 'lucide-react'
+import { Users, UserPlus, Pencil, Search, KeyRound } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -9,12 +9,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { UserFormDialog } from '@/components/UserFormDialog'
 import {
   getUsers,
   updateUserRole,
   createUser,
   updateUser,
+  requestPasswordReset,
   UserItem,
   UserRole,
 } from '@/services/users'
@@ -29,6 +40,7 @@ export default function Usuarios() {
   const [loading, setLoading] = useState(true)
   const [createOpen, setCreateOpen] = useState(false)
   const [editUser, setEditUser] = useState<UserItem | null>(null)
+  const [resetTargetEmail, setResetTargetEmail] = useState<string | null>(null)
   const [createErrors, setCreateErrors] = useState<FieldErrors>({})
   const [editErrors, setEditErrors] = useState<FieldErrors>({})
   const [saving, setSaving] = useState(false)
@@ -122,6 +134,22 @@ export default function Usuarios() {
     }
   }
 
+  const handleConfirmResetPassword = async (email: string) => {
+    if (!email) {
+      toast.error('E-mail inválido')
+      return
+    }
+    try {
+      await requestPasswordReset(email)
+      toast.success(`E-mail de redefinição de senha enviado para ${email}`)
+      setResetTargetEmail(null)
+    } catch (err) {
+      toast.error('Erro ao solicitar redefinição de senha', {
+        description: getErrorMessage(err),
+      })
+    }
+  }
+
   return (
     <div className="space-y-6 animate-fade-in max-w-5xl">
       <div className="flex items-start justify-between">
@@ -200,6 +228,15 @@ export default function Usuarios() {
                     <Button
                       variant="ghost"
                       size="icon"
+                      onClick={() => setResetTargetEmail(u.email)}
+                      className="h-8 w-8 text-muted-foreground hover:text-amber-600 dark:hover:text-amber-400"
+                      title="Resetar Senha"
+                    >
+                      <KeyRound className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => setEditUser(u)}
                       className="h-8 w-8 text-muted-foreground hover:text-blue-600"
                       title="Editar usuário"
@@ -230,7 +267,32 @@ export default function Usuarios() {
         loading={saving}
         onClose={() => setEditUser(null)}
         onSubmit={handleEdit}
+        onResetPassword={(email) => setResetTargetEmail(email)}
       />
+
+      <AlertDialog
+        open={!!resetTargetEmail}
+        onOpenChange={(open) => !open && setResetTargetEmail(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Resetar Senha</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja enviar um e-mail de redefinição de senha para{' '}
+              <strong className="text-foreground">{resetTargetEmail}</strong>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => resetTargetEmail && handleConfirmResetPassword(resetTargetEmail)}
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              Enviar E-mail
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
