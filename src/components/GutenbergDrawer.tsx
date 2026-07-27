@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
-import { Bot, Send, X, Loader2, Sparkles, AlertCircle } from 'lucide-react'
+import { Bot, Send, X, Loader2, Sparkles, AlertCircle, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { MarkdownRenderer } from '@/components/MarkdownRenderer'
-import { useGutenbergChatStore, sendGutenbergMessage } from '@/stores/gutenberg-chat'
+import { useGutenbergChatStore, sendGutenbergMessage, clearChat } from '@/stores/gutenberg-chat'
 
 interface GutenbergDrawerProps {
   isOpen: boolean
@@ -44,14 +44,25 @@ export function GutenbergDrawer({ isOpen, onClose }: GutenbergDrawerProps) {
             <p className="text-xs text-slate-300">Inteligência Operacional BKO</p>
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-slate-300 hover:text-white hover:bg-slate-800"
-          onClick={onClose}
-        >
-          <X className="w-5 h-5" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={clearChat}
+            className="text-slate-300 hover:text-white hover:bg-slate-800"
+            title="Limpar Chat"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-slate-300 hover:text-white hover:bg-slate-800"
+            onClick={onClose}
+          >
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 p-4 overflow-y-auto" ref={scrollRef}>

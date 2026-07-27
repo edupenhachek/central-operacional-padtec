@@ -10,11 +10,13 @@
 @layer base {
   :root {
     /* Change the colors to match the design system */
-    --background: 0 0% 100%;
+    --background: 210 20% 97%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
+    --accent: 210 20% 94%;
+    --accent-foreground: 222.2 84% 4.9%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
@@ -25,8 +27,8 @@
     --secondary: 210 40% 98%;
     --secondary-foreground: 222.2 84% 4.9%;
 
-    --muted: 210 40% 98%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 210 20% 94%;
+    --muted-foreground: 215.4 16.3% 40%;
 
     --accent: 210 40% 98%;
     --accent-foreground: 222.2 84% 4.9%;
@@ -65,41 +67,41 @@
 
   .dark {
     /* Change the colors to match the design system consistent with the dark mode */
-    --background: 222.2 84% 4.9%;
+    --background: 222 47% 7%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 222 44% 11%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 222 44% 11%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 84% 4.9%;
 
-    --secondary: 222.2 84% 4.9%;
+    --secondary: 222 32% 16%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 222.2 84% 4.9%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 222 32% 14%;
+    --muted-foreground: 215 25% 65%;
 
-    --accent: 222.2 84% 4.9%;
+    --accent: 222 32% 16%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 222.2 84% 4.9%;
-    --input: 222.2 84% 4.9%;
-    --ring: 214.3 31.8% 91.4%;
-    --sidebar-background: 222.2 84% 4.9%;
+    --border: 222 32% 20%;
+    --input: 222 32% 20%;
+    --ring: 213 94% 68%;
+    --sidebar-background: 222 47% 7%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 222.2 84% 4.9%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222.2 84% 4.9%;
+    --sidebar-accent: 222 32% 14%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222.2 84% 4.9%;
-    --sidebar-ring: 222.2 84% 4.9%;
+    --sidebar-border: 222 32% 20%;
+    --sidebar-ring: 213 94% 68%;
 
     --chart-1: 270 100% 44%;
     --chart-2: 164 100% 38%;

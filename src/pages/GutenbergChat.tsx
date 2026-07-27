@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
-import { Bot, Send, Sparkles, AlertCircle, Loader2 } from 'lucide-react'
+import { Bot, Send, Sparkles, AlertCircle, Loader2, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { MarkdownRenderer } from '@/components/MarkdownRenderer'
-import { useGutenbergChatStore, sendGutenbergMessage } from '@/stores/gutenberg-chat'
+import { useGutenbergChatStore, sendGutenbergMessage, clearChat } from '@/stores/gutenberg-chat'
 
 export default function GutenbergChat() {
   const { messages, isLoading, error } = useGutenbergChatStore()
@@ -25,16 +25,28 @@ export default function GutenbergChat() {
 
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col border border-border rounded-xl bg-card shadow-sm overflow-hidden animate-fade-in">
-      <div className="p-4 border-b border-border bg-[#0B0E14] text-white flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
-          <Bot className="w-6 h-6" />
+      <div className="p-4 border-b border-border bg-[#0B0E14] text-white flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
+            <Bot className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="font-bold text-base flex items-center gap-2">
+              Módulo Gutenberg AI <Sparkles className="w-4 h-4 text-amber-400" />
+            </h2>
+            <p className="text-xs text-slate-300">Central de Inteligência da Operação</p>
+          </div>
         </div>
-        <div>
-          <h2 className="font-bold text-base flex items-center gap-2">
-            Módulo Gutenberg AI <Sparkles className="w-4 h-4 text-amber-400" />
-          </h2>
-          <p className="text-xs text-slate-300">Central de Inteligência da Operação</p>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={clearChat}
+          className="text-slate-300 hover:text-white hover:bg-slate-800 gap-1.5 text-xs"
+          title="Limpar Chat"
+        >
+          <RotateCcw className="w-4 h-4" />
+          Limpar Chat
+        </Button>
       </div>
 
       <div className="flex-1 p-6 overflow-y-auto space-y-4" ref={scrollRef}>
