@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { KeyRound } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,11 +19,12 @@ const ROLE_OPTIONS: UserRole[] = ['ADMIN', 'USUARIO', 'FOCAL BKO', 'FOCAL NOC', 
 interface UserFormDialogProps {
   open: boolean
   mode: 'create' | 'edit'
-  user?: { name?: string; email?: string; role?: UserRole } | null
+  user?: { id?: string; name?: string; email?: string; role?: UserRole } | null
   fieldErrors?: FieldErrors
   loading?: boolean
   onClose: () => void
   onSubmit: (data: { name: string; email: string; password?: string; role: UserRole }) => void
+  onResetPassword?: (email: string) => void
 }
 
 export function UserFormDialog({
@@ -33,6 +35,7 @@ export function UserFormDialog({
   loading = false,
   onClose,
   onSubmit,
+  onResetPassword,
 }: UserFormDialogProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -83,7 +86,11 @@ export function UserFormDialog({
               placeholder="usuario@padtec.com.br"
               className="h-10 text-sm"
             />
-            {fieldErrors.email && <p className="text-xs text-red-500">{fieldErrors.email}</p>}
+            {(fieldErrors.email || fieldErrors.emailConfirm) && (
+              <p className="text-xs text-red-500">
+                {fieldErrors.email || fieldErrors.emailConfirm}
+              </p>
+            )}
           </div>
           {mode === 'create' && (
             <div className="space-y-1.5">
@@ -101,7 +108,7 @@ export function UserFormDialog({
             </div>
           )}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Perfil / Role</Label>
+            <Label className="text-xs font-semibold">Perfil</Label>
             <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
               <SelectTrigger className="h-10 text-sm">
                 <SelectValue />
@@ -116,6 +123,23 @@ export function UserFormDialog({
             </Select>
             {fieldErrors.role && <p className="text-xs text-red-500">{fieldErrors.role}</p>}
           </div>
+
+          {mode === 'edit' && onResetPassword && (
+            <div className="pt-3 border-t border-border flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Redefinição de acesso</span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => onResetPassword(email)}
+                className="text-xs gap-1.5 h-8 text-amber-600 border-amber-500/30 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/30"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                Resetar Senha
+              </Button>
+            </div>
+          )}
+
           <div className="flex items-center justify-end gap-3 pt-2">
             <Button variant="outline" onClick={onClose} className="text-sm">
               Cancelar
