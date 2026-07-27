@@ -13,6 +13,7 @@ import Documentacao from '@/pages/Documentacao'
 import Treinamentos from '@/pages/Treinamentos'
 import GutenbergChat from '@/pages/GutenbergChat'
 import Transbordo from '@/pages/Transbordo'
+import Escalas from '@/pages/Escalas'
 import Usuarios from '@/pages/Usuarios'
 import NotFound from '@/pages/NotFound'
 
@@ -33,6 +34,7 @@ const App = () => (
             }
           >
             <Route path="/" element={<Index />} />
+            <Route path="/escalas" element={<Escalas />} />
             <Route path="/validador-ops" element={<ValidadorOPS />} />
             <Route path="/documentacao" element={<Documentacao />} />
             <Route path="/treinamentos" element={<Treinamentos />} />

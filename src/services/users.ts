@@ -26,3 +26,8 @@ export const createUser = (data: {
   passwordConfirm: string
   role: UserRole
 }) => pb.collection('users').create<UserItem>(data)
+
+export const updateUser = (
+  id: string,
+  data: Partial<{ name: string; email: string; role: UserRole }>,
+) => pb.collection('users').update<UserItem>(id, data)
