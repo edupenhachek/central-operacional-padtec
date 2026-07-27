@@ -76,6 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await pb.collection('users').create({
         email,
+        emailConfirm: email,
         password,
         passwordConfirm: password,
         name: name || email.split('@')[0],
