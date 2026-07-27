@@ -6,6 +6,7 @@ import {
   FileText,
   GraduationCap,
   Bot,
+  BrainCircuit,
   ArrowRightLeft,
   Users,
   Moon,
@@ -37,7 +38,7 @@ export default function Layout() {
     { label: 'Validador OPS', path: '/validador-ops', icon: CheckSquare },
     { label: 'Documentacao', path: '/documentacao', icon: FileText },
     { label: 'Treinamentos', path: '/treinamentos', icon: GraduationCap },
-    { label: 'Gutenberg', path: '/gutenberg', icon: Bot },
+    { label: 'Gutenberg', path: '/gutenberg', icon: BrainCircuit },
     { label: 'Transbordo', path: '/transbordo', icon: ArrowRightLeft },
     ...(isAdmin ? [{ label: 'Usuarios', path: '/usuarios', icon: Users }] : []),
   ]
@@ -57,9 +58,9 @@ export default function Layout() {
             <PadtecEmblem />
             <div>
               <h1 className="font-bold text-sm tracking-tight text-foreground">
-                Central Operacional
+                Central Operacional Padtec
               </h1>
-              <p className="text-xs text-muted-foreground font-medium">BackOffice</p>
+              <p className="text-xs text-muted-foreground font-medium">NOC • COPE • BKO</p>
             </div>
           </div>
 
@@ -149,8 +150,8 @@ export default function Layout() {
           <div className="p-2 flex items-center gap-3 border-b border-border/50 pb-4">
             <PadtecEmblem />
             <div>
-              <h1 className="font-bold text-sm">Central Operacional</h1>
-              <p className="text-xs text-muted-foreground">BackOffice</p>
+              <h1 className="font-bold text-sm">Central Operacional Padtec</h1>
+              <p className="text-xs text-muted-foreground">NOC • COPE • BKO</p>
             </div>
           </div>
           <nav className="mt-4 space-y-1">

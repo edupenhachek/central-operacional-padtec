@@ -1,10 +1,12 @@
 import pb from '@/lib/pocketbase/client'
 
+export type UserRole = 'ADMIN' | 'USUARIO' | 'FOCAL BKO' | 'FOCAL NOC' | 'FOCAL COPE'
+
 export interface UserItem {
   id: string
   name: string
   email: string
-  role?: 'NOC' | 'COPE' | 'BKO' | 'ADMIN'
+  role?: UserRole
   created: string
   updated: string
 }
@@ -14,5 +16,13 @@ export const getUsers = () =>
     sort: '-created',
   })
 
-export const updateUserRole = (id: string, role: 'NOC' | 'COPE' | 'BKO' | 'ADMIN') =>
+export const updateUserRole = (id: string, role: UserRole) =>
   pb.collection('users').update<UserItem>(id, { role })
+
+export const createUser = (data: {
+  name: string
+  email: string
+  password: string
+  passwordConfirm: string
+  role: UserRole
+}) => pb.collection('users').create<UserItem>(data)
