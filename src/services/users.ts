@@ -11,10 +11,19 @@ export interface UserItem {
   updated: string
 }
 
-export const getUsers = () =>
-  pb.collection('users').getFullList<UserItem>({
+export const getUsers = async (): Promise<UserItem[]> => {
+  const records = await pb.collection('users').getFullList({
     sort: '-created',
   })
+  return records.map((r) => ({
+    id: r.id,
+    name: r.name || '',
+    email: r.email || '',
+    role: r.role as UserRole | undefined,
+    created: r.created || '',
+    updated: r.updated || '',
+  }))
+}
 
 export const updateUserRole = (id: string, role: UserRole) =>
   pb.collection('users').update<UserItem>(id, { role })

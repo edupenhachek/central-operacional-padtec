@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Users, UserPlus, Pencil } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Users, UserPlus, Pencil, Search } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -32,6 +32,16 @@ export default function Usuarios() {
   const [createErrors, setCreateErrors] = useState<FieldErrors>({})
   const [editErrors, setEditErrors] = useState<FieldErrors>({})
   const [saving, setSaving] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const filteredUsers = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase()
+    if (!term) return users
+    return users.filter(
+      (u) =>
+        (u.name || '').toLowerCase().includes(term) || (u.email || '').toLowerCase().includes(term),
+    )
+  }, [users, searchTerm])
 
   const loadUsers = async () => {
     try {
@@ -127,6 +137,17 @@ export default function Usuarios() {
         </Button>
       </div>
 
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Buscar por nome ou e-mail..."
+          className="w-full h-10 pl-10 pr-4 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+      </div>
+
       <Card className="border-border">
         <CardHeader>
           <CardTitle className="text-base font-bold flex items-center gap-2">
@@ -139,8 +160,12 @@ export default function Usuarios() {
               <div className="p-8 text-center text-sm text-muted-foreground">
                 Carregando usuários...
               </div>
+            ) : filteredUsers.length === 0 ? (
+              <div className="p-8 text-center text-sm text-muted-foreground">
+                Nenhum usuário encontrado.
+              </div>
             ) : (
-              users.map((u) => (
+              filteredUsers.map((u) => (
                 <div key={u.id} className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center font-bold text-xs">
