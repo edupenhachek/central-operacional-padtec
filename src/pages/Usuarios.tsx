@@ -29,6 +29,7 @@ import {
   UserItem,
   UserRole,
 } from '@/services/users'
+import { useAuth } from '@/hooks/use-auth'
 import { useRealtime } from '@/hooks/use-realtime'
 import { extractFieldErrors, getErrorMessage, type FieldErrors } from '@/lib/pocketbase/errors'
 import { toast } from 'sonner'
@@ -36,6 +37,9 @@ import { toast } from 'sonner'
 const ROLE_OPTIONS: UserRole[] = ['ADMIN', 'USUARIO', 'FOCAL BKO', 'FOCAL NOC', 'FOCAL COPE']
 
 export default function Usuarios() {
+  const { user: currentUser } = useAuth()
+  const isAdmin = currentUser?.role === 'ADMIN'
+
   const [users, setUsers] = useState<UserItem[]>([])
   const [loading, setLoading] = useState(true)
   const [createOpen, setCreateOpen] = useState(false)
@@ -44,6 +48,7 @@ export default function Usuarios() {
   const [createErrors, setCreateErrors] = useState<FieldErrors>({})
   const [editErrors, setEditErrors] = useState<FieldErrors>({})
   const [saving, setSaving] = useState(false)
+  const [resetting, setResetting] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
 
   const filteredUsers = useMemo(() => {
@@ -58,9 +63,11 @@ export default function Usuarios() {
   const loadUsers = async () => {
     try {
       setLoading(true)
-      setUsers(await getUsers())
-    } catch {
+      const data = await getUsers()
+      setUsers(data)
+    } catch (err) {
       setUsers([])
+      toast.error('Erro ao carregar usuários', { description: getErrorMessage(err) })
     } finally {
       setLoading(false)
     }
@@ -75,11 +82,15 @@ export default function Usuarios() {
   })
 
   const handleRoleChange = async (id: string, role: UserRole) => {
+    if (!isAdmin) {
+      toast.error('Apenas administradores podem alterar o perfil.')
+      return
+    }
     try {
       await updateUserRole(id, role)
       toast.success('Perfil atualizado com sucesso')
-    } catch {
-      toast.error('Erro ao atualizar perfil')
+    } catch (err) {
+      toast.error('Erro ao atualizar perfil', { description: getErrorMessage(err) })
     }
     loadUsers()
   }
@@ -90,6 +101,10 @@ export default function Usuarios() {
     password?: string
     role: UserRole
   }) => {
+    if (!isAdmin) {
+      toast.error('Apenas administradores podem criar usuários.')
+      return
+    }
     setSaving(true)
     setCreateErrors({})
     try {
@@ -105,6 +120,7 @@ export default function Usuarios() {
       loadUsers()
     } catch (err) {
       setCreateErrors(extractFieldErrors(err))
+      toast.error('Erro ao criar usuário', { description: getErrorMessage(err) })
     } finally {
       setSaving(false)
     }
@@ -117,6 +133,10 @@ export default function Usuarios() {
     role: UserRole
   }) => {
     if (!editUser) return
+    if (!isAdmin) {
+      toast.error('Apenas administradores podem editar usuários.')
+      return
+    }
     setSaving(true)
     setEditErrors({})
     try {
@@ -135,10 +155,15 @@ export default function Usuarios() {
   }
 
   const handleConfirmResetPassword = async (email: string) => {
-    if (!email) {
-      toast.error('E-mail inválido')
+    if (!isAdmin) {
+      toast.error('Apenas administradores podem resetar senhas.')
       return
     }
+    if (!email) {
+      toast.error('E-mail inválido para redefinição de senha')
+      return
+    }
+    setResetting(true)
     try {
       await requestPasswordReset(email)
       toast.success(`E-mail de redefinição de senha enviado para ${email}`)
@@ -147,6 +172,8 @@ export default function Usuarios() {
       toast.error('Erro ao solicitar redefinição de senha', {
         description: getErrorMessage(err),
       })
+    } finally {
+      setResetting(false)
     }
   }
 
@@ -159,13 +186,15 @@ export default function Usuarios() {
             Controle de permissões e perfis de acesso da Central Operacional.
           </p>
         </div>
-        <Button
-          onClick={() => setCreateOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm gap-2"
-        >
-          <UserPlus className="w-4 h-4" />
-          Novo Usuário
-        </Button>
+        {isAdmin && (
+          <Button
+            onClick={() => setCreateOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm gap-2"
+          >
+            <UserPlus className="w-4 h-4" />
+            Novo Usuário
+          </Button>
+        )}
       </div>
 
       <div className="relative max-w-md">
@@ -212,6 +241,7 @@ export default function Usuarios() {
                       <Select
                         value={u.role || 'USUARIO'}
                         onValueChange={(val) => handleRoleChange(u.id, val as UserRole)}
+                        disabled={!isAdmin}
                       >
                         <SelectTrigger className="h-8 text-xs">
                           <SelectValue />
@@ -225,24 +255,28 @@ export default function Usuarios() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setResetTargetEmail(u.email)}
-                      className="h-8 w-8 text-muted-foreground hover:text-amber-600 dark:hover:text-amber-400"
-                      title="Resetar Senha"
-                    >
-                      <KeyRound className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setEditUser(u)}
-                      className="h-8 w-8 text-muted-foreground hover:text-blue-600"
-                      title="Editar usuário"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
+                    {isAdmin && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setResetTargetEmail(u.email)}
+                          className="h-8 w-8 text-muted-foreground hover:text-amber-600 dark:hover:text-amber-400"
+                          title="Resetar Senha"
+                        >
+                          <KeyRound className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setEditUser(u)}
+                          className="h-8 w-8 text-muted-foreground hover:text-blue-600"
+                          title="Editar usuário"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))
@@ -283,12 +317,13 @@ export default function Usuarios() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={resetting}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => resetTargetEmail && handleConfirmResetPassword(resetTargetEmail)}
+              disabled={resetting}
               className="bg-amber-600 hover:bg-amber-700 text-white"
             >
-              Enviar E-mail
+              {resetting ? 'Enviando...' : 'Enviar E-mail'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
