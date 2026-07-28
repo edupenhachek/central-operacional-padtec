@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-28T00:36:40.081Z",
+  "generatedAt": "2026-07-28T23:47:22.383Z",
   "collections": [
     {
       "name": "users",
@@ -44,6 +44,39 @@
           "required": false,
           "system": false,
           "selectValues": ["ADMIN", "USUARIO", "FOCAL BKO", "FOCAL NOC", "FOCAL COPE"]
+        },
+        {
+          "name": "phone",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "equipe",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["NOC", "BKO", "COPE", "OHR", "Radisys"]
+        },
+        {
+          "name": "horario_trabalho",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": [
+            "07:00 às 16:00",
+            "08:00 às 17:00",
+            "09:00 às 18:00",
+            "13:00 às 22:00",
+            "22:00 às 07:00",
+            "Escala 12x36"
+          ]
+        },
+        {
+          "name": "cargo",
+          "type": "text",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [
