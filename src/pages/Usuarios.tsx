@@ -181,8 +181,10 @@ export default function Usuarios() {
     <div className="space-y-6 animate-fade-in max-w-5xl">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Gestão de Usuários</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground dark:text-slate-100">
+            Gestão de Usuários
+          </h1>
+          <p className="text-sm text-muted-foreground dark:text-slate-400 mt-1">
             Controle de permissões e perfis de acesso da Central Operacional.
           </p>
         </div>
@@ -198,42 +200,46 @@ export default function Usuarios() {
       </div>
 
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground dark:text-slate-400" />
         <input
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Buscar por nome ou e-mail..."
-          className="w-full h-10 pl-10 pr-4 rounded-md border border-input bg-background text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="w-full h-10 pl-10 pr-4 rounded-md border border-input bg-background dark:bg-slate-900/80 text-foreground dark:text-slate-100 text-sm placeholder:text-muted-foreground dark:placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
       </div>
 
-      <Card className="border-border">
+      <Card className="border-border bg-card dark:bg-slate-900">
         <CardHeader>
-          <CardTitle className="text-base font-bold flex items-center gap-2">
-            <Users className="w-5 h-5 text-blue-600" /> Colaboradores Cadastrados
+          <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground dark:text-slate-100">
+            <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Colaboradores Cadastrados
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y border-t border-border">
             {loading ? (
-              <div className="p-8 text-center text-sm text-muted-foreground">
+              <div className="p-8 text-center text-sm text-muted-foreground dark:text-slate-400">
                 Carregando usuários...
               </div>
             ) : filteredUsers.length === 0 ? (
-              <div className="p-8 text-center text-sm text-muted-foreground">
+              <div className="p-8 text-center text-sm text-muted-foreground dark:text-slate-400">
                 Nenhum usuário encontrado.
               </div>
             ) : (
               filteredUsers.map((u) => (
                 <div key={u.id} className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center font-bold text-xs">
+                    <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs">
                       {(u.name || u.email || 'U').charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-foreground">{u.name || 'Sem Nome'}</p>
-                      <p className="text-[11px] text-muted-foreground">{u.email || 'Sem e-mail'}</p>
+                      <p className="text-xs font-bold text-foreground dark:text-slate-100">
+                        {u.name || 'Sem Nome'}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground dark:text-slate-400">
+                        {u.email || 'Sem e-mail'}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -243,12 +249,16 @@ export default function Usuarios() {
                         onValueChange={(val) => handleRoleChange(u.id, val as UserRole)}
                         disabled={!isAdmin}
                       >
-                        <SelectTrigger className="h-8 text-xs">
+                        <SelectTrigger className="h-8 text-xs text-foreground dark:text-slate-100 bg-background dark:bg-slate-900/80 border-input">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-popover dark:bg-slate-900 text-popover-foreground dark:text-slate-100 border-border">
                           {ROLE_OPTIONS.map((r) => (
-                            <SelectItem key={r} value={r}>
+                            <SelectItem
+                              key={r}
+                              value={r}
+                              className="dark:focus:bg-slate-800 dark:focus:text-white"
+                            >
                               {r}
                             </SelectItem>
                           ))}
@@ -261,7 +271,7 @@ export default function Usuarios() {
                           variant="ghost"
                           size="icon"
                           onClick={() => setResetTargetEmail(u.email)}
-                          className="h-8 w-8 text-muted-foreground hover:text-amber-600 dark:hover:text-amber-400"
+                          className="h-8 w-8 text-muted-foreground dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400"
                           title="Resetar Senha"
                         >
                           <KeyRound className="w-4 h-4" />
@@ -270,7 +280,7 @@ export default function Usuarios() {
                           variant="ghost"
                           size="icon"
                           onClick={() => setEditUser(u)}
-                          className="h-8 w-8 text-muted-foreground hover:text-blue-600"
+                          className="h-8 w-8 text-muted-foreground dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400"
                           title="Editar usuário"
                         >
                           <Pencil className="w-4 h-4" />
@@ -308,16 +318,23 @@ export default function Usuarios() {
         open={!!resetTargetEmail}
         onOpenChange={(open) => !open && setResetTargetEmail(null)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-card dark:bg-slate-900 text-card-foreground dark:text-slate-100 border-border">
           <AlertDialogHeader>
-            <AlertDialogTitle>Resetar Senha</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-foreground dark:text-slate-100">
+              Resetar Senha
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground dark:text-slate-300">
               Deseja enviar um e-mail de redefinição de senha para{' '}
-              <strong className="text-foreground">{resetTargetEmail}</strong>?
+              <strong className="text-foreground dark:text-slate-100">{resetTargetEmail}</strong>?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={resetting}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel
+              disabled={resetting}
+              className="dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => resetTargetEmail && handleConfirmResetPassword(resetTargetEmail)}
               disabled={resetting}
