@@ -1,14 +1,5 @@
 import { useEffect, useState } from 'react'
-import {
-  Users,
-  FileText,
-  CheckCircle2,
-  TrendingUp,
-  Megaphone,
-  File,
-  ShieldAlert,
-  Award,
-} from 'lucide-react'
+import { Users, FileText, CheckCircle2, TrendingUp, Megaphone, File, Award } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { getAnnouncements, Announcement } from '@/services/announcements'
@@ -56,58 +47,72 @@ export default function Index() {
     <div className="space-y-8 animate-fade-in">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Visao consolidada da operacao, aprendizagem e comunicados internos.
+        <h1 className="text-3xl font-bold tracking-tight text-foreground dark:text-slate-100">
+          Dashboard
+        </h1>
+        <p className="text-sm text-muted-foreground dark:text-slate-400 mt-1">
+          Visão consolidada da operação, aprendizagem e comunicados internos.
         </p>
       </div>
 
       {/* KPI Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <Card className="border-border shadow-sm hover:shadow transition-shadow">
+        <Card className="border-border shadow-sm hover:shadow transition-shadow bg-card dark:bg-slate-900">
           <CardContent className="p-5 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600">
+            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-medium text-muted-foreground">Usuarios ativos</p>
-              <h3 className="text-2xl font-bold mt-0.5">3</h3>
+              <p className="text-xs font-medium text-muted-foreground dark:text-slate-400">
+                Usuários ativos
+              </p>
+              <h3 className="text-2xl font-bold mt-0.5 text-foreground dark:text-slate-100">3</h3>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-border shadow-sm hover:shadow transition-shadow">
+        <Card className="border-border shadow-sm hover:shadow transition-shadow bg-card dark:bg-slate-900">
           <CardContent className="p-5 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600">
+            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-medium text-muted-foreground">Documentos</p>
-              <h3 className="text-2xl font-bold mt-0.5">{documents.length || 2}</h3>
+              <p className="text-xs font-medium text-muted-foreground dark:text-slate-400">
+                Documentos
+              </p>
+              <h3 className="text-2xl font-bold mt-0.5 text-foreground dark:text-slate-100">
+                {documents.length || 2}
+              </h3>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-border shadow-sm hover:shadow transition-shadow">
+        <Card className="border-border shadow-sm hover:shadow transition-shadow bg-card dark:bg-slate-900">
           <CardContent className="p-5 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600">
+            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
               <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-medium text-muted-foreground">Licoes concluidas</p>
-              <h3 className="text-2xl font-bold mt-0.5">10</h3>
+              <p className="text-xs font-medium text-muted-foreground dark:text-slate-400">
+                Lições concluídas
+              </p>
+              <h3 className="text-2xl font-bold mt-0.5 text-foreground dark:text-slate-100">10</h3>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-border shadow-sm hover:shadow transition-shadow">
+        <Card className="border-border shadow-sm hover:shadow transition-shadow bg-card dark:bg-slate-900">
           <CardContent className="p-5 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600">
+            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
               <TrendingUp className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-medium text-muted-foreground">Evolucao media</p>
-              <h3 className="text-2xl font-bold mt-0.5">23.8%</h3>
+              <p className="text-xs font-medium text-muted-foreground dark:text-slate-400">
+                Evolução média
+              </p>
+              <h3 className="text-2xl font-bold mt-0.5 text-foreground dark:text-slate-100">
+                23.8%
+              </h3>
             </div>
           </CardContent>
         </Card>
@@ -116,30 +121,34 @@ export default function Index() {
       {/* Announcements Section */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <Megaphone className="w-4 h-4 text-pink-600" />
-          <h2 className="text-base font-bold tracking-tight">Anúncios</h2>
+          <Megaphone className="w-4 h-4 text-pink-600 dark:text-pink-400" />
+          <h2 className="text-base font-bold tracking-tight text-foreground dark:text-slate-100">
+            Anúncios
+          </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {announcements.map((item) => (
             <Card
               key={item.id}
-              className="border-border shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+              className="border-border shadow-sm hover:shadow-md transition-all flex flex-col justify-between bg-card dark:bg-slate-900"
             >
               <CardHeader className="p-5 pb-3">
-                <CardTitle className="text-sm font-bold leading-snug">{item.title}</CardTitle>
-                <p className="text-[11px] text-muted-foreground mt-1">
+                <CardTitle className="text-sm font-bold leading-snug text-foreground dark:text-slate-100">
+                  {item.title}
+                </CardTitle>
+                <p className="text-[11px] text-muted-foreground dark:text-slate-400 mt-1">
                   {item.expand?.author?.name || 'Administrador BKO'} •{' '}
                   {new Date(item.created).toLocaleDateString('pt-BR')}
                 </p>
               </CardHeader>
               <CardContent className="p-5 pt-0 space-y-4">
-                <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+                <p className="text-xs text-muted-foreground dark:text-slate-300 line-clamp-3 leading-relaxed">
                   {item.content}
                 </p>
                 <Button
                   onClick={() => setSelectedAnn(item)}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs h-9 rounded-md"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs h-9 rounded-md font-medium"
                 >
                   Ler mais
                 </Button>
@@ -152,28 +161,30 @@ export default function Index() {
       {/* Grid: Last Documents & Internal Notices */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Ultimos Documentos */}
-        <Card className="border-border shadow-sm">
+        <Card className="border-border shadow-sm bg-card dark:bg-slate-900">
           <CardHeader className="p-5 border-b border-border/50">
-            <CardTitle className="text-sm font-bold">Ultimos documentos acessados</CardTitle>
+            <CardTitle className="text-sm font-bold text-foreground dark:text-slate-100">
+              Últimos documentos acessados
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-5 space-y-3">
             {documents.length > 0 ? (
               documents.map((doc) => (
                 <div
                   key={doc.id}
-                  className="flex items-center gap-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-3 text-xs text-muted-foreground dark:text-slate-300 hover:text-foreground dark:hover:text-slate-100 transition-colors"
                 >
-                  <File className="w-4 h-4 text-slate-400 shrink-0" />
+                  <File className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" />
                   <span className="truncate">{doc.title}</span>
                 </div>
               ))
             ) : (
               <>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <div className="flex items-center gap-3 text-xs text-muted-foreground dark:text-slate-300">
                   <File className="w-4 h-4 text-slate-400 shrink-0" />
                   <span>Batimento de Caixa - Procedimentos</span>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <div className="flex items-center gap-3 text-xs text-muted-foreground dark:text-slate-300">
                   <File className="w-4 h-4 text-slate-400 shrink-0" />
                   <span>Passo a Passo Batimento de Caixa - Tela Única</span>
                 </div>
@@ -183,26 +194,31 @@ export default function Index() {
         </Card>
 
         {/* Avisos Internos */}
-        <Card className="border-border shadow-sm">
+        <Card className="border-border shadow-sm bg-card dark:bg-slate-900">
           <CardHeader className="p-5 border-b border-border/50">
-            <CardTitle className="text-sm font-bold">Avisos internos</CardTitle>
+            <CardTitle className="text-sm font-bold text-foreground dark:text-slate-100">
+              Avisos internos
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-5 space-y-3">
             {notices.length > 0 ? (
               notices.map((n) => (
-                <p key={n.id} className="text-xs text-muted-foreground leading-relaxed">
+                <p
+                  key={n.id}
+                  className="text-xs text-muted-foreground dark:text-slate-300 leading-relaxed"
+                >
                   {n.content}
                 </p>
               ))
             ) : (
               <>
-                <p className="text-xs text-muted-foreground">
-                  Atualizacao semanal dos fluxos operacionais publicada.
+                <p className="text-xs text-muted-foreground dark:text-slate-300">
+                  Atualização semanal dos fluxos operacionais publicada.
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground dark:text-slate-300">
                   Treinamento GPON recomendado para novos colaboradores.
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground dark:text-slate-300">
                   Use o Gutenberg para consultar procedimentos antes de escalar.
                 </p>
               </>
@@ -212,34 +228,46 @@ export default function Index() {
       </div>
 
       {/* Ranking de Colaboradores */}
-      <Card className="border-border shadow-sm">
+      <Card className="border-border shadow-sm bg-card dark:bg-slate-900">
         <CardHeader className="p-5 border-b border-border/50 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-bold flex items-center gap-2">
+          <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground dark:text-slate-100">
             <Award className="w-4 h-4 text-amber-500" /> Ranking de colaboradores
           </CardTitle>
         </CardHeader>
         <CardContent className="p-5">
           <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-muted/40">
+            <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-muted/40 dark:bg-slate-800/50">
               <div className="flex items-center gap-3">
-                <span className="font-bold w-4 text-center">1</span>
-                <span className="font-medium">Eduardo Guidini</span>
+                <span className="font-bold w-4 text-center text-foreground dark:text-slate-100">
+                  1
+                </span>
+                <span className="font-medium text-foreground dark:text-slate-100">
+                  Eduardo Guidini
+                </span>
               </div>
-              <span className="text-blue-600 font-semibold">1,240 pts</span>
+              <span className="text-blue-600 dark:text-blue-400 font-semibold">1,240 pts</span>
             </div>
             <div className="flex items-center justify-between text-xs p-2 rounded-lg">
               <div className="flex items-center gap-3">
-                <span className="font-bold w-4 text-center text-muted-foreground">2</span>
-                <span className="font-medium">Operador BKO 1</span>
+                <span className="font-bold w-4 text-center text-muted-foreground dark:text-slate-400">
+                  2
+                </span>
+                <span className="font-medium text-foreground dark:text-slate-200">
+                  Operador BKO 1
+                </span>
               </div>
-              <span className="text-muted-foreground">890 pts</span>
+              <span className="text-muted-foreground dark:text-slate-400">890 pts</span>
             </div>
             <div className="flex items-center justify-between text-xs p-2 rounded-lg">
               <div className="flex items-center gap-3">
-                <span className="font-bold w-4 text-center text-muted-foreground">3</span>
-                <span className="font-medium">Analista COPE</span>
+                <span className="font-bold w-4 text-center text-muted-foreground dark:text-slate-400">
+                  3
+                </span>
+                <span className="font-medium text-foreground dark:text-slate-200">
+                  Analista COPE
+                </span>
               </div>
-              <span className="text-muted-foreground">620 pts</span>
+              <span className="text-muted-foreground dark:text-slate-400">620 pts</span>
             </div>
           </div>
         </CardContent>
@@ -248,15 +276,17 @@ export default function Index() {
       {/* Announcement Detail Modal */}
       {selectedAnn && (
         <Dialog open={!!selectedAnn} onOpenChange={() => setSelectedAnn(null)}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg bg-card dark:bg-slate-900 border-border text-card-foreground dark:text-slate-100">
             <DialogHeader>
-              <DialogTitle className="text-base font-bold">{selectedAnn.title}</DialogTitle>
-              <p className="text-xs text-muted-foreground">
+              <DialogTitle className="text-base font-bold text-foreground dark:text-slate-100">
+                {selectedAnn.title}
+              </DialogTitle>
+              <p className="text-xs text-muted-foreground dark:text-slate-400">
                 {selectedAnn.expand?.author?.name || 'Administrador BKO'} •{' '}
                 {new Date(selectedAnn.created).toLocaleDateString('pt-BR')}
               </p>
             </DialogHeader>
-            <div className="mt-4 text-xs leading-relaxed text-foreground whitespace-pre-wrap">
+            <div className="mt-4 text-xs leading-relaxed text-foreground dark:text-slate-200 whitespace-pre-wrap">
               {selectedAnn.content}
             </div>
           </DialogContent>
