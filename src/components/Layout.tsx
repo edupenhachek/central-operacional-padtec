@@ -1,5 +1,8 @@
 import { useState } from 'react'
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useTabs } from '@/hooks/use-tabs'
+import { TabBar } from '@/components/TabBar'
+import { getTabConfig } from '@/lib/tab-config'
 import {
   LayoutDashboard,
   FileText,
@@ -31,6 +34,7 @@ export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
+  const { tabs, activePath, closeTab } = useTabs()
 
   const isAdmin = user?.role === 'ADMIN'
 
@@ -254,8 +258,30 @@ export default function Layout() {
           </div>
         </div>
 
+        <TabBar
+          tabs={tabs}
+          activePath={activePath}
+          onActivate={(p) => navigate(p)}
+          onClose={closeTab}
+        />
         <main className="flex-1 lg:p-8 p-4 overflow-y-auto max-w-7xl mx-auto w-full">
-          <Outlet />
+          {tabs.length === 0 ? (
+            <div className="flex items-center justify-center h-full text-sm text-muted-foreground dark:text-slate-400">
+              Nenhuma aba aberta. Clique em um item do menu para começar.
+            </div>
+          ) : (
+            tabs.map((tab) => {
+              const config = getTabConfig(tab.path)
+              if (!config) return null
+              if (config.requiredRole && user?.role !== config.requiredRole) return null
+              const Comp = config.component
+              return (
+                <div key={tab.path} className={cn(tab.path === activePath ? 'block' : 'hidden')}>
+                  <Comp />
+                </div>
+              )
+            })
+          )}
         </main>
       </div>
 

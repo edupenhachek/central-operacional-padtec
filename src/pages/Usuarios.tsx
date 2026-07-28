@@ -100,6 +100,10 @@ export default function Usuarios() {
     email: string
     password?: string
     role: UserRole
+    phone?: string
+    equipe?: string
+    horario_trabalho?: string
+    cargo?: string
   }) => {
     if (!isAdmin) {
       toast.error('Apenas administradores podem criar usuários.')
@@ -114,6 +118,10 @@ export default function Usuarios() {
         password: data.password!,
         passwordConfirm: data.password!,
         role: data.role,
+        phone: data.phone,
+        equipe: data.equipe,
+        horario_trabalho: data.horario_trabalho,
+        cargo: data.cargo,
       })
       toast.success('Usuário criado com sucesso')
       setCreateOpen(false)
@@ -131,6 +139,10 @@ export default function Usuarios() {
     email: string
     password?: string
     role: UserRole
+    phone?: string
+    equipe?: string
+    horario_trabalho?: string
+    cargo?: string
   }) => {
     if (!editUser) return
     if (!isAdmin) {
@@ -140,7 +152,14 @@ export default function Usuarios() {
     setSaving(true)
     setEditErrors({})
     try {
-      await updateUser(editUser.id, { name: data.name, role: data.role })
+      await updateUser(editUser.id, {
+        name: data.name,
+        role: data.role,
+        phone: data.phone,
+        equipe: data.equipe,
+        horario_trabalho: data.horario_trabalho,
+        cargo: data.cargo,
+      })
       toast.success('Usuário atualizado com sucesso')
       setEditUser(null)
       loadUsers()
