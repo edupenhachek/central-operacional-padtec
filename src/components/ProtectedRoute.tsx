@@ -1,19 +1,20 @@
-import { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '@/hooks/use-auth'
+import type { ReactNode } from 'react'
+import { useAuth, type UserRole } from '@/hooks/use-auth'
 
-interface ProtectedRouteProps {
+export function ProtectedRoute({
+  children,
+  requiredRole,
+}: {
   children: ReactNode
-  requiredRole?: 'ADMIN'
-}
-
-export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { isAuthenticated, user, loading } = useAuth()
+  requiredRole?: UserRole
+}) {
+  const { isAuthenticated, loading, user } = useAuth()
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-screen text-muted-foreground">
+        Carregando...
       </div>
     )
   }
@@ -22,8 +23,11 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     return <Navigate to="/login" replace />
   }
 
-  if (requiredRole && user?.role !== requiredRole && user?.role !== 'ADMIN') {
-    return <Navigate to="/" replace />
+  if (requiredRole) {
+    const userRole = user?.role
+    if (userRole !== requiredRole && userRole !== 'SUPERADMIN') {
+      return <Navigate to="/" replace />
+    }
   }
 
   return <>{children}</>

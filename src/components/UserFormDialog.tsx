@@ -7,24 +7,17 @@ import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { MultiSelect } from '@/components/MultiSelect'
 import type { UserRole } from '@/services/users'
 import type { FieldErrors } from '@/lib/pocketbase/errors'
 import { formatPhone, isValidPadtecEmail } from '@/lib/formatters'
-
-const ROLE_OPTIONS: UserRole[] = ['ADMIN', 'USUARIO', 'FOCAL BKO', 'FOCAL NOC', 'FOCAL COPE']
-const EQUIPE_OPTIONS = ['NOC', 'BKO', 'COPE', 'OHR', 'Radisys']
-const HORARIO_OPTIONS = [
-  '07:00 às 16:00',
-  '08:00 às 17:00',
-  '09:00 às 18:00',
-  '13:00 às 22:00',
-  '22:00 às 07:00',
-  'Escala 12x36',
-]
+import { ROLE_OPTIONS, PROJETO_OPTIONS, getHorarioGroupsForProjetos } from '@/lib/user-constants'
 
 interface UserFormDialogProps {
   open: boolean
@@ -35,7 +28,7 @@ interface UserFormDialogProps {
     email?: string
     role?: UserRole
     phone?: string
-    equipe?: string
+    projeto?: string[]
     horario_trabalho?: string
     cargo?: string
   } | null
@@ -48,11 +41,13 @@ interface UserFormDialogProps {
     password?: string
     role: UserRole
     phone?: string
-    equipe?: string
+    projeto?: string[]
     horario_trabalho?: string
     cargo?: string
   }) => void
   onResetPassword?: (email: string) => void
+  currentUserRole?: UserRole
+  isSelf?: boolean
 }
 
 export function UserFormDialog({
@@ -64,16 +59,24 @@ export function UserFormDialog({
   onClose,
   onSubmit,
   onResetPassword,
+  currentUserRole,
+  isSelf = false,
 }: UserFormDialogProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState<UserRole>('USUARIO')
   const [phone, setPhone] = useState('')
-  const [equipe, setEquipe] = useState('')
+  const [projeto, setProjeto] = useState<string[]>([])
   const [horarioTrabalho, setHorarioTrabalho] = useState('')
   const [cargo, setCargo] = useState('')
   const [emailError, setEmailError] = useState('')
+
+  const canEditAll = currentUserRole === 'ADMIN' || currentUserRole === 'SUPERADMIN'
+  const isRestricted = !canEditAll && isSelf
+  const showPassword = mode === 'create' && canEditAll
+  const emailDisabled = mode === 'edit' && !canEditAll && !isSelf
+  const fieldDisabled = isRestricted
 
   useEffect(() => {
     if (open) {
@@ -82,7 +85,7 @@ export function UserFormDialog({
       setRole(user?.role || 'USUARIO')
       setPassword('')
       setPhone(user?.phone || '')
-      setEquipe(user?.equipe || '')
+      setProjeto(user?.projeto || [])
       setHorarioTrabalho(user?.horario_trabalho || '')
       setCargo(user?.cargo || '')
       setEmailError('')
@@ -91,7 +94,7 @@ export function UserFormDialog({
 
   const handleSubmit = () => {
     const trimmedEmail = email.trim()
-    if (trimmedEmail && !isValidPadtecEmail(trimmedEmail)) {
+    if (trimmedEmail && currentUserRole !== 'SUPERADMIN' && !isValidPadtecEmail(trimmedEmail)) {
       setEmailError('Use apenas e-mail @padtec.com ou @padtec.com.br')
       return
     }
@@ -99,10 +102,10 @@ export function UserFormDialog({
     onSubmit({
       name: name.trim(),
       email: trimmedEmail,
-      password: mode === 'create' ? password : undefined,
+      password: showPassword ? password : undefined,
       role,
       phone: phone.trim(),
-      equipe: equipe || undefined,
+      projeto,
       horario_trabalho: horarioTrabalho || undefined,
       cargo: cargo.trim() || undefined,
     })
@@ -110,6 +113,7 @@ export function UserFormDialog({
 
   const inputCls =
     'h-10 text-sm text-foreground dark:text-slate-100 placeholder:text-muted-foreground dark:placeholder:text-slate-400 bg-background dark:bg-slate-900/80 border-input'
+  const horarioGroups = getHorarioGroupsForProjetos(projeto)
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -137,7 +141,7 @@ export function UserFormDialog({
 
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold text-foreground dark:text-slate-200">
-              {mode === 'edit' ? 'E-mail (Apenas Leitura)' : 'E-mail'}
+              {mode === 'edit' && emailDisabled ? 'E-mail (Apenas Leitura)' : 'E-mail'}
             </Label>
             <Input
               type="email"
@@ -148,12 +152,12 @@ export function UserFormDialog({
               }}
               placeholder="usuario@padtec.com.br"
               className={`${inputCls} ${
-                mode === 'edit'
+                emailDisabled
                   ? 'bg-muted/60 dark:bg-slate-800/60 text-muted-foreground dark:text-slate-400 cursor-not-allowed opacity-90'
                   : ''
               }`}
-              disabled={mode === 'edit'}
-              readOnly={mode === 'edit'}
+              disabled={emailDisabled}
+              readOnly={emailDisabled}
             />
             {(emailError ||
               (mode === 'create' && (fieldErrors.email || fieldErrors.emailConfirm))) && (
@@ -184,6 +188,7 @@ export function UserFormDialog({
                 onChange={(e) => setCargo(e.target.value)}
                 placeholder="Ex: Analista N1"
                 className={inputCls}
+                disabled={fieldDisabled}
               />
             </div>
           </div>
@@ -191,49 +196,51 @@ export function UserFormDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-foreground dark:text-slate-200">
-                Equipe
+                Projeto
               </Label>
-              <Select value={equipe} onValueChange={setEquipe}>
-                <SelectTrigger className={`h-10 text-sm ${inputCls}`}>
-                  <SelectValue placeholder="Selecionar" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover dark:bg-slate-900 text-popover-foreground dark:text-slate-100 border-border">
-                  {EQUIPE_OPTIONS.map((opt) => (
-                    <SelectItem
-                      key={opt}
-                      value={opt}
-                      className="dark:focus:bg-slate-800 dark:focus:text-white"
-                    >
-                      {opt}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <MultiSelect
+                options={PROJETO_OPTIONS}
+                selected={projeto}
+                onChange={setProjeto}
+                placeholder="Selecionar"
+                disabled={fieldDisabled}
+              />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-foreground dark:text-slate-200">
                 Horário de Trabalho
               </Label>
-              <Select value={horarioTrabalho} onValueChange={setHorarioTrabalho}>
+              <Select
+                value={horarioTrabalho}
+                onValueChange={setHorarioTrabalho}
+                disabled={fieldDisabled}
+              >
                 <SelectTrigger className={`h-10 text-sm ${inputCls}`}>
                   <SelectValue placeholder="Selecionar" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover dark:bg-slate-900 text-popover-foreground dark:text-slate-100 border-border">
-                  {HORARIO_OPTIONS.map((opt) => (
-                    <SelectItem
-                      key={opt}
-                      value={opt}
-                      className="dark:focus:bg-slate-800 dark:focus:text-white"
-                    >
-                      {opt}
-                    </SelectItem>
+                  {horarioGroups.map((group) => (
+                    <SelectGroup key={group.label}>
+                      <SelectLabel className="text-xs font-semibold text-muted-foreground dark:text-slate-400 px-2 py-1.5">
+                        {group.label}
+                      </SelectLabel>
+                      {group.options.map((opt) => (
+                        <SelectItem
+                          key={opt}
+                          value={opt}
+                          className="dark:focus:bg-slate-800 dark:focus:text-white"
+                        >
+                          {opt}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          {mode === 'create' && (
+          {showPassword && (
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-foreground dark:text-slate-200">
                 Senha
@@ -255,7 +262,11 @@ export function UserFormDialog({
             <Label className="text-xs font-semibold text-foreground dark:text-slate-200">
               Perfil
             </Label>
-            <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
+            <Select
+              value={role}
+              onValueChange={(v) => setRole(v as UserRole)}
+              disabled={fieldDisabled}
+            >
               <SelectTrigger className={`h-10 text-sm ${inputCls}`}>
                 <SelectValue />
               </SelectTrigger>
@@ -276,7 +287,7 @@ export function UserFormDialog({
             )}
           </div>
 
-          {mode === 'edit' && onResetPassword && (
+          {mode === 'edit' && onResetPassword && (canEditAll || isSelf) && (
             <div className="pt-2 border-t border-border flex items-center justify-between">
               <span className="text-xs text-muted-foreground dark:text-slate-400">
                 Redefinição de acesso

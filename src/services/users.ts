@@ -1,6 +1,6 @@
 import pb from '@/lib/pocketbase/client'
 
-export type UserRole = 'ADMIN' | 'USUARIO' | 'FOCAL BKO' | 'FOCAL NOC' | 'FOCAL COPE'
+export type UserRole = 'ADMIN' | 'USUARIO' | 'FOCAL BKO' | 'FOCAL NOC' | 'FOCAL COPE' | 'SUPERADMIN'
 
 export interface UserItem {
   id: string
@@ -8,7 +8,7 @@ export interface UserItem {
   email: string
   role?: UserRole
   phone?: string
-  equipe?: string
+  projeto?: string[]
   horario_trabalho?: string
   cargo?: string
   created: string
@@ -25,7 +25,7 @@ export const getUsers = async (): Promise<UserItem[]> => {
     email: r.email || '',
     role: r.role as UserRole | undefined,
     phone: r.phone || '',
-    equipe: r.equipe || '',
+    projeto: Array.isArray(r.projeto) ? r.projeto : [],
     horario_trabalho: r.horario_trabalho || '',
     cargo: r.cargo || '',
     created: r.created || '',
@@ -43,7 +43,7 @@ export const createUser = (data: {
   passwordConfirm: string
   role: UserRole
   phone?: string
-  equipe?: string
+  projeto?: string[]
   horario_trabalho?: string
   cargo?: string
 }) =>
@@ -56,7 +56,7 @@ export const createUser = (data: {
     role: data.role,
     emailVisibility: true,
     phone: data.phone || '',
-    equipe: data.equipe || '',
+    projeto: data.projeto || [],
     horario_trabalho: data.horario_trabalho || '',
     cargo: data.cargo || '',
   })
@@ -65,18 +65,20 @@ export const updateUser = (
   id: string,
   data: Partial<{
     name: string
+    email: string
     role: UserRole
     phone: string
-    equipe: string
+    projeto: string[]
     horario_trabalho: string
     cargo: string
   }>,
 ) => {
   const payload: Record<string, any> = {}
   if (data.name !== undefined) payload.name = data.name
+  if (data.email !== undefined) payload.email = data.email
   if (data.role !== undefined) payload.role = data.role
   if (data.phone !== undefined) payload.phone = data.phone
-  if (data.equipe !== undefined) payload.equipe = data.equipe
+  if (data.projeto !== undefined) payload.projeto = data.projeto
   if (data.horario_trabalho !== undefined) payload.horario_trabalho = data.horario_trabalho
   if (data.cargo !== undefined) payload.cargo = data.cargo
   return pb.collection('users').update<UserItem>(id, payload)
