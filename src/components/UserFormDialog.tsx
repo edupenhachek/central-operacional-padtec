@@ -85,10 +85,9 @@ export function UserFormDialog({
   const [emailChangeLoading, setEmailChangeLoading] = useState(false)
 
   const canEditAll = currentUserRole === 'ADMIN' || currentUserRole === 'SUPERADMIN'
-  const isRestricted = !canEditAll && isSelf
+  const isRestrictedRoleEdit = !canEditAll && isSelf
   const showPassword = mode === 'create' && canEditAll
-  const emailDisabled = mode === 'edit'
-  const fieldDisabled = isRestricted
+  const emailDisabled = mode === 'edit' && !(isSelf && canEditAll)
 
   useEffect(() => {
     if (open) {
@@ -149,7 +148,7 @@ export function UserFormDialog({
     setEmailError('')
     onSubmit({
       name: name.trim(),
-      email: trimmedEmail,
+      email: mode === 'create' ? trimmedEmail : trimmedEmail !== user?.email ? trimmedEmail : '',
       password: showPassword ? password : undefined,
       role,
       phone: phone.trim(),
@@ -236,7 +235,6 @@ export function UserFormDialog({
                 onChange={(e) => setCargo(e.target.value)}
                 placeholder="Ex: Analista N1"
                 className={inputCls}
-                disabled={fieldDisabled}
               />
             </div>
           </div>
@@ -251,18 +249,13 @@ export function UserFormDialog({
                 selected={projeto}
                 onChange={setProjeto}
                 placeholder="Selecionar"
-                disabled={fieldDisabled}
               />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-foreground dark:text-slate-200">
                 Horário de Trabalho
               </Label>
-              <Select
-                value={horarioTrabalho}
-                onValueChange={setHorarioTrabalho}
-                disabled={fieldDisabled}
-              >
+              <Select value={horarioTrabalho} onValueChange={setHorarioTrabalho}>
                 <SelectTrigger className={`h-10 text-sm ${inputCls}`}>
                   <SelectValue placeholder="Selecionar" />
                 </SelectTrigger>
@@ -313,7 +306,7 @@ export function UserFormDialog({
             <Select
               value={role}
               onValueChange={(v) => setRole(v as UserRole)}
-              disabled={fieldDisabled}
+              disabled={isRestrictedRoleEdit}
             >
               <SelectTrigger className={`h-10 text-sm ${inputCls}`}>
                 <SelectValue />
@@ -399,7 +392,6 @@ export function UserFormDialog({
         </div>
       </DialogContent>
 
-      {/* Sub-Dialog for Alterar E-mail */}
       <Dialog
         open={showEmailChangeDialog}
         onOpenChange={(v) => !v && setShowEmailChangeDialog(false)}
