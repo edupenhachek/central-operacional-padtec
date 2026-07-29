@@ -6,6 +6,7 @@ export interface DocumentItem {
   category?: string
   file?: string
   file_type?: string
+  projeto_alvo?: string[]
   created: string
   updated: string
 }
@@ -23,7 +24,7 @@ export const getDocuments = () =>
   })
 
 export const createDocument = (
-  data: FormData | { title: string; category?: string; file?: File },
+  data: FormData | { title: string; category?: string; file?: File; projeto_alvo?: string[] },
 ) => pb.collection('documents').create<DocumentItem>(data)
 
 export const deleteDocument = (id: string) => pb.collection('documents').delete(id)
