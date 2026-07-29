@@ -5,6 +5,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ImageCropModal } from '@/components/ImageCropModal'
 import { useAuth } from '@/hooks/use-auth'
 import { updateUser, requestPasswordReset } from '@/services/users'
 import { formatPhone } from '@/lib/formatters'
@@ -25,6 +26,7 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
   const [resetting, setResetting] = useState(false)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -33,6 +35,7 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
       setPhone(user.phone || '')
       setAvatarFile(null)
       setAvatarPreview(null)
+      setCropImageSrc(null)
     }
   }, [open, user])
 
@@ -51,9 +54,23 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    setAvatarFile(file)
-    setAvatarPreview(URL.createObjectURL(file))
+    const reader = new FileReader()
+    reader.onload = () => {
+      setCropImageSrc(reader.result as string)
+    }
+    reader.readAsDataURL(file)
     e.target.value = ''
+  }
+
+  const handleCropCancel = () => {
+    setCropImageSrc(null)
+  }
+
+  const handleCropConfirm = (file: File) => {
+    setAvatarFile(file)
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview)
+    setAvatarPreview(URL.createObjectURL(file))
+    setCropImageSrc(null)
   }
 
   const handleSave = async () => {
@@ -97,6 +114,7 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
     'bg-muted/60 dark:bg-slate-800/60 text-muted-foreground dark:text-slate-400 cursor-not-allowed opacity-90'
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-lg bg-card dark:bg-slate-900 text-card-foreground dark:text-slate-100 border-border">
         <DialogHeader>
@@ -260,6 +278,12 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
           </div>
         </div>
       </DialogContent>
+      <ImageCropModal
+        open={cropImageSrc !== null}
+        imageSrc={cropImageSrc}
+        onCancel={handleCropCancel}
+        onConfirm={handleCropConfirm}
+      />
     </Dialog>
   )
 }
