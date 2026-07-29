@@ -40,14 +40,7 @@ const App = () => (
             <Route path="/treinamentos" element={<Treinamentos />} />
             <Route path="/gutenberg" element={<Navigate to="/" replace />} />
             <Route path="/transbordo" element={<Transbordo />} />
-            <Route
-              path="/usuarios"
-              element={
-                <ProtectedRoute requiredRole="ADMIN">
-                  <Usuarios />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/usuarios" element={<Usuarios />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

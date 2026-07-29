@@ -125,7 +125,7 @@ export default function Layout() {
                   return (
                     <button
                       key={item.path}
-                      onClick={() => setDrawerOpen(true)}
+                      onClick={() => setDrawerOpen(!drawerOpen)}
                       title={collapsed ? item.label : undefined}
                       className={itemCls}
                     >
@@ -261,7 +261,7 @@ export default function Layout() {
                       key={item.path}
                       onClick={() => {
                         setMobileOpen(false)
-                        setDrawerOpen(true)
+                        setDrawerOpen(!drawerOpen)
                       }}
                       className={itemCls}
                     >
@@ -328,7 +328,12 @@ export default function Layout() {
             tabs.map((tab) => {
               const config = getTabConfig(tab.path)
               if (!config) return null
-              if (config.requiredRole && user?.role !== config.requiredRole) return null
+              if (
+                config.requiredRole &&
+                user?.role !== config.requiredRole &&
+                user?.role !== 'SUPERADMIN'
+              )
+                return null
               const Comp = config.component
               return (
                 <div key={tab.path} className={cn(tab.path === activePath ? 'block' : 'hidden')}>
@@ -341,11 +346,20 @@ export default function Layout() {
       </div>
 
       <button
-        onClick={() => setDrawerOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-40 group"
-        title="Gutenberg AI Assistant"
+        onClick={() => setDrawerOpen(!drawerOpen)}
+        className={cn(
+          'fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-50 group',
+          drawerOpen
+            ? 'bg-slate-800 hover:bg-slate-900 text-white'
+            : 'bg-blue-600 hover:bg-blue-700 text-white',
+        )}
+        title={drawerOpen ? 'Fechar Gutenberg AI' : 'Gutenberg AI Assistant'}
       >
-        <Bot className="w-7 h-7 group-hover:scale-110 transition-transform duration-200" />
+        {drawerOpen ? (
+          <X className="w-6 h-6" />
+        ) : (
+          <Bot className="w-7 h-7 group-hover:scale-110 transition-transform duration-200" />
+        )}
       </button>
 
       <GutenbergDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
