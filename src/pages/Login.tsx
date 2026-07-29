@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
+import { requestPasswordReset } from '@/services/users'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,6 +15,8 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [resetSending, setResetSending] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
 
   const { signIn } = useAuth()
   const navigate = useNavigate()
@@ -30,6 +33,23 @@ export default function Login() {
       setErrorMsg('Credenciais inválidas. Verifique seu e-mail e senha.')
     } else {
       navigate('/')
+    }
+  }
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      setErrorMsg('Digite seu e-mail acima para recuperar a senha.')
+      return
+    }
+    setResetSending(true)
+    setErrorMsg('')
+    try {
+      await requestPasswordReset(email.trim())
+      setResetSent(true)
+    } catch (err) {
+      setErrorMsg('Erro ao enviar link de recuperação. Verifique o e-mail informado.')
+    } finally {
+      setResetSending(false)
     }
   }
 
@@ -53,6 +73,12 @@ export default function Login() {
         {errorMsg && (
           <div className="mb-6 p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 text-xs text-center font-medium">
             {errorMsg}
+          </div>
+        )}
+
+        {resetSent && (
+          <div className="mb-6 p-3 rounded-lg bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900 text-green-600 dark:text-green-400 text-xs text-center font-medium">
+            Link de recuperação enviado para {email}
           </div>
         )}
 
@@ -81,6 +107,14 @@ export default function Login() {
               <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Senha
               </Label>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={resetSending}
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium disabled:opacity-50"
+              >
+                {resetSending ? 'Enviando...' : 'Esqueci minha senha'}
+              </button>
             </div>
             <div className="relative">
               <Input

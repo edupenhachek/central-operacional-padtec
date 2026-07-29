@@ -17,7 +17,11 @@ import { MultiSelect } from '@/components/MultiSelect'
 import type { UserRole } from '@/services/users'
 import type { FieldErrors } from '@/lib/pocketbase/errors'
 import { formatPhone, isValidPadtecEmail } from '@/lib/formatters'
-import { ROLE_OPTIONS, PROJETO_OPTIONS, getHorarioGroupsForProjetos } from '@/lib/user-constants'
+import {
+  PROJETO_OPTIONS,
+  getHorarioGroupsForProjetos,
+  getRoleOptionsForUser,
+} from '@/lib/user-constants'
 
 interface UserFormDialogProps {
   open: boolean
@@ -75,7 +79,7 @@ export function UserFormDialog({
   const canEditAll = currentUserRole === 'ADMIN' || currentUserRole === 'SUPERADMIN'
   const isRestricted = !canEditAll && isSelf
   const showPassword = mode === 'create' && canEditAll
-  const emailDisabled = mode === 'edit' && !canEditAll && !isSelf
+  const emailDisabled = mode === 'edit'
   const fieldDisabled = isRestricted
 
   useEffect(() => {
@@ -271,7 +275,7 @@ export function UserFormDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-popover dark:bg-slate-900 text-popover-foreground dark:text-slate-100 border-border">
-                {ROLE_OPTIONS.map((r) => (
+                {getRoleOptionsForUser(currentUserRole).map((r) => (
                   <SelectItem
                     key={r}
                     value={r}

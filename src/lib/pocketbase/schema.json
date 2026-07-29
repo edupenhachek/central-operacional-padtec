@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-29T00:12:41.997Z",
+  "generatedAt": "2026-07-29T00:34:03.947Z",
   "collections": [
     {
       "name": "users",
@@ -203,6 +203,65 @@
           "required": false,
           "system": false,
           "selectValues": ["low", "medium", "high"]
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "name": "escalas",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != ''",
+        "delete": "@request.auth.id != ''"
+      },
+      "fields": [
+        {
+          "name": "Data",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "Usuario_ID",
+          "type": "relation",
+          "required": false,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "Projeto",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "Turno",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "Status",
+          "type": "text",
+          "required": false,
+          "system": false
         },
         {
           "name": "created",

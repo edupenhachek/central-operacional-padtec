@@ -4,11 +4,16 @@ onRecordUpdateRequest((e) => {
   }
 
   var role = e.auth.getString('role') || ''
+  var body = e.requestInfo().body || {}
+
+  if (body.role === 'SUPERADMIN' && role !== 'SUPERADMIN') {
+    return e.badRequestError('Você não tem permissão para atribuir o perfil SUPERADMIN.')
+  }
+
   if (role === 'ADMIN' || role === 'SUPERADMIN') {
     return e.next()
   }
 
-  var body = e.requestInfo().body || {}
   var protectedFields = ['role', 'projeto', 'horario_trabalho', 'cargo', 'equipe']
 
   for (var i = 0; i < protectedFields.length; i++) {
