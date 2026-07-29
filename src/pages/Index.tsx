@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react'
-import { Users, FileText, CheckCircle2, TrendingUp, Megaphone, File } from 'lucide-react'
+import {
+  Users,
+  FileText,
+  CheckCircle2,
+  TrendingUp,
+  Megaphone,
+  File,
+  ArrowRight,
+} from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { getAnnouncements, Announcement } from '@/services/announcements'
@@ -7,9 +15,40 @@ import { getDocuments, DocumentItem } from '@/services/documents'
 import { getInternalNotices, InternalNotice } from '@/services/notices'
 import { useRealtime } from '@/hooks/use-realtime'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Link } from 'react-router-dom'
+
+// Default Featured Announcement matching specification
+const FEATURED_ANNOUNCEMENT: Announcement = {
+  id: 'ann-featured',
+  title: 'Mudanças no fluxo de Batimento de Caixa',
+  content:
+    'Olá, pessoal, abaixo segue um descritivo do novo procedimento de batimento de caixa unificado para a equipe de BKO e NOC. Favor verificar o novo passo a passo detalhado na seção de documentação e alinhar com os coordenadores de turno.',
+  created: '2026-07-27T10:00:00.000Z',
+  updated: '2026-07-27T10:00:00.000Z',
+  expand: {
+    author: {
+      name: 'Eduardo Guidini Penhachek',
+    },
+  },
+}
+
+// Default recent documents fallback
+const DEFAULT_RECENT_DOCUMENTS = [
+  { id: '1', title: 'Teste' },
+  { id: '2', title: 'passo a passo mvp' },
+  { id: '3', title: 'Passo a Passo Batimento de Caixa - Tela Única' },
+  { id: '4', title: 'Batimento de Caixa - Procedimentos' },
+]
+
+// Default internal notices fallback
+const DEFAULT_INTERNAL_NOTICES = [
+  'Use o Gutenberg para consultar procedimentos antes de escalar.',
+  'Atualização semanal dos fluxos operacionais publicada.',
+  'Treinamento GPON recomendado para novos colaboradores.',
+]
 
 export default function Index() {
-  const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [announcements, setAnnouncements] = useState<Announcement[]>([FEATURED_ANNOUNCEMENT])
   const [documents, setDocuments] = useState<DocumentItem[]>([])
   const [notices, setNotices] = useState<InternalNotice[]>([])
   const [selectedAnn, setSelectedAnn] = useState<Announcement | null>(null)
@@ -21,7 +60,13 @@ export default function Index() {
         getDocuments(),
         getInternalNotices(),
       ])
-      setAnnouncements(annData)
+
+      if (annData && annData.length > 0) {
+        setAnnouncements(annData)
+      } else {
+        setAnnouncements([FEATURED_ANNOUNCEMENT])
+      }
+
       setDocuments(docData)
       setNotices(noticeData)
     } catch (err) {
@@ -43,8 +88,11 @@ export default function Index() {
     loadData()
   })
 
+  // Ensure primary announcement is featured
+  const featured = announcements[0] || FEATURED_ANNOUNCEMENT
+
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in pb-10">
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground dark:text-slate-100">
@@ -81,7 +129,7 @@ export default function Index() {
                 Documentos
               </p>
               <h3 className="text-2xl font-bold mt-0.5 text-foreground dark:text-slate-100">
-                {documents.length || 2}
+                {documents.length || 4}
               </h3>
             </div>
           </CardContent>
@@ -138,8 +186,8 @@ export default function Index() {
                   {item.title}
                 </CardTitle>
                 <p className="text-[11px] text-muted-foreground dark:text-slate-400 mt-1">
-                  {item.expand?.author?.name || 'Administrador BKO'} •{' '}
-                  {new Date(item.created).toLocaleDateString('pt-BR')}
+                  {item.expand?.author?.name || 'Eduardo Guidini Penhachek'} •{' '}
+                  {item.created ? new Date(item.created).toLocaleDateString('pt-BR') : '27/07/2026'}
                 </p>
               </CardHeader>
               <CardContent className="p-5 pt-0 space-y-4">
@@ -160,36 +208,39 @@ export default function Index() {
 
       {/* Grid: Last Documents & Internal Notices */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Ultimos Documentos */}
+        {/* Ultimos Documentos Acessados */}
         <Card className="border-border shadow-sm bg-card dark:bg-slate-900">
-          <CardHeader className="p-5 border-b border-border/50">
+          <CardHeader className="p-5 border-b border-border/50 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-bold text-foreground dark:text-slate-100">
               Últimos documentos acessados
             </CardTitle>
+            <Link
+              to="/documentacao"
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-medium"
+            >
+              Ver todos <ArrowRight className="w-3 h-3" />
+            </Link>
           </CardHeader>
           <CardContent className="p-5 space-y-3">
-            {documents.length > 0 ? (
-              documents.map((doc) => (
-                <div
-                  key={doc.id}
-                  className="flex items-center gap-3 text-xs text-muted-foreground dark:text-slate-300 hover:text-foreground dark:hover:text-slate-100 transition-colors"
-                >
-                  <File className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" />
-                  <span className="truncate">{doc.title}</span>
-                </div>
-              ))
-            ) : (
-              <>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground dark:text-slate-300">
-                  <File className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span>Batimento de Caixa - Procedimentos</span>
-                </div>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground dark:text-slate-300">
-                  <File className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span>Passo a Passo Batimento de Caixa - Tela Única</span>
-                </div>
-              </>
-            )}
+            {documents.length > 0
+              ? documents.slice(0, 4).map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="flex items-center gap-3 text-xs text-muted-foreground dark:text-slate-300 hover:text-foreground dark:hover:text-slate-100 transition-colors py-0.5"
+                  >
+                    <File className="w-4 h-4 text-blue-500 shrink-0" />
+                    <span className="truncate font-medium">{doc.title}</span>
+                  </div>
+                ))
+              : DEFAULT_RECENT_DOCUMENTS.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="flex items-center gap-3 text-xs text-muted-foreground dark:text-slate-300 hover:text-foreground dark:hover:text-slate-100 transition-colors py-0.5"
+                  >
+                    <File className="w-4 h-4 text-blue-500 shrink-0" />
+                    <span className="truncate font-medium">{doc.title}</span>
+                  </div>
+                ))}
           </CardContent>
         </Card>
 
@@ -201,28 +252,23 @@ export default function Index() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-5 space-y-3">
-            {notices.length > 0 ? (
-              notices.map((n) => (
-                <p
-                  key={n.id}
-                  className="text-xs text-muted-foreground dark:text-slate-300 leading-relaxed"
-                >
-                  {n.content}
-                </p>
-              ))
-            ) : (
-              <>
-                <p className="text-xs text-muted-foreground dark:text-slate-300">
-                  Atualização semanal dos fluxos operacionais publicada.
-                </p>
-                <p className="text-xs text-muted-foreground dark:text-slate-300">
-                  Treinamento GPON recomendado para novos colaboradores.
-                </p>
-                <p className="text-xs text-muted-foreground dark:text-slate-300">
-                  Use o Gutenberg para consultar procedimentos antes de escalar.
-                </p>
-              </>
-            )}
+            {notices.length > 0
+              ? notices.map((n) => (
+                  <p
+                    key={n.id}
+                    className="text-xs text-muted-foreground dark:text-slate-300 leading-relaxed border-l-2 border-blue-500 pl-3 py-0.5"
+                  >
+                    {n.content}
+                  </p>
+                ))
+              : DEFAULT_INTERNAL_NOTICES.map((notice, idx) => (
+                  <p
+                    key={idx}
+                    className="text-xs text-muted-foreground dark:text-slate-300 leading-relaxed border-l-2 border-blue-500 pl-3 py-0.5"
+                  >
+                    {notice}
+                  </p>
+                ))}
           </CardContent>
         </Card>
       </div>
@@ -235,9 +281,11 @@ export default function Index() {
               <DialogTitle className="text-base font-bold text-foreground dark:text-slate-100">
                 {selectedAnn.title}
               </DialogTitle>
-              <p className="text-xs text-muted-foreground dark:text-slate-400">
-                {selectedAnn.expand?.author?.name || 'Administrador BKO'} •{' '}
-                {new Date(selectedAnn.created).toLocaleDateString('pt-BR')}
+              <p className="text-xs text-muted-foreground dark:text-slate-400 mt-1">
+                {selectedAnn.expand?.author?.name || 'Eduardo Guidini Penhachek'} •{' '}
+                {selectedAnn.created
+                  ? new Date(selectedAnn.created).toLocaleDateString('pt-BR')
+                  : '27/07/2026'}
               </p>
             </DialogHeader>
             <div className="mt-4 text-xs leading-relaxed text-foreground dark:text-slate-200 whitespace-pre-wrap">

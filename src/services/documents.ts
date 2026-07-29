@@ -5,8 +5,16 @@ export interface DocumentItem {
   title: string
   category?: string
   file?: string
+  file_type?: string
   created: string
   updated: string
+}
+
+export interface DocumentFavorite {
+  id: string
+  user: string
+  document: string
+  created: string
 }
 
 export const getDocuments = () =>
@@ -14,7 +22,31 @@ export const getDocuments = () =>
     sort: '-created',
   })
 
-export const createDocument = (data: FormData | { title: string; category?: string }) =>
-  pb.collection('documents').create<DocumentItem>(data)
+export const createDocument = (
+  data: FormData | { title: string; category?: string; file?: File },
+) => pb.collection('documents').create<DocumentItem>(data)
 
 export const deleteDocument = (id: string) => pb.collection('documents').delete(id)
+
+export const getUserFavorites = async (userId: string): Promise<DocumentFavorite[]> => {
+  if (!userId) return []
+  try {
+    return await pb.collection('document_favorites').getFullList<DocumentFavorite>({
+      filter: `user = "${userId}"`,
+    })
+  } catch (err) {
+    console.error('Error fetching favorites:', err)
+    return []
+  }
+}
+
+export const addFavorite = async (userId: string, documentId: string) => {
+  return pb.collection('document_favorites').create<DocumentFavorite>({
+    user: userId,
+    document: documentId,
+  })
+}
+
+export const removeFavorite = async (favoriteId: string) => {
+  return pb.collection('document_favorites').delete(favoriteId)
+}
