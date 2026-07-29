@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import pb from '@/lib/pocketbase/client'
 
-export type UserRole = 'ADMIN' | 'USUARIO' | 'FOCAL BKO' | 'FOCAL NOC' | 'FOCAL COPE'
+export type UserRole = 'ADMIN' | 'USUARIO' | 'FOCAL BKO' | 'FOCAL NOC' | 'FOCAL COPE' | 'SUPERADMIN'
 
 export interface UserRecord {
   id: string
@@ -9,6 +9,10 @@ export interface UserRecord {
   name?: string
   role?: UserRole
   avatar?: string
+  phone?: string
+  projeto?: string[]
+  horario_trabalho?: string
+  cargo?: string
 }
 
 interface AuthContextType {

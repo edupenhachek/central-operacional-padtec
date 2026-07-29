@@ -26,19 +26,18 @@ import {
   createUser,
   updateUser,
   requestPasswordReset,
-  UserItem,
-  UserRole,
+  type UserItem,
+  type UserRole,
 } from '@/services/users'
 import { useAuth } from '@/hooks/use-auth'
 import { useRealtime } from '@/hooks/use-realtime'
 import { extractFieldErrors, getErrorMessage, type FieldErrors } from '@/lib/pocketbase/errors'
+import { ROLE_OPTIONS } from '@/lib/user-constants'
 import { toast } from 'sonner'
-
-const ROLE_OPTIONS: UserRole[] = ['ADMIN', 'USUARIO', 'FOCAL BKO', 'FOCAL NOC', 'FOCAL COPE']
 
 export default function Usuarios() {
   const { user: currentUser } = useAuth()
-  const isAdmin = currentUser?.role === 'ADMIN'
+  const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPERADMIN'
 
   const [users, setUsers] = useState<UserItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -101,7 +100,7 @@ export default function Usuarios() {
     password?: string
     role: UserRole
     phone?: string
-    equipe?: string
+    projeto?: string[]
     horario_trabalho?: string
     cargo?: string
   }) => {
@@ -119,7 +118,7 @@ export default function Usuarios() {
         passwordConfirm: data.password!,
         role: data.role,
         phone: data.phone,
-        equipe: data.equipe,
+        projeto: data.projeto || [],
         horario_trabalho: data.horario_trabalho,
         cargo: data.cargo,
       })
@@ -140,26 +139,31 @@ export default function Usuarios() {
     password?: string
     role: UserRole
     phone?: string
-    equipe?: string
+    projeto?: string[]
     horario_trabalho?: string
     cargo?: string
   }) => {
     if (!editUser) return
-    if (!isAdmin) {
-      toast.error('Apenas administradores podem editar usuários.')
-      return
-    }
     setSaving(true)
     setEditErrors({})
     try {
-      await updateUser(editUser.id, {
-        name: data.name,
-        role: data.role,
-        phone: data.phone,
-        equipe: data.equipe,
-        horario_trabalho: data.horario_trabalho,
-        cargo: data.cargo,
-      })
+      if (isAdmin) {
+        await updateUser(editUser.id, {
+          name: data.name,
+          email: data.email,
+          role: data.role,
+          phone: data.phone,
+          projeto: data.projeto,
+          horario_trabalho: data.horario_trabalho,
+          cargo: data.cargo,
+        })
+      } else {
+        await updateUser(editUser.id, {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+        })
+      }
       toast.success('Usuário atualizado com sucesso')
       setEditUser(null)
       loadUsers()
@@ -174,10 +178,6 @@ export default function Usuarios() {
   }
 
   const handleConfirmResetPassword = async (email: string) => {
-    if (!isAdmin) {
-      toast.error('Apenas administradores podem resetar senhas.')
-      return
-    }
     if (!email) {
       toast.error('E-mail inválido para redefinição de senha')
       return
@@ -195,6 +195,8 @@ export default function Usuarios() {
       setResetting(false)
     }
   }
+
+  const isEditingSelf = editUser?.id === currentUser?.id
 
   return (
     <div className="space-y-6 animate-fade-in max-w-5xl">
@@ -284,17 +286,19 @@ export default function Usuarios() {
                         </SelectContent>
                       </Select>
                     </div>
-                    {isAdmin && (
+                    {(isAdmin || u.id === currentUser?.id) && (
                       <>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setResetTargetEmail(u.email)}
-                          className="h-8 w-8 text-muted-foreground dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400"
-                          title="Resetar Senha"
-                        >
-                          <KeyRound className="w-4 h-4" />
-                        </Button>
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setResetTargetEmail(u.email)}
+                            className="h-8 w-8 text-muted-foreground dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400"
+                            title="Resetar Senha"
+                          >
+                            <KeyRound className="w-4 h-4" />
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -321,6 +325,7 @@ export default function Usuarios() {
         loading={saving}
         onClose={() => setCreateOpen(false)}
         onSubmit={handleCreate}
+        currentUserRole={currentUser?.role}
       />
       <UserFormDialog
         open={!!editUser}
@@ -331,6 +336,8 @@ export default function Usuarios() {
         onClose={() => setEditUser(null)}
         onSubmit={handleEdit}
         onResetPassword={(email) => setResetTargetEmail(email)}
+        currentUserRole={currentUser?.role}
+        isSelf={isEditingSelf}
       />
 
       <AlertDialog
