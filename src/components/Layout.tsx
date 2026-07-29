@@ -45,7 +45,7 @@ export default function Layout() {
     { label: 'Dashboard', path: '/', icon: LayoutDashboard },
     { label: 'Escalas', path: '/escalas', icon: CalendarDays },
     { label: 'Documentação', path: '/documentacao', icon: FileText },
-    { label: 'Gutenberg', path: '/gutenberg', icon: BrainCircuit },
+    { label: 'Gutenberg AI', path: '/gutenberg', icon: BrainCircuit },
     ...(isAdmin ? [{ label: 'Usuários', path: '/usuarios', icon: Users }] : []),
   ]
 
@@ -113,7 +113,6 @@ export default function Layout() {
               {navItems.map((item) => {
                 const Icon = item.icon
                 const isActive = location.pathname === item.path
-                const isGutenberg = item.path === '/gutenberg'
                 const itemCls = cn(
                   'flex items-center rounded-lg text-sm font-medium transition-all duration-150',
                   collapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3.5 py-2.5',
@@ -121,19 +120,6 @@ export default function Layout() {
                     ? 'bg-muted text-foreground dark:text-white font-semibold shadow-sm'
                     : 'text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted/50',
                 )
-                if (isGutenberg) {
-                  return (
-                    <button
-                      key={item.path}
-                      onClick={() => setDrawerOpen(!drawerOpen)}
-                      title={collapsed ? item.label : undefined}
-                      className={itemCls}
-                    >
-                      <Icon className="w-4 h-4 shrink-0 text-blue-600" />
-                      {!collapsed && item.label}
-                    </button>
-                  )
-                }
                 return (
                   <Link
                     key={item.path}
@@ -248,28 +234,12 @@ export default function Layout() {
               {navItems.map((item) => {
                 const Icon = item.icon
                 const isActive = location.pathname === item.path
-                const isGutenberg = item.path === '/gutenberg'
                 const itemCls = cn(
                   'flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium',
                   isActive
                     ? 'bg-muted text-foreground dark:text-white font-semibold'
                     : 'text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted/50',
                 )
-                if (isGutenberg) {
-                  return (
-                    <button
-                      key={item.path}
-                      onClick={() => {
-                        setMobileOpen(false)
-                        setDrawerOpen(!drawerOpen)
-                      }}
-                      className={itemCls}
-                    >
-                      <Icon className="w-4 h-4 text-blue-600" />
-                      {item.label}
-                    </button>
-                  )
-                }
                 return (
                   <Link
                     key={item.path}
@@ -277,7 +247,7 @@ export default function Layout() {
                     onClick={() => setMobileOpen(false)}
                     className={itemCls}
                   >
-                    <Icon className="w-4 h-4" />
+                    <Icon className="w-4 h-4 text-blue-600" />
                     {item.label}
                   </Link>
                 )

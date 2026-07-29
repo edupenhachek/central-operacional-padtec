@@ -21,7 +21,10 @@ export function useTabs() {
     const config = getTabConfig(location.pathname)
     if (!config) return
 
-    if (config.requiredRole && user?.role !== config.requiredRole) {
+    const hasPermission =
+      !config.requiredRole || user?.role === config.requiredRole || user?.role === 'SUPERADMIN'
+
+    if (!hasPermission) {
       navigate('/')
       return
     }

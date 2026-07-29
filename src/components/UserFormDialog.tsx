@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { KeyRound } from 'lucide-react'
+import { KeyRound, Mail } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -50,6 +50,7 @@ interface UserFormDialogProps {
     cargo?: string
   }) => void
   onResetPassword?: (email: string) => void
+  onChangeEmail?: (userId: string, newEmail: string) => Promise<void>
   currentUserRole?: UserRole
   isSelf?: boolean
 }
@@ -76,6 +77,12 @@ export function UserFormDialog({
   const [cargo, setCargo] = useState('')
   const [emailError, setEmailError] = useState('')
 
+  const [showEmailChangeDialog, setShowEmailChangeDialog] = useState(false)
+  const [oldEmailInput, setOldEmailInput] = useState('')
+  const [newEmailInput, setNewEmailInput] = useState('')
+  const [emailChangeError, setEmailChangeError] = useState('')
+  const [emailChangeLoading, setEmailChangeLoading] = useState(false)
+
   const canEditAll = currentUserRole === 'ADMIN' || currentUserRole === 'SUPERADMIN'
   const isRestricted = !canEditAll && isSelf
   const showPassword = mode === 'create' && canEditAll
@@ -93,8 +100,44 @@ export function UserFormDialog({
       setHorarioTrabalho(user?.horario_trabalho || '')
       setCargo(user?.cargo || '')
       setEmailError('')
+      setShowEmailChangeDialog(false)
+      setOldEmailInput('')
+      setNewEmailInput('')
+      setEmailChangeError('')
     }
   }, [open, user])
+
+  const handleConfirmEmailChange = async () => {
+    if (!user?.id || !onChangeEmail) return
+    const currentEmail = (user.email || email).trim()
+    if (oldEmailInput.trim().toLowerCase() !== currentEmail.toLowerCase()) {
+      setEmailChangeError('O E-mail Antigo não confere com o e-mail atual do cadastro.')
+      return
+    }
+    const trimmedNew = newEmailInput.trim()
+    if (!trimmedNew) {
+      setEmailChangeError('Por favor, informe o novo e-mail.')
+      return
+    }
+    if (currentUserRole !== 'SUPERADMIN' && !isValidPadtecEmail(trimmedNew)) {
+      setEmailChangeError('Use apenas e-mail @padtec.com ou @padtec.com.br')
+      return
+    }
+
+    setEmailChangeLoading(true)
+    setEmailChangeError('')
+    try {
+      await onChangeEmail(user.id, trimmedNew)
+      setEmail(trimmedNew)
+      setShowEmailChangeDialog(false)
+      setOldEmailInput('')
+      setNewEmailInput('')
+    } catch (err: any) {
+      setEmailChangeError(err?.message || 'Erro ao alterar e-mail.')
+    } finally {
+      setEmailChangeLoading(false)
+    }
+  }
 
   const handleSubmit = () => {
     const trimmedEmail = email.trim()
@@ -291,21 +334,48 @@ export function UserFormDialog({
             )}
           </div>
 
-          {mode === 'edit' && onResetPassword && (canEditAll || isSelf) && (
-            <div className="pt-2 border-t border-border flex items-center justify-between">
-              <span className="text-xs text-muted-foreground dark:text-slate-400">
-                Redefinição de acesso
-              </span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => onResetPassword(email)}
-                className="text-xs gap-1.5 h-8 text-amber-600 border-amber-500/30 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-400/30 dark:hover:bg-amber-950/40 dark:hover:text-amber-300"
-              >
-                <KeyRound className="w-3.5 h-3.5" />
-                Resetar Senha
-              </Button>
+          {mode === 'edit' && (
+            <div className="pt-2 border-t border-border space-y-2">
+              {onResetPassword && (canEditAll || isSelf) && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground dark:text-slate-400">
+                    Redefinição de acesso
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onResetPassword(email)}
+                    className="text-xs gap-1.5 h-8 text-amber-600 border-amber-500/30 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-400/30 dark:hover:bg-amber-950/40 dark:hover:text-amber-300"
+                  >
+                    <KeyRound className="w-3.5 h-3.5" />
+                    Resetar Senha
+                  </Button>
+                </div>
+              )}
+
+              {canEditAll && onChangeEmail && user?.id && (
+                <div className="flex items-center justify-between pt-1 border-t border-border/50">
+                  <span className="text-xs text-muted-foreground dark:text-slate-400">
+                    Alteração de e-mail
+                  </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setOldEmailInput('')
+                      setNewEmailInput('')
+                      setEmailChangeError('')
+                      setShowEmailChangeDialog(true)
+                    }}
+                    className="text-xs gap-1.5 h-8 text-blue-600 border-blue-500/30 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:border-blue-400/30 dark:hover:bg-blue-950/40 dark:hover:text-blue-300"
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    Alterar E-mail
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
@@ -327,6 +397,83 @@ export function UserFormDialog({
           </div>
         </div>
       </DialogContent>
+
+      {/* Sub-Dialog for Alterar E-mail */}
+      <Dialog
+        open={showEmailChangeDialog}
+        onOpenChange={(v) => !v && setShowEmailChangeDialog(false)}
+      >
+        <DialogContent className="sm:max-w-md bg-card dark:bg-slate-900 text-card-foreground dark:text-slate-100 border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground dark:text-slate-100 font-bold text-base">
+              Alterar E-mail do Usuário
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            <p className="text-xs text-muted-foreground dark:text-slate-300">
+              Confirme o e-mail antigo do usuário antes de atribuir o novo e-mail corporativo.
+            </p>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-foreground dark:text-slate-200">
+                E-mail Antigo
+              </Label>
+              <Input
+                type="email"
+                value={oldEmailInput}
+                onChange={(e) => {
+                  setOldEmailInput(e.target.value)
+                  setEmailChangeError('')
+                }}
+                placeholder="Digite o e-mail atual do cadastro"
+                className={inputCls}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-foreground dark:text-slate-200">
+                E-mail Novo
+              </Label>
+              <Input
+                type="email"
+                value={newEmailInput}
+                onChange={(e) => {
+                  setNewEmailInput(e.target.value)
+                  setEmailChangeError('')
+                }}
+                placeholder="novo.email@padtec.com.br"
+                className={inputCls}
+              />
+            </div>
+
+            {emailChangeError && (
+              <p className="text-xs text-red-500 dark:text-red-400 font-medium">
+                {emailChangeError}
+              </p>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowEmailChangeDialog(false)}
+                disabled={emailChangeLoading}
+                className="text-xs dark:border-slate-700 dark:text-slate-200"
+              >
+                Cancelar
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleConfirmEmailChange}
+                disabled={emailChangeLoading}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium"
+              >
+                {emailChangeLoading ? 'Alterando...' : 'Confirmar Alteração'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }
