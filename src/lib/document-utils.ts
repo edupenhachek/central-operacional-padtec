@@ -1,9 +1,8 @@
-import type { ComponentType } from 'react'
 import {
   FileText,
-  FileCode,
   Presentation,
-  Folder,
+  FileCode,
+  FileSpreadsheet,
   Building2,
   BookOpen,
   Wrench,
@@ -12,105 +11,141 @@ import {
   ClipboardList,
   GraduationCap,
 } from 'lucide-react'
+import pb from '@/lib/pocketbase/client'
 import type { DocumentItem } from '@/services/documents'
 
-export type ViewMode = 'grade' | 'lista' | 'icones'
+export type ViewMode = 'grid' | 'list' | 'icons'
+
+export interface CategoryOption {
+  label: string
+  value: string
+  icon: any
+}
+
+export const CATEGORIES: CategoryOption[] = [
+  { label: 'Corporativo', value: 'Corporativo', icon: Building2 },
+  { label: 'Diário de Bordo', value: 'Diário de Bordo', icon: BookOpen },
+  { label: 'Ferramentas', value: 'Ferramentas', icon: Wrench },
+  { label: 'Gestão de Acessos', value: 'Gestão de Acessos', icon: KeyRound },
+  { label: 'Institucional', value: 'Institucional', icon: Landmark },
+  { label: 'Procedimentos', value: 'Procedimentos', icon: ClipboardList },
+  { label: 'Treinamentos', value: 'Treinamentos', icon: GraduationCap },
+]
+
+export const PROJETO_ALVO_OPTIONS = ['TODOS', 'NOC', 'COPE', 'BKO']
+
+export type PreviewType = 'pdf' | 'video' | 'office' | 'image' | 'unknown'
+
+export const getFileExtension = (filename?: string): string => {
+  if (!filename) return ''
+  const parts = filename.split('.')
+  return parts.length > 1 ? parts.pop()!.toLowerCase() : ''
+}
+
+export const getPreviewType = (filename: string): PreviewType => {
+  const ext = getFileExtension(filename)
+  if (['pdf'].includes(ext)) return 'pdf'
+  if (['mp4', 'webm', 'ogg', 'mov'].includes(ext)) return 'video'
+  if (['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'csv'].includes(ext)) return 'office'
+  if (['png', 'jpg', 'jpeg', 'svg', 'webp', 'gif'].includes(ext)) return 'image'
+  return 'unknown'
+}
+
+export const getFileUrl = (doc: DocumentItem): string => {
+  if (!doc.file || doc.id.startsWith('demo-')) return ''
+  return pb.files.getURL(doc, doc.file)
+}
 
 export interface FileTypeInfo {
   label: string
   bgColor: string
   iconColor: string
-  icon: ComponentType<{ className?: string }>
+  badgeColor: string
+  icon: any
 }
 
-export const CATEGORIES = [
-  { name: 'Todos', icon: Folder },
-  { name: 'Corporativo', icon: Building2 },
-  { name: 'Diário de Bordo', icon: BookOpen },
-  { name: 'Ferramentas', icon: Wrench },
-  { name: 'Gestão de Acessos', icon: KeyRound },
-  { name: 'Institucional', icon: Landmark },
-  { name: 'Procedimentos', icon: ClipboardList },
-  { name: 'Treinamentos', icon: GraduationCap },
-] as const
-
-export const PROJETO_ALVO_OPTIONS = ['NOC', 'COPE', 'BKO', 'TODOS']
-
-export function getFileTypeInfo(doc: DocumentItem): FileTypeInfo {
+export const getFileTypeInfo = (doc: DocumentItem): FileTypeInfo => {
   const title = doc.title.toLowerCase()
   const fileName = doc.file?.toLowerCase() || ''
   const customType = doc.file_type?.toUpperCase()
+  const ext = getFileExtension(fileName)
 
   if (customType) {
     if (customType.includes('WORD') || customType.includes('DOC')) {
       return {
         label: 'WORD',
-        bgColor: 'bg-blue-50/80 dark:bg-blue-950/30',
-        iconColor: 'text-blue-500',
+        bgColor: 'bg-blue-50/80 dark:bg-blue-950/40',
+        iconColor: 'text-blue-600 dark:text-blue-400',
+        badgeColor: 'bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300',
         icon: FileText,
       }
     }
-    if (customType.includes('APRESENTA') || customType.includes('PPT')) {
+    if (customType.includes('APRESENTAÇÃO') || customType.includes('PPT')) {
       return {
-        label: 'APRESENTAÇÃO',
-        bgColor: 'bg-amber-50/80 dark:bg-amber-950/30',
-        iconColor: 'text-amber-500',
+        label: 'PPT',
+        bgColor: 'bg-amber-50/80 dark:bg-amber-950/40',
+        iconColor: 'text-amber-600 dark:text-amber-400',
+        badgeColor: 'bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300',
         icon: Presentation,
+      }
+    }
+    if (customType.includes('EXCEL') || customType.includes('XLS')) {
+      return {
+        label: 'EXCEL',
+        bgColor: 'bg-emerald-50/80 dark:bg-emerald-950/40',
+        iconColor: 'text-emerald-600 dark:text-emerald-400',
+        badgeColor: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300',
+        icon: FileSpreadsheet,
       }
     }
     return {
       label: 'PDF',
-      bgColor: 'bg-red-50/80 dark:bg-red-950/30',
-      iconColor: 'text-red-500',
+      bgColor: 'bg-red-50/80 dark:bg-red-950/40',
+      iconColor: 'text-red-600 dark:text-red-400',
+      badgeColor: 'bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300',
       icon: FileCode,
     }
   }
 
-  if (fileName.endsWith('.doc') || fileName.endsWith('.docx') || title.includes('manual')) {
+  if (['doc', 'docx'].includes(ext) || title.includes('manual') || title.includes('relatório')) {
     return {
       label: 'WORD',
-      bgColor: 'bg-blue-50/80 dark:bg-blue-950/30',
-      iconColor: 'text-blue-500',
+      bgColor: 'bg-blue-50/80 dark:bg-blue-950/40',
+      iconColor: 'text-blue-600 dark:text-blue-400',
+      badgeColor: 'bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300',
       icon: FileText,
     }
   }
-  if (
-    fileName.endsWith('.ppt') ||
-    fileName.endsWith('.pptx') ||
-    title.includes('fluxo') ||
-    title.includes('apresenta')
-  ) {
+
+  if (['ppt', 'pptx'].includes(ext) || title.includes('fluxo') || title.includes('apresentação')) {
     return {
-      label: 'APRESENTAÇÃO',
-      bgColor: 'bg-amber-50/80 dark:bg-amber-950/30',
-      iconColor: 'text-amber-500',
+      label: 'PPT',
+      bgColor: 'bg-amber-50/80 dark:bg-amber-950/40',
+      iconColor: 'text-amber-600 dark:text-amber-400',
+      badgeColor: 'bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300',
       icon: Presentation,
     }
   }
+
+  if (
+    ['xls', 'xlsx', 'csv'].includes(ext) ||
+    title.includes('planilha') ||
+    title.includes('escala')
+  ) {
+    return {
+      label: 'EXCEL',
+      bgColor: 'bg-emerald-50/80 dark:bg-emerald-950/40',
+      iconColor: 'text-emerald-600 dark:text-emerald-400',
+      badgeColor: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300',
+      icon: FileSpreadsheet,
+    }
+  }
+
   return {
     label: 'PDF',
-    bgColor: 'bg-red-50/80 dark:bg-red-950/30',
-    iconColor: 'text-red-500',
+    bgColor: 'bg-red-50/80 dark:bg-red-950/40',
+    iconColor: 'text-red-600 dark:text-red-400',
+    badgeColor: 'bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300',
     icon: FileCode,
   }
-}
-
-export function getFileUrl(doc: DocumentItem): string {
-  if (!doc.file) return ''
-  return `${import.meta.env.VITE_POCKETBASE_URL}/api/files/documents/${doc.id}/${doc.file}`
-}
-
-export function getFileExtension(fileName: string): string {
-  return fileName.split('.').pop()?.toLowerCase() || ''
-}
-
-export type PreviewType = 'pdf' | 'video' | 'office' | 'image' | 'unsupported'
-
-export function getPreviewType(fileName: string): PreviewType {
-  const ext = getFileExtension(fileName)
-  if (ext === 'pdf') return 'pdf'
-  if (['mp4', 'webm', 'mov', 'avi', 'mkv'].includes(ext)) return 'video'
-  if (['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'].includes(ext)) return 'office'
-  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) return 'image'
-  return 'unsupported'
 }
