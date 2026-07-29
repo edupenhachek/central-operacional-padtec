@@ -45,6 +45,7 @@ export default function Layout() {
     { label: 'Dashboard', path: '/', icon: LayoutDashboard },
     { label: 'Escalas', path: '/escalas', icon: CalendarDays },
     { label: 'Documentação', path: '/documentacao', icon: FileText },
+    { label: 'Treinamentos', path: '/treinamentos', icon: GraduationCap },
     { label: 'Gutenberg AI', path: '/gutenberg', icon: BrainCircuit },
     ...(isAdmin ? [{ label: 'Usuários', path: '/usuarios', icon: Users }] : []),
   ]

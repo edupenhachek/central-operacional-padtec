@@ -7,6 +7,9 @@ import {
   Megaphone,
   File,
   ArrowRight,
+  Flame,
+  Award,
+  Play,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -15,9 +18,9 @@ import { getDocuments, DocumentItem } from '@/services/documents'
 import { getInternalNotices, InternalNotice } from '@/services/notices'
 import { useRealtime } from '@/hooks/use-realtime'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/hooks/use-auth'
 
-// Default Featured Announcement matching specification
 const FEATURED_ANNOUNCEMENT: Announcement = {
   id: 'ann-featured',
   title: 'Mudanças no fluxo de Batimento de Caixa',
@@ -32,22 +35,16 @@ const FEATURED_ANNOUNCEMENT: Announcement = {
   },
 }
 
-// Default recent documents fallback
 const DEFAULT_RECENT_DOCUMENTS = [
-  { id: '1', title: 'Teste' },
-  { id: '2', title: 'passo a passo mvp' },
-  { id: '3', title: 'Passo a Passo Batimento de Caixa - Tela Única' },
-  { id: '4', title: 'Batimento de Caixa - Procedimentos' },
-]
-
-// Default internal notices fallback
-const DEFAULT_INTERNAL_NOTICES = [
-  'Use o Gutenberg para consultar procedimentos antes de escalar.',
-  'Atualização semanal dos fluxos operacionais publicada.',
-  'Treinamento GPON recomendado para novos colaboradores.',
+  { id: '1', title: 'Glossário Técnico BKO' },
+  { id: '2', title: 'Passo a Passo Batimento de Caixa - Tela Única' },
+  { id: '3', title: 'Procedimento GPON v2.1' },
+  { id: '4', title: 'Manual de Transbordo NOC/COPE' },
 ]
 
 export default function Index() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [announcements, setAnnouncements] = useState<Announcement[]>([FEATURED_ANNOUNCEMENT])
   const [documents, setDocuments] = useState<DocumentItem[]>([])
   const [notices, setNotices] = useState<InternalNotice[]>([])
@@ -88,209 +85,210 @@ export default function Index() {
     loadData()
   })
 
-  // Ensure primary announcement is featured
-  const featured = announcements[0] || FEATURED_ANNOUNCEMENT
+  const userName = user?.name ? user.name.split(' ')[0] : 'Carlos'
+  const userXP = user?.xp || 1250
+  const userLevel = user?.level || 3
 
   return (
     <div className="space-y-8 animate-fade-in pb-10">
-      {/* Page Header */}
+      {/* Welcome Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground dark:text-slate-100">
-          Dashboard
-        </h1>
-        <p className="text-sm text-muted-foreground dark:text-slate-400 mt-1">
-          Visão consolidada da operação, aprendizagem e comunicados internos.
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Olá, {userName}!</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Aqui está o resumo da sua operação hoje.
         </p>
       </div>
 
-      {/* KPI Cards Row */}
+      {/* Gamification KPI Cards Row matching Screenshot 1 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <Card className="border-border shadow-sm hover:shadow transition-shadow bg-card dark:bg-slate-900">
-          <CardContent className="p-5 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
-              <Users className="w-5 h-5" />
+        <Card className="border-border shadow-sm bg-card p-5 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground">Progresso de XP</span>
+            <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+              <Award className="w-4 h-4" />
             </div>
-            <div>
-              <p className="text-xs font-medium text-muted-foreground dark:text-slate-400">
-                Usuários ativos
-              </p>
-              <h3 className="text-2xl font-bold mt-0.5 text-foreground dark:text-slate-100">3</h3>
+          </div>
+          <div className="mt-3">
+            <h3 className="text-2xl font-bold text-foreground">
+              {userXP} <span className="text-sm font-normal text-muted-foreground">/ 2750</span>
+            </h3>
+            <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full mt-2 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-orange-400 to-purple-600"
+                style={{ width: `${(userXP / 2750) * 100}%` }}
+              />
             </div>
-          </CardContent>
+            <p className="text-[10px] text-right text-muted-foreground font-medium mt-1">
+              1500 XP para subir
+            </p>
+          </div>
         </Card>
 
-        <Card className="border-border shadow-sm hover:shadow transition-shadow bg-card dark:bg-slate-900">
-          <CardContent className="p-5 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
-              <FileText className="w-5 h-5" />
+        <Card className="border-border shadow-sm bg-card p-5 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground">Nível Atual</span>
+            <div className="w-7 h-7 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-xs">
+              L{userLevel}
             </div>
-            <div>
-              <p className="text-xs font-medium text-muted-foreground dark:text-slate-400">
-                Documentos
-              </p>
-              <h3 className="text-2xl font-bold mt-0.5 text-foreground dark:text-slate-100">
-                {documents.length || 4}
-              </h3>
-            </div>
-          </CardContent>
+          </div>
+          <div className="mt-3">
+            <h3 className="text-2xl font-bold text-foreground">{userLevel}</h3>
+            <p className="text-xs text-blue-600 font-semibold mt-1">Operador</p>
+          </div>
         </Card>
 
-        <Card className="border-border shadow-sm hover:shadow transition-shadow bg-card dark:bg-slate-900">
-          <CardContent className="p-5 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
-              <CheckCircle2 className="w-5 h-5" />
+        <Card className="border-border shadow-sm bg-card p-5 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground">Dias Consecutivos</span>
+            <div className="w-8 h-8 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center">
+              <Flame className="w-4 h-4" />
             </div>
-            <div>
-              <p className="text-xs font-medium text-muted-foreground dark:text-slate-400">
-                Lições concluídas
-              </p>
-              <h3 className="text-2xl font-bold mt-0.5 text-foreground dark:text-slate-100">10</h3>
-            </div>
-          </CardContent>
+          </div>
+          <div className="mt-3">
+            <h3 className="text-2xl font-bold text-foreground">{user?.streak_days || 1}</h3>
+            <p className="text-[11px] text-muted-foreground font-medium mt-1">Recorde: 12 dias</p>
+          </div>
         </Card>
 
-        <Card className="border-border shadow-sm hover:shadow transition-shadow bg-card dark:bg-slate-900">
-          <CardContent className="p-5 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
-              <TrendingUp className="w-5 h-5" />
+        <Card className="border-border shadow-sm bg-card p-5 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground">Últimas Medalhas</span>
+            <div className="w-8 h-8 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center">
+              <Award className="w-4 h-4" />
             </div>
-            <div>
-              <p className="text-xs font-medium text-muted-foreground dark:text-slate-400">
-                Evolução média
-              </p>
-              <h3 className="text-2xl font-bold mt-0.5 text-foreground dark:text-slate-100">
-                23.8%
-              </h3>
+          </div>
+          <div className="mt-3">
+            <h3 className="text-2xl font-bold text-foreground">1</h3>
+            <div className="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center text-[10px] font-bold mt-1">
+              🏅
             </div>
-          </CardContent>
+          </div>
         </Card>
       </div>
 
-      {/* Announcements Section */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Megaphone className="w-4 h-4 text-pink-600 dark:text-pink-400" />
-          <h2 className="text-base font-bold tracking-tight text-foreground dark:text-slate-100">
-            Anúncios
-          </h2>
-        </div>
+      {/* Hero Card "Continue de onde parou" matching Screenshot 1 */}
+      <Card className="border-border shadow-sm overflow-hidden bg-card relative">
+        <div className="h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
+        <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-2 flex-1">
+            <div className="flex items-center gap-2 text-blue-600">
+              <Play className="w-4 h-4 fill-blue-600" />
+              <span className="text-xs font-bold uppercase tracking-wider">
+                Continue de onde parou
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">Trilha de Formação NOC BKO</p>
+            <h3 className="text-lg font-bold text-foreground">Conceitos de Associação</h3>
+            <p className="text-xs text-muted-foreground">🕒 16h restantes • 0% concluído</p>
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {announcements.map((item) => (
-            <Card
-              key={item.id}
-              className="border-border shadow-sm hover:shadow-md transition-all flex flex-col justify-between bg-card dark:bg-slate-900"
+          <div className="flex items-center gap-6">
+            <div className="w-14 h-14 rounded-full border-4 border-slate-200 dark:border-slate-800 flex items-center justify-center font-bold text-xs text-muted-foreground">
+              0%
+            </div>
+            <Button
+              onClick={() => navigate('/treinamentos')}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs h-10 px-6 rounded-lg shadow-sm"
             >
-              <CardHeader className="p-5 pb-3">
-                <CardTitle className="text-sm font-bold leading-snug text-foreground dark:text-slate-100">
-                  {item.title}
-                </CardTitle>
-                <p className="text-[11px] text-muted-foreground dark:text-slate-400 mt-1">
-                  {item.expand?.author?.name || 'Eduardo Guidini Penhachek'} •{' '}
-                  {item.created ? new Date(item.created).toLocaleDateString('pt-BR') : '27/07/2026'}
-                </p>
-              </CardHeader>
-              <CardContent className="p-5 pt-0 space-y-4">
-                <p className="text-xs text-muted-foreground dark:text-slate-300 line-clamp-3 leading-relaxed">
-                  {item.content}
-                </p>
-                <Button
-                  onClick={() => setSelectedAnn(item)}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs h-9 rounded-md font-medium"
-                >
-                  Ler mais
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+              Continuar Aula
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Grid: Last Documents & Internal Notices */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Ultimos Documentos Acessados */}
-        <Card className="border-border shadow-sm bg-card dark:bg-slate-900">
-          <CardHeader className="p-5 border-b border-border/50 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm font-bold text-foreground dark:text-slate-100">
-              Últimos documentos acessados
-            </CardTitle>
-            <Link
-              to="/documentacao"
-              className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-medium"
-            >
-              Ver todos <ArrowRight className="w-3 h-3" />
+      {/* Grid: Announcements & Recent Activity / Documents */}
+      <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
+        {/* Left Column - Comunicados Recentes (60%) */}
+        <div className="lg:col-span-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Megaphone className="w-4 h-4 text-pink-600" />
+              <h2 className="text-base font-bold text-foreground">Comunicados Recentes</h2>
+            </div>
+            <Link to="#" className="text-xs text-blue-600 hover:underline font-semibold">
+              Ver todos &gt;
             </Link>
-          </CardHeader>
-          <CardContent className="p-5 space-y-3">
-            {documents.length > 0
-              ? documents.slice(0, 4).map((doc) => (
-                  <div
-                    key={doc.id}
-                    className="flex items-center gap-3 text-xs text-muted-foreground dark:text-slate-300 hover:text-foreground dark:hover:text-slate-100 transition-colors py-0.5"
-                  >
-                    <File className="w-4 h-4 text-blue-500 shrink-0" />
-                    <span className="truncate font-medium">{doc.title}</span>
-                  </div>
-                ))
-              : DEFAULT_RECENT_DOCUMENTS.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className="flex items-center gap-3 text-xs text-muted-foreground dark:text-slate-300 hover:text-foreground dark:hover:text-slate-100 transition-colors py-0.5"
-                  >
-                    <File className="w-4 h-4 text-blue-500 shrink-0" />
-                    <span className="truncate font-medium">{doc.title}</span>
-                  </div>
-                ))}
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Avisos Internos */}
-        <Card className="border-border shadow-sm bg-card dark:bg-slate-900">
-          <CardHeader className="p-5 border-b border-border/50">
-            <CardTitle className="text-sm font-bold text-foreground dark:text-slate-100">
-              Avisos internos
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-5 space-y-3">
-            {notices.length > 0
-              ? notices.map((n) => (
-                  <p
-                    key={n.id}
-                    className="text-xs text-muted-foreground dark:text-slate-300 leading-relaxed border-l-2 border-blue-500 pl-3 py-0.5"
-                  >
-                    {n.content}
-                  </p>
-                ))
-              : DEFAULT_INTERNAL_NOTICES.map((notice, idx) => (
-                  <p
-                    key={idx}
-                    className="text-xs text-muted-foreground dark:text-slate-300 leading-relaxed border-l-2 border-blue-500 pl-3 py-0.5"
-                  >
-                    {notice}
-                  </p>
-                ))}
-          </CardContent>
-        </Card>
+          <div className="space-y-3">
+            {announcements.map((item) => (
+              <Card
+                key={item.id}
+                className="border-border shadow-sm p-4 bg-card hover:border-blue-300 transition-all"
+              >
+                <div className="flex justify-between text-[11px] text-muted-foreground mb-1">
+                  <span className="font-semibold text-blue-600 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded">
+                    Procedimento
+                  </span>
+                  <span>
+                    {item.created
+                      ? new Date(item.created).toLocaleDateString('pt-BR')
+                      : '20 jul às 16:22'}
+                  </span>
+                </div>
+                <h4 className="font-bold text-sm text-foreground">{item.title}</h4>
+                <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{item.content}</p>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Right Column - Documentos Recentes & Atividade Recente (40%) */}
+        <div className="lg:col-span-4 space-y-6">
+          <Card className="border-border shadow-sm bg-card p-5">
+            <CardHeader className="p-0 pb-3 border-b border-border/50">
+              <CardTitle className="text-xs font-bold text-foreground flex items-center gap-2">
+                <FileText className="w-4 h-4 text-emerald-600" /> Documentos Recentes
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 pt-3 space-y-2 text-xs">
+              {DEFAULT_RECENT_DOCUMENTS.map((doc) => (
+                <div
+                  key={doc.id}
+                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground py-1"
+                >
+                  <File className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                  <span className="truncate">{doc.title}</span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="border-border shadow-sm bg-card p-5">
+            <CardHeader className="p-0 pb-3 border-b border-border/50">
+              <CardTitle className="text-xs font-bold text-foreground flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-blue-600" /> Atividade Recente
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 pt-4 space-y-4 text-xs">
+              <div className="border-l-2 border-blue-500 pl-3 space-y-0.5">
+                <p className="font-semibold text-foreground">Login realizado</p>
+                <p className="text-[10px] text-muted-foreground">18 jul 16:26</p>
+              </div>
+              <div className="border-l-2 border-blue-500 pl-3 space-y-0.5">
+                <p className="font-semibold text-foreground">
+                  Documento consultado: Glossário Técnico BKO
+                </p>
+                <p className="text-[10px] text-muted-foreground">18 jul 16:26</p>
+              </div>
+              <div className="border-l-2 border-blue-500 pl-3 space-y-0.5">
+                <p className="font-semibold text-foreground">
+                  Aula concluída: Introdução à Rede Óptica
+                </p>
+                <p className="text-[10px] font-bold text-blue-600">+50 XP • 18 jul 15:26</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      {/* Announcement Detail Modal */}
       {selectedAnn && (
         <Dialog open={!!selectedAnn} onOpenChange={() => setSelectedAnn(null)}>
-          <DialogContent className="max-w-lg bg-card dark:bg-slate-900 border-border text-card-foreground dark:text-slate-100">
+          <DialogContent className="max-w-lg bg-card border-border text-foreground">
             <DialogHeader>
-              <DialogTitle className="text-base font-bold text-foreground dark:text-slate-100">
-                {selectedAnn.title}
-              </DialogTitle>
-              <p className="text-xs text-muted-foreground dark:text-slate-400 mt-1">
-                {selectedAnn.expand?.author?.name || 'Eduardo Guidini Penhachek'} •{' '}
-                {selectedAnn.created
-                  ? new Date(selectedAnn.created).toLocaleDateString('pt-BR')
-                  : '27/07/2026'}
-              </p>
+              <DialogTitle className="text-base font-bold">{selectedAnn.title}</DialogTitle>
             </DialogHeader>
-            <div className="mt-4 text-xs leading-relaxed text-foreground dark:text-slate-200 whitespace-pre-wrap">
-              {selectedAnn.content}
-            </div>
+            <p className="text-xs leading-relaxed mt-2">{selectedAnn.content}</p>
           </DialogContent>
         </Dialog>
       )}
