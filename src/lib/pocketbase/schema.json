@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-29T17:09:59.177Z",
+  "generatedAt": "2026-07-29T17:40:57.382Z",
   "collections": [
     {
       "name": "users",
@@ -189,6 +189,13 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "projeto_alvo",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["NOC", "COPE", "BKO", "TODOS"]
         }
       ],
       "indexes": []
