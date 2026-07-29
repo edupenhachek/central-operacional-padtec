@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
-import { KeyRound, Loader2 } from 'lucide-react'
+import { useState, useEffect, useRef, type ChangeEvent } from 'react'
+import { KeyRound, Loader2, UserCircle, Camera } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,15 +23,38 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
   const [phone, setPhone] = useState('')
   const [saving, setSaving] = useState(false)
   const [resetting, setResetting] = useState(false)
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (open && user) {
       setName(user.name || '')
       setPhone(user.phone || '')
+      setAvatarFile(null)
+      setAvatarPreview(null)
     }
   }, [open, user])
 
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview)
+    }
+  }, [avatarPreview])
+
   if (!user) return null
+
+  const pbUrl = import.meta.env.VITE_POCKETBASE_URL
+  const currentAvatarUrl = user.avatar ? `${pbUrl}/api/files/users/${user.id}/${user.avatar}` : null
+  const displayAvatarUrl = avatarPreview || currentAvatarUrl
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarFile(file)
+    setAvatarPreview(URL.createObjectURL(file))
+    e.target.value = ''
+  }
 
   const handleSave = async () => {
     setSaving(true)
@@ -38,6 +62,7 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
       await updateUser(user.id, {
         name: name.trim(),
         phone: phone.trim(),
+        ...(avatarFile ? { avatar: avatarFile } : {}),
       })
       try {
         await pb.collection('users').authRefresh()
@@ -80,6 +105,35 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
+          <div className="flex items-center gap-4 pb-4 border-b border-border">
+            <Avatar className="w-20 h-20 border-2 border-border">
+              {displayAvatarUrl && <AvatarImage src={displayAvatarUrl} alt="Avatar" />}
+              <AvatarFallback className="bg-muted">
+                <UserCircle className="w-10 h-10 text-muted-foreground" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="space-y-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-xs gap-1.5 h-8"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                Alterar foto
+              </Button>
+              <p className="text-[11px] text-muted-foreground dark:text-slate-400">PNG ou JPEG</p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+            </div>
+          </div>
+
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold text-foreground dark:text-slate-200">
               Nome Completo

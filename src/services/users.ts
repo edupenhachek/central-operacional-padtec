@@ -75,10 +75,10 @@ export const updateUser = (
     horario_trabalho: string
     cargo: string
     Ativo: boolean
+    avatar: File
   }>,
-) => {
-  const payload: Record<string, any> = {}
-  if (data.name !== undefined) payload.name = data.name
+  ) => {
+    const payload: Record<string, any> = {}  if (data.name !== undefined) payload.name = data.name
   if (data.email !== undefined && data.email.trim() !== '') payload.email = data.email
   if (data.role !== undefined) payload.role = data.role
   if (data.phone !== undefined) payload.phone = data.phone
@@ -86,6 +86,7 @@ export const updateUser = (
   if (data.horario_trabalho !== undefined) payload.horario_trabalho = data.horario_trabalho
   if (data.cargo !== undefined) payload.cargo = data.cargo
   if (data.Ativo !== undefined) payload.Ativo = data.Ativo
+  if (data.avatar !== undefined) payload.avatar = data.avatar
   return pb.collection('users').update<UserItem>(id, payload)
 }
 

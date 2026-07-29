@@ -41,6 +41,10 @@ export default function Layout() {
   const { tabs, activePath, closeTab } = useTabs()
 
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN'
+  const userAvatarUrl =
+    user?.avatar && user?.id
+      ? `${import.meta.env.VITE_POCKETBASE_URL}/api/files/users/${user.id}/${user.avatar}`
+      : null
 
   const navItems = [
     { label: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -145,15 +149,21 @@ export default function Layout() {
         >
           {collapsed ? (
             <>
-              <Button
-                variant="ghost"
-                size="icon"
+              <button
                 onClick={() => setProfileModalOpen(true)}
                 title="Meu Perfil"
-                className="text-muted-foreground hover:text-foreground"
+                className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-border hover:ring-primary/50 transition-all shrink-0 flex items-center justify-center"
               >
-                <UserCircle className="w-4 h-4" />
-              </Button>
+                {userAvatarUrl ? (
+                  <img
+                    src={userAvatarUrl}
+                    alt={user?.name || 'Perfil'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <UserCircle className="w-5 h-5 text-muted-foreground" />
+                )}
+              </button>
               <Button
                 variant="ghost"
                 size="icon"
