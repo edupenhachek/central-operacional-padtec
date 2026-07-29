@@ -77,8 +77,9 @@ export const updateUser = (
     Ativo: boolean
     avatar: File
   }>,
-  ) => {
-    const payload: Record<string, any> = {}  if (data.name !== undefined) payload.name = data.name
+) => {
+  const payload: Record<string, any> = {}
+  if (data.name !== undefined) payload.name = data.name
   if (data.email !== undefined && data.email.trim() !== '') payload.email = data.email
   if (data.role !== undefined) payload.role = data.role
   if (data.phone !== undefined) payload.phone = data.phone
