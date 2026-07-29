@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-29T00:04:48.474Z",
+  "generatedAt": "2026-07-29T00:12:41.997Z",
   "collections": [
     {
       "name": "users",
@@ -8,8 +8,8 @@
         "list": "@request.auth.id != ''",
         "view": "@request.auth.id != ''",
         "create": "",
-        "update": "id = @request.auth.id || @request.auth.role = \"ADMIN\"",
-        "delete": "id = @request.auth.id"
+        "update": "id = @request.auth.id || @request.auth.role = \"ADMIN\" || @request.auth.role = \"SUPERADMIN\"",
+        "delete": "id = @request.auth.id || @request.auth.role = \"ADMIN\" || @request.auth.role = \"SUPERADMIN\""
       },
       "fields": [
         {
@@ -43,7 +43,7 @@
           "type": "select",
           "required": false,
           "system": false,
-          "selectValues": ["ADMIN", "USUARIO", "FOCAL BKO", "FOCAL NOC", "FOCAL COPE"]
+          "selectValues": ["ADMIN", "USUARIO", "FOCAL BKO", "FOCAL NOC", "FOCAL COPE", "SUPERADMIN"]
         },
         {
           "name": "phone",
@@ -52,24 +52,20 @@
           "system": false
         },
         {
-          "name": "equipe",
-          "type": "select",
-          "required": false,
-          "system": false,
-          "selectValues": ["NOC", "BKO", "COPE", "OHR", "Radisys"]
-        },
-        {
           "name": "horario_trabalho",
           "type": "select",
           "required": false,
           "system": false,
           "selectValues": [
-            "07:00 às 16:00",
-            "08:00 às 17:00",
-            "09:00 às 18:00",
-            "13:00 às 22:00",
-            "22:00 às 07:00",
-            "Escala 12x36"
+            "06H15 ÁS 15H15",
+            "08H00 ÁS 17H00",
+            "09H00 ÁS 18H00",
+            "10H00 ÁS 19H00",
+            "11H00 ÁS 20H00",
+            "11H30 ÁS 20H30",
+            "13H00 ÁS 22H00",
+            "15H00 ÁS 23H43",
+            "23H30 ÁS 06H30"
           ]
         },
         {
@@ -77,6 +73,13 @@
           "type": "text",
           "required": false,
           "system": false
+        },
+        {
+          "name": "projeto",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": ["NOC", "BKO", "COPE", "OHR", "Radisys"]
         }
       ],
       "indexes": [
