@@ -70,7 +70,7 @@ export default function Layout() {
     <div className="h-screen flex bg-slate-50 dark:bg-background text-foreground transition-colors duration-200 overflow-hidden">
       <aside
         className={cn(
-          'relative hidden lg:flex flex-col h-screen border-r border-border bg-card justify-between select-none transition-all duration-300 shrink-0',
+          'relative hidden lg:flex flex-col h-screen border-r border-border bg-card justify-between select-none transition-all duration-300 shrink-0 z-20',
           collapsed ? 'w-16' : 'w-64',
         )}
       >
@@ -105,7 +105,6 @@ export default function Layout() {
                 </div>
               </div>
             )}
-            {collapsed && <PadtecEmblem className="hidden" />}
           </div>
 
           <nav className={cn('flex-1 overflow-y-auto', collapsed ? 'p-2' : 'p-4')}>
@@ -191,22 +190,41 @@ export default function Layout() {
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="hidden lg:flex items-center justify-end px-6 h-14 border-b border-border bg-card/60 backdrop-blur-md shrink-0">
-          <ThemeToggle />
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <header className="hidden lg:flex items-center justify-between px-4 h-14 border-b border-border bg-card/80 backdrop-blur-md shrink-0 z-10">
+          <div className="flex items-center gap-3 overflow-hidden flex-1 mr-4 min-w-0">
+            <TabBar
+              tabs={tabs}
+              activePath={activePath}
+              onActivate={(p) => navigate(p)}
+              onClose={closeTab}
+            />
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <ThemeToggle />
+          </div>
         </header>
 
-        <div className="lg:hidden flex items-center justify-between h-16 px-4 bg-card border-b border-border shrink-0">
+        <div className="lg:hidden flex items-center justify-between h-14 px-4 bg-card border-b border-border shrink-0 z-10">
           <div className="flex items-center gap-2">
-            <PadtecEmblem className="w-8 h-8 text-lg" />
-            <span className="font-bold text-sm dark:text-white">Central Operacional</span>
+            <PadtecEmblem className="w-7 h-7 text-base" />
+            <span className="font-bold text-xs dark:text-white">Central Operacional</span>
           </div>
           <div className="flex items-center gap-1">
             <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
-              {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
           </div>
+        </div>
+
+        <div className="lg:hidden bg-card/90 border-b border-border px-2 py-1 overflow-x-auto shrink-0 z-10">
+          <TabBar
+            tabs={tabs}
+            activePath={activePath}
+            onActivate={(p) => navigate(p)}
+            onClose={closeTab}
+          />
         </div>
 
         {mobileOpen && (
@@ -283,13 +301,7 @@ export default function Layout() {
           </div>
         </div>
 
-        <TabBar
-          tabs={tabs}
-          activePath={activePath}
-          onActivate={(p) => navigate(p)}
-          onClose={closeTab}
-        />
-        <main className="flex-1 lg:p-8 p-4 overflow-y-auto max-w-7xl mx-auto w-full">
+        <main className="flex-1 lg:p-6 p-4 overflow-y-auto max-w-7xl mx-auto w-full flex flex-col min-h-0">
           {tabs.length === 0 ? (
             <div className="flex items-center justify-center h-full text-sm text-muted-foreground dark:text-slate-400">
               Nenhuma aba aberta. Clique em um item do menu para começar.
@@ -306,7 +318,12 @@ export default function Layout() {
                 return null
               const Comp = config.component
               return (
-                <div key={tab.path} className={cn(tab.path === activePath ? 'block' : 'hidden')}>
+                <div
+                  key={tab.path}
+                  className={cn(
+                    tab.path === activePath ? 'flex-1 flex flex-col min-h-0' : 'hidden',
+                  )}
+                >
                   <Comp />
                 </div>
               )
@@ -323,7 +340,7 @@ export default function Layout() {
             ? 'bg-slate-800 hover:bg-slate-900 text-white'
             : 'bg-blue-600 hover:bg-blue-700 text-white',
         )}
-        title={drawerOpen ? 'Fechar Gutenberg AI' : 'Gutenberg AI Assistant'}
+        title={drawerOpen ? 'Fechar Gutenberg AI' : 'Gutenberg AI - Inteligência da Operação'}
       >
         {drawerOpen ? (
           <X className="w-6 h-6" />

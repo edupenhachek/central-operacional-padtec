@@ -14,7 +14,15 @@ onRecordUpdateRequest((e) => {
     return e.next()
   }
 
-  var protectedFields = ['role', 'projeto', 'horario_trabalho', 'cargo', 'equipe']
+  var protectedFields = [
+    'role',
+    'projeto',
+    'horario_trabalho',
+    'cargo',
+    'equipe',
+    'Ativo',
+    'user_role',
+  ]
 
   for (var i = 0; i < protectedFields.length; i++) {
     if (protectedFields[i] in body) {

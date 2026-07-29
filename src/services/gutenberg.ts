@@ -4,6 +4,7 @@ import { streamAgentChat, AgentCitation } from '@/lib/skipAi'
 export interface GutenbergSendOptions {
   message: string
   conversationId?: string | null
+  specialties?: string[]
   signal?: AbortSignal
   onChunk?: (chunk: string, accumulated: string) => void
   onCitations?: (citations: AgentCitation[]) => void
@@ -12,6 +13,7 @@ export interface GutenbergSendOptions {
 export async function askGutenbergStream({
   message,
   conversationId,
+  specialties,
   signal,
   onChunk,
   onCitations,
@@ -26,6 +28,7 @@ export async function askGutenbergStream({
     body: JSON.stringify({
       message,
       conversation_id: conversationId || null,
+      specialties: specialties || [],
     }),
     signal,
   })

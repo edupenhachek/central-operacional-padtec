@@ -13,7 +13,7 @@ export function TabBar({ tabs, activePath, onActivate, onClose }: TabBarProps) {
   if (tabs.length === 0) return null
 
   return (
-    <div className="flex items-center gap-1 px-2 h-9 border-b border-border bg-card/40 overflow-x-auto shrink-0">
+    <div className="flex items-center gap-0.5 px-2 h-full overflow-x-auto shrink-0">
       {tabs.map((tab) => (
         <div
           key={tab.id}

@@ -1,5 +1,8 @@
 onRecordCreateRequest((e) => {
   var body = e.requestInfo().body || {}
+  if (e.record && !('Ativo' in body)) {
+    e.record.set('Ativo', true)
+  }
   var requestedRole = body.role || 'USUARIO'
 
   if (!e.auth) {
