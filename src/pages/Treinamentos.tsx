@@ -120,8 +120,7 @@ export default function Treinamentos() {
         {/* Left Column (70%) */}
         <div className="lg:col-span-7 space-y-6">
           {/* Hero Card matching screenshot 2 */}
-          <Card className="border-border shadow-sm overflow-hidden bg-card relative">
-            <div className="h-1 bg-gradient-to-r from-orange-400 via-pink-500 to-blue-600" />
+          <Card className="border-border shadow-sm bg-card relative">
             <CardContent className="p-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>

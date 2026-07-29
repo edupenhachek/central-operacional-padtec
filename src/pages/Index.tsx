@@ -185,8 +185,7 @@ export default function Index() {
           </div>
         </div>
 
-        <Card className="border-border shadow-sm overflow-hidden bg-card self-start">
-          <div className="h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
+        <Card className="border-border shadow-sm bg-card">
           <CardContent className="p-6 space-y-4">
             <div className="flex items-center gap-2 text-blue-600">
               <Play className="w-4 h-4 fill-blue-600" />
