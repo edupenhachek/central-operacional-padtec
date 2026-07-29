@@ -10,8 +10,8 @@ import { PadtecEmblem, PadtecLogo } from '@/components/PadtecLogo'
 import { PadtecBackground } from '@/components/PadtecBackground'
 
 export default function Login() {
-  const [email, setEmail] = useState('eduardo.guidini@padtec.com.br')
-  const [password, setPassword] = useState('Skip@Pass')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -95,7 +95,7 @@ export default function Login() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@bko.local"
+                placeholder="usuario@padtec.com.br"
                 required
                 className="bg-slate-100/80 dark:bg-slate-800/80 border-none text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-slate-100 h-11 text-sm rounded-lg"
               />
