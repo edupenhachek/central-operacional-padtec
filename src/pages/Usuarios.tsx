@@ -85,6 +85,10 @@ export default function Usuarios() {
       toast.error('Apenas administradores podem alterar o perfil.')
       return
     }
+    if (role === 'SUPERADMIN' && currentUser?.role !== 'SUPERADMIN') {
+      toast.error('Apenas SuperAdmins podem atribuir o perfil SUPERADMIN.')
+      return
+    }
     try {
       await updateUserRole(id, role)
       toast.success('Perfil atualizado com sucesso')
@@ -106,6 +110,10 @@ export default function Usuarios() {
   }) => {
     if (!isAdmin) {
       toast.error('Apenas administradores podem criar usuários.')
+      return
+    }
+    if (data.role === 'SUPERADMIN' && currentUser?.role !== 'SUPERADMIN') {
+      toast.error('Apenas SuperAdmins podem criar usuários com perfil SUPERADMIN.')
       return
     }
     setSaving(true)
@@ -144,13 +152,16 @@ export default function Usuarios() {
     cargo?: string
   }) => {
     if (!editUser) return
+    if (data.role === 'SUPERADMIN' && currentUser?.role !== 'SUPERADMIN') {
+      toast.error('Apenas SuperAdmins podem atribuir o perfil SUPERADMIN.')
+      return
+    }
     setSaving(true)
     setEditErrors({})
     try {
       if (isAdmin) {
         await updateUser(editUser.id, {
           name: data.name,
-          email: data.email,
           role: data.role,
           phone: data.phone,
           projeto: data.projeto,
@@ -160,7 +171,6 @@ export default function Usuarios() {
       } else {
         await updateUser(editUser.id, {
           name: data.name,
-          email: data.email,
           phone: data.phone,
         })
       }
@@ -172,6 +182,21 @@ export default function Usuarios() {
       toast.error('Erro ao atualizar usuário', {
         description: getErrorMessage(err),
       })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleEmailChange = async (userId: string, newEmail: string) => {
+    setSaving(true)
+    try {
+      await updateUser(userId, { email: newEmail })
+      toast.success('E-mail atualizado com sucesso!')
+      loadUsers()
+      setEditUser((prev) => (prev && prev.id === userId ? { ...prev, email: newEmail } : prev))
+    } catch (err) {
+      toast.error('Erro ao atualizar e-mail', { description: getErrorMessage(err) })
+      throw err
     } finally {
       setSaving(false)
     }
@@ -336,6 +361,7 @@ export default function Usuarios() {
         onClose={() => setEditUser(null)}
         onSubmit={handleEdit}
         onResetPassword={(email) => setResetTargetEmail(email)}
+        onChangeEmail={handleEmailChange}
         currentUserRole={currentUser?.role}
         isSelf={isEditingSelf}
       />

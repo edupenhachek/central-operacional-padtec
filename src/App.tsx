@@ -11,6 +11,7 @@ import Login from '@/pages/Login'
 import ValidadorOPS from '@/pages/ValidadorOPS'
 import Documentacao from '@/pages/Documentacao'
 import Treinamentos from '@/pages/Treinamentos'
+import GutenbergPage from '@/pages/Gutenberg'
 
 import Transbordo from '@/pages/Transbordo'
 import Escalas from '@/pages/Escalas'
@@ -38,7 +39,7 @@ const App = () => (
             <Route path="/validador-ops" element={<ValidadorOPS />} />
             <Route path="/documentacao" element={<Documentacao />} />
             <Route path="/treinamentos" element={<Treinamentos />} />
-            <Route path="/gutenberg" element={<Navigate to="/" replace />} />
+            <Route path="/gutenberg" element={<GutenbergPage />} />
             <Route path="/transbordo" element={<Transbordo />} />
             <Route path="/usuarios" element={<Usuarios />} />
           </Route>
