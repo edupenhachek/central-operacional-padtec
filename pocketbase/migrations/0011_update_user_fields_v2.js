@@ -67,9 +67,8 @@ migrate(
     }
 
     var usersColFinal = app.findCollectionByNameOrId('users')
-    var equipeField = usersColFinal.fields.getByName('equipe')
-    if (equipeField) {
-      usersColFinal.fields.remove(equipeField)
+    if (usersColFinal.fields.getByName('equipe')) {
+      usersColFinal.fields.removeByName('equipe')
     }
     app.save(usersColFinal)
   },
@@ -133,9 +132,8 @@ migrate(
     }
 
     var usersColFinal = app.findCollectionByNameOrId('users')
-    var projetoField = usersColFinal.fields.getByName('projeto')
-    if (projetoField) {
-      usersColFinal.fields.remove(projetoField)
+    if (usersColFinal.fields.getByName('projeto')) {
+      usersColFinal.fields.removeByName('projeto')
     }
     app.save(usersColFinal)
   },
