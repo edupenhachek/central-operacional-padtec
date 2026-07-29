@@ -23,9 +23,27 @@ export const getDocuments = () =>
     sort: '-created',
   })
 
-export const createDocument = (
-  data: FormData | { title: string; category?: string; file?: File; projeto_alvo?: string[] },
-) => pb.collection('documents').create<DocumentItem>(data)
+export const createDocument = async (
+  data: { title: string; category?: string; file?: File | null; projetoAlvo?: string[] } | FormData,
+) => {
+  if (data instanceof FormData) {
+    return pb.collection('documents').create<DocumentItem>(data)
+  }
+
+  const formData = new FormData()
+  formData.append('title', data.title)
+  if (data.category) {
+    formData.append('category', data.category)
+  }
+  if (data.file) {
+    formData.append('file', data.file)
+  }
+  if (data.projetoAlvo && data.projetoAlvo.length > 0) {
+    data.projetoAlvo.forEach((p) => formData.append('projeto_alvo', p))
+  }
+
+  return pb.collection('documents').create<DocumentItem>(formData)
+}
 
 export const deleteDocument = (id: string) => pb.collection('documents').delete(id)
 
