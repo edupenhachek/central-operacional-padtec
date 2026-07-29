@@ -52,3 +52,8 @@ export function getHorarioGroupsForProjetos(projetos: string[]): HorarioGroup[] 
   if (!projetos || projetos.length === 0) return HORARIO_GROUPS
   return HORARIO_GROUPS.filter((g) => g.projetos.some((p) => projetos.includes(p)))
 }
+
+export function getRoleOptionsForUser(role?: UserRole | null): UserRole[] {
+  if (role === 'SUPERADMIN') return ROLE_OPTIONS
+  return ROLE_OPTIONS.filter((r) => r !== 'SUPERADMIN')
+}

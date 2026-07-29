@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Users, FileText, CheckCircle2, TrendingUp, Megaphone, File, Award } from 'lucide-react'
+import { Users, FileText, CheckCircle2, TrendingUp, Megaphone, File } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { getAnnouncements, Announcement } from '@/services/announcements'
@@ -226,52 +226,6 @@ export default function Index() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Ranking de Colaboradores */}
-      <Card className="border-border shadow-sm bg-card dark:bg-slate-900">
-        <CardHeader className="p-5 border-b border-border/50 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground dark:text-slate-100">
-            <Award className="w-4 h-4 text-amber-500" /> Ranking de colaboradores
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-5">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-muted/40 dark:bg-slate-800/50">
-              <div className="flex items-center gap-3">
-                <span className="font-bold w-4 text-center text-foreground dark:text-slate-100">
-                  1
-                </span>
-                <span className="font-medium text-foreground dark:text-slate-100">
-                  Eduardo Guidini
-                </span>
-              </div>
-              <span className="text-blue-600 dark:text-blue-400 font-semibold">1,240 pts</span>
-            </div>
-            <div className="flex items-center justify-between text-xs p-2 rounded-lg">
-              <div className="flex items-center gap-3">
-                <span className="font-bold w-4 text-center text-muted-foreground dark:text-slate-400">
-                  2
-                </span>
-                <span className="font-medium text-foreground dark:text-slate-200">
-                  Operador BKO 1
-                </span>
-              </div>
-              <span className="text-muted-foreground dark:text-slate-400">890 pts</span>
-            </div>
-            <div className="flex items-center justify-between text-xs p-2 rounded-lg">
-              <div className="flex items-center gap-3">
-                <span className="font-bold w-4 text-center text-muted-foreground dark:text-slate-400">
-                  3
-                </span>
-                <span className="font-medium text-foreground dark:text-slate-200">
-                  Analista COPE
-                </span>
-              </div>
-              <span className="text-muted-foreground dark:text-slate-400">620 pts</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Announcement Detail Modal */}
       {selectedAnn && (

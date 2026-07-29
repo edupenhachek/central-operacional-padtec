@@ -32,7 +32,7 @@ import {
 import { useAuth } from '@/hooks/use-auth'
 import { useRealtime } from '@/hooks/use-realtime'
 import { extractFieldErrors, getErrorMessage, type FieldErrors } from '@/lib/pocketbase/errors'
-import { ROLE_OPTIONS } from '@/lib/user-constants'
+import { getRoleOptionsForUser } from '@/lib/user-constants'
 import { toast } from 'sonner'
 
 export default function Usuarios() {
@@ -274,7 +274,7 @@ export default function Usuarios() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-popover dark:bg-slate-900 text-popover-foreground dark:text-slate-100 border-border">
-                          {ROLE_OPTIONS.map((r) => (
+                          {getRoleOptionsForUser(currentUser?.role).map((r) => (
                             <SelectItem
                               key={r}
                               value={r}

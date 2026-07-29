@@ -17,12 +17,14 @@ import {
   ChevronsLeft,
   ChevronsRight,
   CalendarDays,
+  UserCircle,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { useTheme } from '@/hooks/use-theme'
 import { Button } from '@/components/ui/button'
 import { PadtecEmblem } from '@/components/PadtecLogo'
 import { GutenbergDrawer } from '@/components/GutenbergDrawer'
+import { ProfileModal } from '@/components/ProfileModal'
 import { cn } from '@/lib/utils'
 
 export default function Layout() {
@@ -34,9 +36,10 @@ export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
+  const [profileModalOpen, setProfileModalOpen] = useState(false)
   const { tabs, activePath, closeTab } = useTabs()
 
-  const isAdmin = user?.role === 'ADMIN'
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN'
 
   const navItems = [
     { label: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -110,18 +113,33 @@ export default function Layout() {
               {navItems.map((item) => {
                 const Icon = item.icon
                 const isActive = location.pathname === item.path
+                const isGutenberg = item.path === '/gutenberg'
+                const itemCls = cn(
+                  'flex items-center rounded-lg text-sm font-medium transition-all duration-150',
+                  collapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3.5 py-2.5',
+                  isActive
+                    ? 'bg-muted text-foreground dark:text-white font-semibold shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted/50',
+                )
+                if (isGutenberg) {
+                  return (
+                    <button
+                      key={item.path}
+                      onClick={() => setDrawerOpen(true)}
+                      title={collapsed ? item.label : undefined}
+                      className={itemCls}
+                    >
+                      <Icon className="w-4 h-4 shrink-0 text-blue-600" />
+                      {!collapsed && item.label}
+                    </button>
+                  )
+                }
                 return (
                   <Link
                     key={item.path}
                     to={item.path}
                     title={collapsed ? item.label : undefined}
-                    className={cn(
-                      'flex items-center rounded-lg text-sm font-medium transition-all duration-150',
-                      collapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3.5 py-2.5',
-                      isActive
-                        ? 'bg-muted text-foreground dark:text-white font-semibold shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted/50',
-                    )}
+                    className={itemCls}
                   >
                     <Icon className={cn('w-4 h-4 shrink-0', isActive && 'text-blue-600')} />
                     {!collapsed && item.label}
@@ -143,6 +161,15 @@ export default function Layout() {
               <Button
                 variant="ghost"
                 size="icon"
+                onClick={() => setProfileModalOpen(true)}
+                title="Meu Perfil"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <UserCircle className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={handleLogout}
                 title="Sair"
                 className="text-muted-foreground hover:text-destructive"
@@ -152,14 +179,18 @@ export default function Layout() {
             </>
           ) : (
             <div className="flex items-center justify-between">
-              <div className="truncate">
+              <button
+                onClick={() => setProfileModalOpen(true)}
+                className="truncate text-left hover:bg-muted/50 rounded-md px-1.5 py-1 -mx-1.5 transition-colors"
+                title="Meu Perfil"
+              >
                 <p className="font-semibold text-xs text-foreground dark:text-white truncate">
                   {user?.name || user?.email || 'Administrador BKO'}
                 </p>
                 <p className="text-[11px] text-muted-foreground dark:text-gray-400 capitalize">
                   {user?.role || 'Administrador'}
                 </p>
-              </div>
+              </button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -217,17 +248,34 @@ export default function Layout() {
               {navItems.map((item) => {
                 const Icon = item.icon
                 const isActive = location.pathname === item.path
+                const isGutenberg = item.path === '/gutenberg'
+                const itemCls = cn(
+                  'flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium',
+                  isActive
+                    ? 'bg-muted text-foreground dark:text-white font-semibold'
+                    : 'text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted/50',
+                )
+                if (isGutenberg) {
+                  return (
+                    <button
+                      key={item.path}
+                      onClick={() => {
+                        setMobileOpen(false)
+                        setDrawerOpen(true)
+                      }}
+                      className={itemCls}
+                    >
+                      <Icon className="w-4 h-4 text-blue-600" />
+                      {item.label}
+                    </button>
+                  )
+                }
                 return (
                   <Link
                     key={item.path}
                     to={item.path}
                     onClick={() => setMobileOpen(false)}
-                    className={cn(
-                      'flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium',
-                      isActive
-                        ? 'bg-muted text-foreground dark:text-white font-semibold'
-                        : 'text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-muted/50',
-                    )}
+                    className={itemCls}
                   >
                     <Icon className="w-4 h-4" />
                     {item.label}
@@ -238,14 +286,21 @@ export default function Layout() {
           </div>
           <div className="pt-4 border-t border-border">
             <div className="flex items-center justify-between">
-              <div>
+              <button
+                onClick={() => {
+                  setMobileOpen(false)
+                  setProfileModalOpen(true)
+                }}
+                className="text-left hover:bg-muted/50 rounded-md px-1.5 py-1 -mx-1.5 transition-colors"
+                title="Meu Perfil"
+              >
                 <p className="font-semibold text-xs dark:text-white">
                   {user?.name || 'Administrador BKO'}
                 </p>
                 <p className="text-[10px] text-muted-foreground dark:text-gray-400 capitalize">
                   {user?.role || 'Administrador'}
                 </p>
-              </div>
+              </button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -294,6 +349,7 @@ export default function Layout() {
       </button>
 
       <GutenbergDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <ProfileModal open={profileModalOpen} onClose={() => setProfileModalOpen(false)} />
     </div>
   )
 }
