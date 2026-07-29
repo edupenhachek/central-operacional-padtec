@@ -18,6 +18,7 @@ import {
   ChevronsRight,
   CalendarDays,
   UserCircle,
+  GraduationCap,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { useTheme } from '@/hooks/use-theme'
