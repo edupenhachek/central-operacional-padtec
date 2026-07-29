@@ -64,6 +64,7 @@ export function UserFormDialog({
   onClose,
   onSubmit,
   onResetPassword,
+  onChangeEmail,
   currentUserRole,
   isSelf = false,
 }: UserFormDialogProps) {
