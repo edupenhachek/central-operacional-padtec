@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { Bot, Send, X, Loader2, Sparkles, AlertCircle, Plus, History, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,9 +20,10 @@ import { useAuth } from '@/hooks/use-auth'
 interface GutenbergDrawerProps {
   isOpen: boolean
   onClose: () => void
+  buttonPosition?: { x: number; y: number }
 }
 
-export function GutenbergDrawer({ isOpen, onClose }: GutenbergDrawerProps) {
+export function GutenbergDrawer({ isOpen, onClose, buttonPosition }: GutenbergDrawerProps) {
   const { user } = useAuth()
   const { messages, isLoading, error, specialties, conversations, conversationId } =
     useGutenbergChatStore()
@@ -50,6 +51,34 @@ export function GutenbergDrawer({ isOpen, onClose }: GutenbergDrawerProps) {
     return () => window.removeEventListener('keydown', handleEscape)
   }, [isOpen, onClose])
 
+  const drawerStyle = useMemo(() => {
+    if (!buttonPosition) return undefined
+    const btnSize = 56
+    const gap = 16
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const dw = vw < 640 ? vw - 48 : 420
+    const dh = Math.min(580, vh - 80)
+
+    let left: number
+    if (buttonPosition.x + btnSize / 2 > vw / 2) {
+      left = buttonPosition.x + btnSize - dw
+    } else {
+      left = buttonPosition.x
+    }
+    left = Math.max(12, Math.min(left, vw - dw - 12))
+
+    let top: number
+    if (buttonPosition.y + btnSize / 2 > vh / 2) {
+      top = buttonPosition.y - gap - dh
+    } else {
+      top = buttonPosition.y + btnSize + gap
+    }
+    top = Math.max(12, Math.min(top, vh - dh - 12))
+
+    return { left: `${left}px`, top: `${top}px` }
+  }, [buttonPosition])
+
   if (!isOpen) return null
 
   const handleSend = async () => {
@@ -74,7 +103,10 @@ export function GutenbergDrawer({ isOpen, onClose }: GutenbergDrawerProps) {
         className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px] animate-fade-in"
         onClick={onClose}
       />
-      <div className="fixed bottom-24 right-6 w-[calc(100vw-3rem)] sm:w-[420px] h-[580px] max-h-[calc(100vh-8rem)] bg-card border border-border rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden animate-fade-in-up">
+      <div
+        className="fixed w-[calc(100vw-3rem)] sm:w-[420px] h-[580px] max-h-[calc(100vh-8rem)] bg-card border border-border rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden animate-fade-in-up"
+        style={drawerStyle ?? { bottom: '6rem', right: '1.5rem' }}
+      >
         <div className="p-3 border-b border-border bg-[#0B0E14] text-white flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shrink-0">

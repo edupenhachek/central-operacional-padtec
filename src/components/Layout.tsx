@@ -27,6 +27,7 @@ import { PadtecEmblem } from '@/components/PadtecLogo'
 import { GutenbergDrawer } from '@/components/GutenbergDrawer'
 import { ProfileModal } from '@/components/ProfileModal'
 import { cn } from '@/lib/utils'
+import { useDraggable } from '@/hooks/use-draggable'
 
 export default function Layout() {
   const { user, signOut } = useAuth()
@@ -39,6 +40,7 @@ export default function Layout() {
   const [collapsed, setCollapsed] = useState(false)
   const [profileModalOpen, setProfileModalOpen] = useState(false)
   const { tabs, activePath, closeTab } = useTabs()
+  const { position: btnPos, isDragging, hasMoved, onDragStart } = useDraggable('gutenberg-btn-pos')
 
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN'
   const userAvatarUrl =
@@ -345,9 +347,17 @@ export default function Layout() {
       </div>
 
       <button
-        onClick={() => setDrawerOpen(!drawerOpen)}
+        onMouseDown={onDragStart}
+        onTouchStart={onDragStart}
+        onClick={() => {
+          if (!hasMoved.current) setDrawerOpen(!drawerOpen)
+        }}
+        style={{ left: `${btnPos.x}px`, top: `${btnPos.y}px` }}
         className={cn(
-          'fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-50 group',
+          'fixed w-14 h-14 rounded-full shadow-lg hover:shadow-xl flex items-center justify-center z-50 group touch-none select-none',
+          isDragging
+            ? 'cursor-grabbing transition-none'
+            : 'cursor-grab transition-colors duration-200',
           drawerOpen
             ? 'bg-slate-800 hover:bg-slate-900 text-white'
             : 'bg-blue-600 hover:bg-blue-700 text-white',
@@ -361,7 +371,11 @@ export default function Layout() {
         )}
       </button>
 
-      <GutenbergDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <GutenbergDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        buttonPosition={btnPos}
+      />
       <ProfileModal open={profileModalOpen} onClose={() => setProfileModalOpen(false)} />
     </div>
   )
