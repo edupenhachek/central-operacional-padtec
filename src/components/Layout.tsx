@@ -25,6 +25,7 @@ import { useTheme } from '@/hooks/use-theme'
 import { Button } from '@/components/ui/button'
 import { PadtecEmblem } from '@/components/PadtecLogo'
 import { GutenbergDrawer } from '@/components/GutenbergDrawer'
+import { NotificationBell } from '@/components/NotificationBell'
 import { ProfileModal } from '@/components/ProfileModal'
 import { cn } from '@/lib/utils'
 import { useDraggable } from '@/hooks/use-draggable'
@@ -216,6 +217,7 @@ export default function Layout() {
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <ThemeToggle />
+            <NotificationBell />
           </div>
         </header>
 
@@ -226,6 +228,7 @@ export default function Layout() {
           </div>
           <div className="flex items-center gap-1">
             <ThemeToggle />
+            <NotificationBell />
             <Button variant="ghost" size="icon" onClick={() => setMobileOpen(!mobileOpen)}>
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
