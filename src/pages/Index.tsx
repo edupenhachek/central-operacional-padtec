@@ -9,6 +9,7 @@ import {
   ArrowRight,
   Play,
   AlertCircle,
+  Clock,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -17,6 +18,8 @@ import { getAnnouncements, Announcement } from '@/services/announcements'
 import { getDocuments, DocumentItem } from '@/services/documents'
 import { getInternalNotices, InternalNotice } from '@/services/notices'
 import { getTrainingModules, getUserProgress } from '@/services/training'
+import { getTodayEscalas, type EscalaRecord } from '@/services/escalas'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useAuth } from '@/hooks/use-auth'
 import { useNavigate } from 'react-router-dom'
@@ -48,17 +51,20 @@ export default function Index() {
   const [notices, setNotices] = useState<InternalNotice[]>([])
   const [trainingProgress, setTrainingProgress] = useState(0)
   const [trainingTrackName, setTrainingTrackName] = useState('Trilha de Formação')
+  const [todayEscalas, setTodayEscalas] = useState<EscalaRecord[]>([])
 
   const loadData = async () => {
     try {
-      const [annData, docData, noticeData] = await Promise.all([
+      const [annData, docData, noticeData, escalaData] = await Promise.all([
         getAnnouncements(),
         getDocuments(),
         getInternalNotices(),
+        getTodayEscalas().catch(() => []),
       ])
       setAnnouncements(annData || [])
       setDocuments(docData || [])
       setNotices(noticeData || [])
+      setTodayEscalas((escalaData as unknown as EscalaRecord[]) || [])
 
       if (user?.id) {
         try {
@@ -89,6 +95,7 @@ export default function Index() {
   useRealtime('announcements', () => loadData())
   useRealtime('documents', () => loadData())
   useRealtime('internal_notices', () => loadData())
+  useRealtime('escalas', () => loadData())
 
   const userName = user?.name ? user.name.split(' ')[0] : 'Carlos'
   const recentDocs = documents.length > 0 ? documents.slice(0, 5) : DEFAULT_RECENT_DOCUMENTS
@@ -151,6 +158,46 @@ export default function Index() {
           )
         })}
       </div>
+
+      <Card className="border-border shadow-sm bg-card p-5">
+        <CardHeader className="p-0 pb-3 border-b border-border/50">
+          <CardTitle className="text-xs font-bold text-foreground flex items-center gap-2">
+            <Clock className="w-4 h-4 text-blue-600" /> Operação Agora
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0 pt-3 space-y-2">
+          {todayEscalas.length > 0 ? (
+            todayEscalas.map((item) => {
+              const u = item.expand?.Usuario_ID
+              const avatarUrl = u?.avatar
+                ? `${import.meta.env.VITE_POCKETBASE_URL}/api/files/users/${u.id}/${u.avatar}`
+                : null
+              return (
+                <div key={item.id} className="flex items-center gap-3 py-1">
+                  <Avatar className="w-8 h-8">
+                    {avatarUrl && <AvatarImage src={avatarUrl} alt={u?.name} />}
+                    <AvatarFallback className="text-xs">
+                      {u?.name?.[0]?.toUpperCase() || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-foreground truncate">
+                      {u?.name || '-'}
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-muted-foreground">{item.Projeto}</span>
+                      <span className="text-[10px] text-muted-foreground">•</span>
+                      <span className="text-[10px] text-muted-foreground">{item.Turno}</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          ) : (
+            <p className="text-xs text-muted-foreground text-center py-4">Nenhum plantão hoje</p>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-3">
