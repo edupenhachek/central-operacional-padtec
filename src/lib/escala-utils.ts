@@ -28,6 +28,13 @@ export const PROJECT_FILTER_MAP: Record<string, string[]> = {
 
 export const FOCAL_ROLES = ['SUPERADMIN', 'ADMIN', 'FOCAL NOC', 'FOCAL COPE', 'FOCAL BKO']
 
+export const COORDINATOR_NAMES = ['eduardo guidini', 'caio nunes']
+
+export function isCoordinator(name: string): boolean {
+  const lower = name.toLowerCase()
+  return COORDINATOR_NAMES.some((n) => lower.includes(n))
+}
+
 export const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
   value: String(i),
   label: format(new Date(2024, i, 1), 'MMMM', { locale: ptBR }),

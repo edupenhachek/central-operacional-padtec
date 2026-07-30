@@ -9,7 +9,6 @@ import {
   PROJECT_BADGE_COLORS,
   getTeamsUrl,
 } from '@/lib/collab-utils'
-import { getShiftLabel } from '@/lib/escala-utils'
 import type { UserItem } from '@/services/users'
 
 interface CollaboratorCellProps {
@@ -31,11 +30,6 @@ export function CollaboratorCell({ user }: CollaboratorCellProps) {
           <div className="text-xs font-semibold text-foreground truncate max-w-[160px]">
             {user.name || user.email}
           </div>
-          {user.horario_trabalho && (
-            <div className="text-[10px] text-muted-foreground truncate max-w-[160px]">
-              {getShiftLabel(user.horario_trabalho)}
-            </div>
-          )}
           {badgeText && (
             <Badge
               variant="outline"

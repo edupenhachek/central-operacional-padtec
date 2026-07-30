@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Plus, CalendarDays, Plane } from 'lucide-react'
+import { Plus, CalendarDays, Plane, Search, Users } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { useRealtime } from '@/hooks/use-realtime'
 import { getUsers, type UserItem } from '@/services/users'
@@ -25,6 +25,7 @@ import {
   YEAR_OPTIONS,
   filterUsersByPill,
   getDaysInMonth,
+  isCoordinator,
 } from '@/lib/escala-utils'
 import { cn } from '@/lib/utils'
 
@@ -51,6 +52,7 @@ export function OperationScheduleTab({
   const [loading, setLoading] = useState(true)
   const [batchOpen, setBatchOpen] = useState(false)
   const [vacationOpen, setVacationOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const canManage = user?.role ? FOCAL_ROLES.includes(user.role) : false
 
@@ -77,14 +79,18 @@ export function OperationScheduleTab({
 
   useRealtime('escalas', () => loadData())
 
-  const filteredUsers = useMemo(
-    () =>
-      filterUsersByPill(
-        users.filter((u) => u.participa_escala !== false),
-        projetoFilter,
-      ),
-    [users, projetoFilter],
-  )
+  const { coordinators, operational } = useMemo(() => {
+    const pillFiltered = filterUsersByPill(
+      users.filter((u) => u.participa_escala !== false),
+      projetoFilter,
+    )
+    const coords = pillFiltered.filter((u) => isCoordinator(u.name))
+    const ops = pillFiltered.filter((u) => !isCoordinator(u.name))
+    const q = searchQuery.trim().toLowerCase()
+    const searched = q ? ops.filter((u) => u.name.toLowerCase().includes(q)) : ops
+    return { coordinators: coords, operational: searched }
+  }, [users, projetoFilter, searchQuery])
+
   const days = useMemo(
     () => getDaysInMonth(Number(monthFilter), Number(yearFilter)),
     [monthFilter, yearFilter],
@@ -149,34 +155,70 @@ export function OperationScheduleTab({
                 </button>
               ))}
             </div>
+            <div className="relative flex-1 min-w-[180px]">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar colaborador..."
+                className="w-full h-9 pl-8 pr-3 text-xs rounded-md border border-input bg-background dark:bg-slate-900/80 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base font-bold flex items-center gap-2">
-            <CalendarDays className="w-5 h-5 text-blue-600" /> Escala da Operação
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
+      {loading ? (
+        <Card>
+          <CardContent className="p-4">
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
+                <Skeleton key={i} className="h-10 w-full" />
               ))}
             </div>
-          ) : (
-            <MatrixGrid
-              users={filteredUsers}
-              escalas={escalas}
-              days={days}
-              canEdit={canManage}
-              onCellSaved={loadData}
-            />
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {coordinators.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <Users className="w-5 h-5 text-indigo-600" /> Coordenação da Operação
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MatrixGrid
+                  users={coordinators}
+                  escalas={escalas}
+                  days={days}
+                  canEdit={canManage}
+                  onCellSaved={loadData}
+                  showFooter={false}
+                />
+              </CardContent>
+            </Card>
           )}
-        </CardContent>
-      </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                <CalendarDays className="w-5 h-5 text-blue-600" /> Escala da Operação
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <MatrixGrid
+                users={operational}
+                escalas={escalas}
+                days={days}
+                canEdit={canManage}
+                onCellSaved={loadData}
+              />
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       <BatchEscalaModal
         open={batchOpen}

@@ -26,9 +26,17 @@ interface MatrixGridProps {
   days: Date[]
   canEdit: boolean
   onCellSaved: () => void
+  showFooter?: boolean
 }
 
-export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: MatrixGridProps) {
+export function MatrixGrid({
+  users,
+  escalas,
+  days,
+  canEdit,
+  onCellSaved,
+  showFooter = true,
+}: MatrixGridProps) {
   const [editKey, setEditKey] = useState<string | null>(null)
 
   const escalaMap = useMemo(() => {
@@ -85,8 +93,11 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
       <table className="border-collapse w-full">
         <thead>
           <tr className="bg-muted/50 dark:bg-slate-800/50">
-            <th className="sticky left-0 z-20 bg-muted/50 dark:bg-slate-800/50 px-3 py-2 text-left text-xs font-semibold border-r border-border min-w-[180px]">
+            <th className="sticky left-0 z-20 bg-muted/50 dark:bg-slate-800/50 px-3 py-1.5 text-left text-xs font-semibold border-r border-border min-w-[160px]">
               Colaborador
+            </th>
+            <th className="px-2 py-1.5 text-center text-[10px] font-semibold border-r border-border/50 min-w-[110px]">
+              Horário
             </th>
             {days.map((day) => {
               const { day: d, weekday } = getDayHeader(day)
@@ -95,7 +106,7 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
                 <th
                   key={d}
                   className={cn(
-                    'px-1 py-2 text-center text-[10px] font-semibold border-r border-border/50 min-w-[42px]',
+                    'px-1 py-1.5 text-center text-[10px] font-semibold border-r border-border/50 min-w-[42px]',
                     we && WEEKEND_HEADER_CLS,
                   )}
                 >
@@ -109,8 +120,11 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
         <tbody>
           {users.map((user) => (
             <tr key={user.id} className="hover:bg-muted/20 dark:hover:bg-slate-800/20">
-              <td className="sticky left-0 z-10 bg-card dark:bg-slate-900 px-2 py-2 border-r border-border min-w-[180px]">
+              <td className="sticky left-0 z-10 bg-card dark:bg-slate-900 px-2 py-1 border-r border-border min-w-[160px]">
                 <CollaboratorCell user={user} />
+              </td>
+              <td className="px-2 py-1 text-center text-[10px] text-muted-foreground border-r border-border/50 min-w-[110px] align-middle">
+                {user.horario_trabalho || '—'}
               </td>
               {days.map((day) => {
                 const dateStr = formatDateStr(day)
@@ -135,7 +149,7 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
                       >
                         <PopoverTrigger asChild>
                           <button
-                            className="w-full h-10 flex items-center justify-center cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors relative"
+                            className="w-full h-9 flex items-center justify-center cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors relative"
                             title={observacao || undefined}
                           >
                             {renderCellContent(turno, status)}
@@ -163,7 +177,7 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
                   <td
                     key={dateStr}
                     className={cn(
-                      'h-10 px-1 text-center align-middle border-r border-border/50',
+                      'h-9 px-1 text-center align-middle border-r border-border/50',
                       cellBg(turno, status, we),
                     )}
                     title={observacao || undefined}
@@ -178,7 +192,7 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
             </tr>
           ))}
         </tbody>
-        <ShiftFooterRow escalas={escalas} days={days} />
+        {showFooter && <ShiftFooterRow escalas={escalas} days={days} />}
       </table>
     </div>
   )
