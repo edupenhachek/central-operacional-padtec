@@ -3,6 +3,9 @@ onRecordCreateRequest((e) => {
   if (e.record && !('Ativo' in body)) {
     e.record.set('Ativo', true)
   }
+  if (e.record && !('primeiro_acesso' in body)) {
+    e.record.set('primeiro_acesso', true)
+  }
   var requestedRole = body.role || 'USUARIO'
 
   if (!e.auth) {
