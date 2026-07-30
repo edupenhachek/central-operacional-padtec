@@ -12,6 +12,7 @@ export interface UserItem {
   horario_trabalho?: string
   cargo?: string
   Ativo?: boolean
+  primeiro_acesso?: boolean
   created: string
   updated: string
 }
@@ -30,6 +31,7 @@ export const getUsers = async (): Promise<UserItem[]> => {
     horario_trabalho: r.horario_trabalho || '',
     cargo: r.cargo || '',
     Ativo: r.Ativo !== false,
+    primeiro_acesso: r.primeiro_acesso,
     created: r.created || '',
     updated: r.updated || '',
   }))
@@ -58,6 +60,7 @@ export const createUser = (data: {
     role: data.role,
     emailVisibility: true,
     Ativo: true,
+    primeiro_acesso: true,
     phone: data.phone || '',
     projeto: data.projeto || [],
     horario_trabalho: data.horario_trabalho || '',
