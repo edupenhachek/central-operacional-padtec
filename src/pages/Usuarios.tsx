@@ -10,6 +10,7 @@ import {
   UserCheck,
   Trash2,
   ShieldCheck,
+  Upload,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -31,6 +32,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { UserFormDialog } from '@/components/UserFormDialog'
+import { BulkImportDialog } from '@/components/BulkImportDialog'
 import { RolesTab } from '@/components/RolesTab'
 import {
   getUsers,
@@ -47,7 +49,7 @@ import {
 import { useAuth } from '@/hooks/use-auth'
 import { useRealtime } from '@/hooks/use-realtime'
 import { extractFieldErrors, getErrorMessage, type FieldErrors } from '@/lib/pocketbase/errors'
-import { getRoleOptionsForUser } from '@/lib/user-constants'
+import { getRoleOptionsForUser, canImportUsers } from '@/lib/user-constants'
 import { toast } from 'sonner'
 
 export default function Usuarios() {
@@ -61,6 +63,7 @@ export default function Usuarios() {
   const [statusFilter, setStatusFilter] = useState<'ativos' | 'desativados'>('ativos')
 
   const [createOpen, setCreateOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const [editUser, setEditUser] = useState<UserItem | null>(null)
   const [deactivateTarget, setDeactivateTarget] = useState<UserItem | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<UserItem | null>(null)
@@ -355,6 +358,17 @@ export default function Usuarios() {
             </Button>
           )}
 
+          {canImportUsers(currentUser?.role) && activeSubTab === 'users' && (
+            <Button
+              variant="outline"
+              onClick={() => setImportOpen(true)}
+              className="text-xs font-medium gap-1.5 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              Importar Usuários
+            </Button>
+          )}
+
           {isAdmin && activeSubTab === 'users' && (
             <Button
               onClick={() => setCreateOpen(true)}
@@ -585,6 +599,12 @@ export default function Usuarios() {
           </Card>
         </div>
       )}
+
+      <BulkImportDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={loadUsers}
+      />
 
       <UserFormDialog
         open={createOpen}
