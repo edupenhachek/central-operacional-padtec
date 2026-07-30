@@ -1,0 +1,144 @@
+import { useState, useMemo } from 'react'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import { CellEditContent } from '@/components/CellEditContent'
+import { cn } from '@/lib/utils'
+import { getShiftLabel, getDayHeader, isWeekend, formatDateStr } from '@/lib/escala-utils'
+import type { EscalaRecord } from '@/services/escalas'
+import type { UserItem } from '@/services/users'
+
+interface MatrixGridProps {
+  users: UserItem[]
+  escalas: EscalaRecord[]
+  days: Date[]
+  canEdit: boolean
+  onCellSaved: () => void
+}
+
+export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: MatrixGridProps) {
+  const [editKey, setEditKey] = useState<string | null>(null)
+
+  const escalaMap = useMemo(() => {
+    const map = new Map<string, EscalaRecord>()
+    for (const e of escalas) {
+      const dateKey = e.Data?.split(' ')[0]
+      const userId = e.expand?.Usuario_ID?.id
+      if (dateKey && userId) map.set(`${userId}_${dateKey}`, e)
+    }
+    return map
+  }, [escalas])
+
+  const cellBg = (turno: string, weekend: boolean) =>
+    cn(
+      weekend && 'bg-muted/40 dark:bg-slate-800/40',
+      turno === 'FOLGA' && 'bg-red-50 dark:bg-red-950/20',
+    )
+
+  const renderCellContent = (turno: string) => {
+    if (!turno) return <span className="text-muted-foreground/40">—</span>
+    if (turno === 'FOLGA')
+      return <span className="text-[10px] font-bold text-red-600 dark:text-red-400">FOLGA</span>
+    return <span className="text-[10px] font-medium text-foreground">{getShiftLabel(turno)}</span>
+  }
+
+  if (users.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground text-center py-8">
+        Nenhum colaborador encontrado.
+      </p>
+    )
+  }
+
+  return (
+    <div className="overflow-x-auto rounded-lg border border-border">
+      <table className="border-collapse">
+        <thead>
+          <tr className="bg-muted/50 dark:bg-slate-800/50">
+            <th className="sticky left-0 z-20 bg-muted/50 dark:bg-slate-800/50 px-3 py-2 text-left text-xs font-semibold border-r border-border min-w-[180px]">
+              Colaborador
+            </th>
+            {days.map((day) => {
+              const { day: d, weekday } = getDayHeader(day)
+              const we = isWeekend(day)
+              return (
+                <th
+                  key={d}
+                  className={cn(
+                    'px-1 py-2 text-center text-[10px] font-semibold border-r border-border/50 min-w-[42px]',
+                    we && 'bg-muted/70 dark:bg-slate-700/50',
+                  )}
+                >
+                  <div>{d}</div>
+                  <div className="text-muted-foreground font-normal capitalize">{weekday}</div>
+                </th>
+              )
+            })}
+          </tr>
+        </thead>
+        <tbody>
+          {users.map((user) => (
+            <tr key={user.id} className="hover:bg-muted/20 dark:hover:bg-slate-800/20">
+              <td className="sticky left-0 z-10 bg-card dark:bg-slate-900 px-3 py-2 border-r border-border min-w-[180px]">
+                <div className="text-xs font-semibold text-foreground truncate max-w-[160px]">
+                  {user.name || user.email}
+                </div>
+                <div className="text-[10px] text-muted-foreground truncate max-w-[160px]">
+                  {user.cargo || user.role || '-'}
+                </div>
+              </td>
+              {days.map((day) => {
+                const dateStr = formatDateStr(day)
+                const cellKey = `${user.id}_${dateStr}`
+                const escala = escalaMap.get(cellKey)
+                const turno = escala?.Turno || ''
+                const we = isWeekend(day)
+                if (canEdit) {
+                  return (
+                    <td
+                      key={dateStr}
+                      className={cn('p-0 text-center border-r border-border/50', cellBg(turno, we))}
+                    >
+                      <Popover
+                        open={editKey === cellKey}
+                        onOpenChange={(open) => setEditKey(open ? cellKey : null)}
+                      >
+                        <PopoverTrigger asChild>
+                          <button className="w-full h-10 flex items-center justify-center cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors">
+                            {renderCellContent(turno)}
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-2" side="bottom" align="center">
+                          <CellEditContent
+                            userId={user.id}
+                            userProjeto={(user.projeto || [])[0] || ''}
+                            userHorario={user.horario_trabalho || ''}
+                            dateStr={dateStr}
+                            currentTurno={turno}
+                            onSaved={onCellSaved}
+                            onClose={() => setEditKey(null)}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </td>
+                  )
+                }
+                return (
+                  <td
+                    key={dateStr}
+                    className={cn(
+                      'h-10 px-1 text-center align-middle border-r border-border/50',
+                      cellBg(turno, we),
+                    )}
+                  >
+                    <div className="flex items-center justify-center h-full">
+                      {renderCellContent(turno)}
+                    </div>
+                  </td>
+                )
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}

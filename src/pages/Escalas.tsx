@@ -8,6 +8,9 @@ type TabKey = 'operacao' | 'minha'
 
 export default function Escalas() {
   const [activeTab, setActiveTab] = useState<TabKey>('operacao')
+  const [monthFilter, setMonthFilter] = useState(String(new Date().getMonth()))
+  const [yearFilter, setYearFilter] = useState(String(new Date().getFullYear()))
+  const [projetoFilter, setProjetoFilter] = useState('all')
 
   const tabs: { key: TabKey; label: string; icon: typeof Users }[] = [
     { key: 'operacao', label: 'Escala da Operação', icon: CalendarDays },
@@ -42,7 +45,23 @@ export default function Escalas() {
         })}
       </div>
 
-      {activeTab === 'operacao' ? <OperationScheduleTab /> : <MyScheduleTab />}
+      {activeTab === 'operacao' ? (
+        <OperationScheduleTab
+          monthFilter={monthFilter}
+          yearFilter={yearFilter}
+          projetoFilter={projetoFilter}
+          onMonthChange={setMonthFilter}
+          onYearChange={setYearFilter}
+          onProjetoChange={setProjetoFilter}
+        />
+      ) : (
+        <MyScheduleTab
+          monthFilter={monthFilter}
+          yearFilter={yearFilter}
+          onMonthChange={setMonthFilter}
+          onYearChange={setYearFilter}
+        />
+      )}
     </div>
   )
 }
