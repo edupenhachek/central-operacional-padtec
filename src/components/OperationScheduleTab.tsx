@@ -1,15 +1,12 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Plus, CalendarDays, Plane, Search, Users } from 'lucide-react'
+import { CalendarDays, Search, Users } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { useRealtime } from '@/hooks/use-realtime'
 import { getUsers, type UserItem } from '@/services/users'
 import { getEscalasForMonth } from '@/services/escala-matrix'
 import { type EscalaRecord } from '@/services/escalas'
 import { MatrixGrid } from '@/components/MatrixGrid'
-import { BatchEscalaModal } from '@/components/BatchEscalaModal'
-import { VacationModal } from '@/components/VacationModal'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Select,
@@ -36,6 +33,7 @@ interface OperationScheduleTabProps {
   onMonthChange: (v: string) => void
   onYearChange: (v: string) => void
   onProjetoChange: (v: string) => void
+  refreshTrigger?: number
 }
 
 export function OperationScheduleTab({
@@ -45,13 +43,12 @@ export function OperationScheduleTab({
   onMonthChange,
   onYearChange,
   onProjetoChange,
+  refreshTrigger,
 }: OperationScheduleTabProps) {
   const { user } = useAuth()
   const [users, setUsers] = useState<UserItem[]>([])
   const [escalas, setEscalas] = useState<EscalaRecord[]>([])
   const [loading, setLoading] = useState(true)
-  const [batchOpen, setBatchOpen] = useState(false)
-  const [vacationOpen, setVacationOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
   const canManage = user?.role ? FOCAL_ROLES.includes(user.role) : false
@@ -75,7 +72,7 @@ export function OperationScheduleTab({
 
   useEffect(() => {
     loadData()
-  }, [loadData])
+  }, [loadData, refreshTrigger])
 
   useRealtime('escalas', () => loadData())
 
@@ -98,20 +95,6 @@ export function OperationScheduleTab({
 
   return (
     <div className="space-y-4">
-      {canManage && (
-        <div className="flex justify-end gap-2">
-          <Button onClick={() => setVacationOpen(true)} variant="outline" className="text-sm gap-2">
-            <Plane className="w-4 h-4" /> Lançar Férias
-          </Button>
-          <Button
-            onClick={() => setBatchOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm gap-2"
-          >
-            <Plus className="w-4 h-4" /> Gerar Escala
-          </Button>
-        </div>
-      )}
-
       <Card className="border-border bg-card dark:bg-slate-900">
         <CardContent className="p-4">
           <div className="flex flex-wrap items-center gap-3">
@@ -219,19 +202,6 @@ export function OperationScheduleTab({
           </Card>
         </>
       )}
-
-      <BatchEscalaModal
-        open={batchOpen}
-        onClose={() => setBatchOpen(false)}
-        onSaved={loadData}
-        defaultMonth={monthFilter}
-        defaultYear={yearFilter}
-      />
-      <VacationModal
-        open={vacationOpen}
-        onClose={() => setVacationOpen(false)}
-        onSaved={loadData}
-      />
     </div>
   )
 }
