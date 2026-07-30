@@ -68,8 +68,6 @@ import {
 } from '@/lib/user-constants'
 import { toast } from 'sonner'
 
-const ITEMS_PER_PAGE = 10
-
 type BatchAction = 'activate' | 'deactivate' | 'delete' | null
 
 export default function Usuarios() {
@@ -103,6 +101,14 @@ export default function Usuarios() {
   const [currentPage, setCurrentPage] = useState(1)
   const [batchAction, setBatchAction] = useState<BatchAction>(null)
   const [batchLoading, setBatchLoading] = useState(false)
+  const [pageSize, setPageSize] = useState<number>(() => {
+    const stored = sessionStorage.getItem('usuarios-page-size')
+    if (stored) {
+      const parsed = parseInt(stored, 10)
+      if (!isNaN(parsed)) return parsed
+    }
+    return 10
+  })
 
   const loadUsers = async () => {
     try {
@@ -148,11 +154,13 @@ export default function Usuarios() {
       .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'))
   }, [users, searchTerm, statusFilter, projectFilter, roleFilter])
 
-  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / ITEMS_PER_PAGE))
+  const effectivePageSize = pageSize === 0 ? filteredUsers.length : pageSize
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / effectivePageSize))
   const paginatedUsers = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE
-    return filteredUsers.slice(start, start + ITEMS_PER_PAGE)
-  }, [filteredUsers, currentPage])
+    if (pageSize === 0) return filteredUsers
+    const start = (currentPage - 1) * pageSize
+    return filteredUsers.slice(start, start + pageSize)
+  }, [filteredUsers, currentPage, pageSize])
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(1)
@@ -697,6 +705,18 @@ export default function Usuarios() {
                             <p className="text-[11px] text-muted-foreground dark:text-slate-400">
                               {u.email || 'Sem e-mail'} {u.cargo ? `• ${u.cargo}` : ''}
                             </p>
+                            {Array.isArray(u.projeto) && u.projeto.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {u.projeto.map((p) => (
+                                  <span
+                                    key={p}
+                                    className="px-1.5 py-0.5 text-[9px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 rounded"
+                                  >
+                                    {p}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2 self-end sm:self-auto">
@@ -786,33 +806,63 @@ export default function Usuarios() {
                   })
                 )}
               </div>
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-                  <p className="text-xs text-muted-foreground dark:text-slate-400">
-                    Página {currentPage} de {totalPages} • {filteredUsers.length} usuário(s)
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                      className="h-8 w-8"
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-4 py-3 border-t border-border">
+                <p className="text-xs text-muted-foreground dark:text-slate-400">
+                  {pageSize === 0
+                    ? `${filteredUsers.length} usuário(s)`
+                    : `Página ${currentPage} de ${totalPages} • ${filteredUsers.length} usuário(s)`}
+                </p>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground dark:text-slate-400">
+                      Itens/página:
+                    </span>
+                    <Select
+                      value={String(pageSize)}
+                      onValueChange={(v) => {
+                        const val = Number(v)
+                        setPageSize(val)
+                        sessionStorage.setItem('usuarios-page-size', String(val))
+                        setCurrentPage(1)
+                      }}
                     >
-                      <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
-                      className="h-8 w-8"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
+                      <SelectTrigger className="w-[70px] h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="20">20</SelectItem>
+                        <SelectItem value="30">30</SelectItem>
+                        <SelectItem value="40">40</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="0">Todos</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+                  {totalPages > 1 && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="h-8 w-8"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="h-8 w-8"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
         </div>
