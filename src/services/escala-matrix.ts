@@ -41,14 +41,14 @@ export const upsertEscala = async (data: {
 export const launchVacation = async (
   usuarioId: string,
   dataInicio: string,
-  dataFim: string,
+  numDays: number,
   projeto: string,
 ) => {
   const start = new Date(dataInicio + 'T00:00:00')
-  const end = new Date(dataFim + 'T00:00:00')
   const records: EscalaBatchRecord[] = []
-  const current = new Date(start)
-  while (current <= end) {
+  for (let i = 0; i < numDays; i++) {
+    const current = new Date(start)
+    current.setDate(current.getDate() + i)
     const y = current.getFullYear()
     const m = String(current.getMonth() + 1).padStart(2, '0')
     const d = String(current.getDate()).padStart(2, '0')
@@ -59,7 +59,6 @@ export const launchVacation = async (
       Turno: '',
       Status: 'FÉRIAS',
     })
-    current.setDate(current.getDate() + 1)
   }
   const results = await Promise.allSettled(records.map((r) => upsertEscala(r)))
   const succeeded = results.filter((r) => r.status === 'fulfilled').length

@@ -10,6 +10,10 @@ import {
   STATUS_CELL_LABELS,
   STATUS_CELL_COLORS,
   STATUS_CELL_BG,
+  SHIFT_CELL_BG,
+  SHIFT_CELL_COLOR,
+  WEEKEND_HEADER_CLS,
+  WEEKEND_CELL_BG,
 } from '@/lib/escala-utils'
 import type { EscalaRecord } from '@/services/escalas'
 import type { UserItem } from '@/services/users'
@@ -35,12 +39,13 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
     return map
   }, [escalas])
 
-  const cellBg = (turno: string, status: string, weekend: boolean) =>
-    cn(
-      weekend && !STATUS_CELL_BG[status] && 'bg-muted/40 dark:bg-slate-800/40',
-      turno === 'FOLGA' && !STATUS_CELL_BG[status] && 'bg-red-50 dark:bg-red-950/20',
-      STATUS_CELL_BG[status] || '',
-    )
+  const cellBg = (turno: string, status: string, weekend: boolean) => {
+    if (status && STATUS_CELL_BG[status]) return STATUS_CELL_BG[status]
+    if (turno === 'FOLGA') return 'bg-gray-100 dark:bg-gray-800/40'
+    if (turno) return SHIFT_CELL_BG
+    if (weekend) return WEEKEND_CELL_BG
+    return ''
+  }
 
   const renderCellContent = (turno: string, status: string) => {
     if (status && STATUS_CELL_LABELS[status]) {
@@ -52,8 +57,12 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
     }
     if (!turno) return <span className="text-muted-foreground/40">—</span>
     if (turno === 'FOLGA')
-      return <span className="text-[10px] font-bold text-red-600 dark:text-red-400">FOLGA</span>
-    return <span className="text-[10px] font-medium text-foreground">{getShiftLabel(turno)}</span>
+      return <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400">FOLGA</span>
+    return (
+      <span className={cn('text-[10px] font-medium', SHIFT_CELL_COLOR)}>
+        {getShiftLabel(turno)}
+      </span>
+    )
   }
 
   const renderObsDot = (observacao: string) =>
@@ -85,7 +94,7 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
                   key={d}
                   className={cn(
                     'px-1 py-2 text-center text-[10px] font-semibold border-r border-border/50 min-w-[42px]',
-                    we && 'bg-muted/70 dark:bg-slate-700/50',
+                    we && WEEKEND_HEADER_CLS,
                   )}
                 >
                   <div>{d}</div>

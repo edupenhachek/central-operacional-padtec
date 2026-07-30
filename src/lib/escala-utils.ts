@@ -94,6 +94,7 @@ export const ESCALA_STATUS_OPTIONS = [
 ] as const
 
 export const STATUS_CELL_LABELS: Record<string, string> = {
+  FOLGA: 'FOLGA',
   FÉRIAS: 'FÉR',
   ATESTADO: 'ATE',
   TREINAMENTO: 'TRE',
@@ -102,20 +103,27 @@ export const STATUS_CELL_LABELS: Record<string, string> = {
 }
 
 export const STATUS_CELL_COLORS: Record<string, string> = {
-  FÉRIAS: 'text-purple-600 dark:text-purple-400',
-  ATESTADO: 'text-orange-600 dark:text-orange-400',
-  TREINAMENTO: 'text-green-600 dark:text-green-400',
-  'BANCO DE HORAS': 'text-amber-600 dark:text-amber-400',
-  'FOLGA COMPENSATÓRIA': 'text-cyan-600 dark:text-cyan-400',
+  FOLGA: 'text-gray-600 dark:text-gray-400',
+  FÉRIAS: 'text-orange-800 dark:text-orange-300',
+  ATESTADO: 'text-orange-800 dark:text-orange-300',
+  TREINAMENTO: 'text-slate-700 dark:text-slate-300',
+  'BANCO DE HORAS': 'text-yellow-800 dark:text-yellow-300',
+  'FOLGA COMPENSATÓRIA': 'text-slate-700 dark:text-slate-300',
 }
 
 export const STATUS_CELL_BG: Record<string, string> = {
-  FÉRIAS: 'bg-purple-50 dark:bg-purple-950/20',
-  ATESTADO: 'bg-orange-50 dark:bg-orange-950/20',
-  TREINAMENTO: 'bg-green-50 dark:bg-green-950/20',
-  'BANCO DE HORAS': 'bg-amber-50 dark:bg-amber-950/20',
-  'FOLGA COMPENSATÓRIA': 'bg-cyan-50 dark:bg-cyan-950/20',
+  FOLGA: 'bg-gray-100 dark:bg-gray-800/40',
+  FÉRIAS: 'bg-orange-100 dark:bg-orange-950/30',
+  ATESTADO: 'bg-orange-100 dark:bg-orange-950/30',
+  TREINAMENTO: 'bg-slate-100 dark:bg-slate-800/40',
+  'BANCO DE HORAS': 'bg-yellow-100 dark:bg-yellow-950/30',
+  'FOLGA COMPENSATÓRIA': 'bg-slate-100 dark:bg-slate-800/40',
 }
+
+export const SHIFT_CELL_BG = 'bg-green-100 dark:bg-green-950/30'
+export const SHIFT_CELL_COLOR = 'text-green-800 dark:text-green-300'
+export const WEEKEND_HEADER_CLS = 'bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300'
+export const WEEKEND_CELL_BG = 'bg-red-50 dark:bg-red-950/20'
 
 export function filterUsersByPill<T extends { projeto?: string[] }>(users: T[], pill: string): T[] {
   if (pill === 'all') return users

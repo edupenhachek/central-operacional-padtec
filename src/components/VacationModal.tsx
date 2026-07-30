@@ -24,7 +24,7 @@ interface VacationModalProps {
 export function VacationModal({ open, onClose, onSaved }: VacationModalProps) {
   const [usuarioId, setUsuarioId] = useState('')
   const [dataInicio, setDataInicio] = useState('')
-  const [dataFim, setDataFim] = useState('')
+  const [quantidadeDias, setQuantidadeDias] = useState('')
   const [users, setUsers] = useState<UserItem[]>([])
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, boolean>>({})
@@ -36,7 +36,7 @@ export function VacationModal({ open, onClose, onSaved }: VacationModalProps) {
         .catch(() => {})
       setUsuarioId('')
       setDataInicio('')
-      setDataFim('')
+      setQuantidadeDias('')
       setErrors({})
     }
   }, [open])
@@ -48,11 +48,8 @@ export function VacationModal({ open, onClose, onSaved }: VacationModalProps) {
     const errs: Record<string, boolean> = {}
     if (!usuarioId) errs.usuarioId = true
     if (!dataInicio) errs.dataInicio = true
-    if (!dataFim) errs.dataFim = true
-    if (dataInicio && dataFim && new Date(dataInicio) > new Date(dataFim)) {
-      errs.dataFim = true
-      toast.error('A data de fim deve ser posterior ou igual à data de início.')
-    }
+    const numDays = parseInt(quantidadeDias, 10)
+    if (!quantidadeDias || isNaN(numDays) || numDays < 1) errs.quantidadeDias = true
     setErrors(errs)
     if (Object.keys(errs).length > 0) {
       toast.error('Preencha todos os campos obrigatórios.')
@@ -64,7 +61,7 @@ export function VacationModal({ open, onClose, onSaved }: VacationModalProps) {
     }
     setLoading(true)
     try {
-      const result = await launchVacation(usuarioId, dataInicio, dataFim, userProjeto)
+      const result = await launchVacation(usuarioId, dataInicio, numDays, userProjeto)
       if (result.failed > 0) {
         toast.warning(`${result.succeeded} dias de férias lançados, ${result.failed} falharam.`)
       } else {
@@ -117,14 +114,19 @@ export function VacationModal({ open, onClose, onSaved }: VacationModalProps) {
               {errors.dataInicio && <p className="text-xs text-red-500">Obrigatório.</p>}
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Data de Fim {reqMark}</Label>
+              <Label className="text-xs font-semibold">Quantidade de Dias {reqMark}</Label>
               <Input
-                type="date"
-                value={dataFim}
-                onChange={(e) => setDataFim(e.target.value)}
-                className={cn(inputCls, errors.dataFim && 'border-red-500')}
+                type="number"
+                min={1}
+                step={1}
+                value={quantidadeDias}
+                onChange={(e) => setQuantidadeDias(e.target.value)}
+                className={cn(inputCls, errors.quantidadeDias && 'border-red-500')}
+                placeholder="Ex: 30"
               />
-              {errors.dataFim && <p className="text-xs text-red-500">Obrigatório.</p>}
+              {errors.quantidadeDias && (
+                <p className="text-xs text-red-500">Obrigatório (mín. 1).</p>
+              )}
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
