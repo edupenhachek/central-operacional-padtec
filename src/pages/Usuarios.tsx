@@ -49,7 +49,12 @@ import {
 import { useAuth } from '@/hooks/use-auth'
 import { useRealtime } from '@/hooks/use-realtime'
 import { extractFieldErrors, getErrorMessage, type FieldErrors } from '@/lib/pocketbase/errors'
-import { getRoleOptionsForUser, canImportUsers } from '@/lib/user-constants'
+import {
+  getRoleOptionsForUser,
+  canImportUsers,
+  PROJETO_OPTIONS,
+  ROLE_OPTIONS,
+} from '@/lib/user-constants'
 import { toast } from 'sonner'
 
 export default function Usuarios() {
@@ -76,6 +81,8 @@ export default function Usuarios() {
   const [deleting, setDeleting] = useState(false)
   const [resetting, setResetting] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [projectFilter, setProjectFilter] = useState<string>('Todos')
+  const [roleFilter, setRoleFilter] = useState<string>('Todos')
 
   const loadUsers = async () => {
     try {
@@ -100,17 +107,26 @@ export default function Usuarios() {
 
   const filteredUsers = useMemo(() => {
     const term = searchTerm.trim().toLowerCase()
-    return users.filter((u) => {
-      const matchesStatus = statusFilter === 'ativos' ? u.Ativo !== false : u.Ativo === false
-      if (!matchesStatus) return false
-      if (!term) return true
-      return (
-        (u.name || '').toLowerCase().includes(term) ||
-        (u.email || '').toLowerCase().includes(term) ||
-        (u.cargo || '').toLowerCase().includes(term)
-      )
-    })
-  }, [users, searchTerm, statusFilter])
+    return users
+      .filter((u) => {
+        const matchesStatus = statusFilter === 'ativos' ? u.Ativo !== false : u.Ativo === false
+        if (!matchesStatus) return false
+        if (projectFilter !== 'Todos') {
+          const projetos = Array.isArray(u.projeto) ? u.projeto : []
+          if (!projetos.includes(projectFilter)) return false
+        }
+        if (roleFilter !== 'Todos') {
+          if ((u.role || '') !== roleFilter) return false
+        }
+        if (!term) return true
+        return (
+          (u.name || '').toLowerCase().includes(term) ||
+          (u.email || '').toLowerCase().includes(term) ||
+          (u.cargo || '').toLowerCase().includes(term)
+        )
+      })
+      .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'))
+  }, [users, searchTerm, statusFilter, projectFilter, roleFilter])
 
   const activeCount = useMemo(() => users.filter((u) => u.Ativo !== false).length, [users])
   const inactiveCount = useMemo(() => users.filter((u) => u.Ativo === false).length, [users])
@@ -413,15 +429,65 @@ export default function Usuarios() {
       ) : (
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground dark:text-slate-400" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar por nome, e-mail ou cargo..."
-                className="w-full h-9 pl-9 pr-4 rounded-lg border border-input bg-background dark:bg-slate-900/80 text-foreground dark:text-slate-100 text-xs placeholder:text-muted-foreground dark:placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              />
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground dark:text-slate-400" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Buscar por nome, e-mail ou cargo..."
+                  className="w-full h-9 pl-9 pr-4 rounded-lg border border-input bg-background dark:bg-slate-900/80 text-foreground dark:text-slate-100 text-xs placeholder:text-muted-foreground dark:placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <Select value={projectFilter} onValueChange={setProjectFilter}>
+                  <SelectTrigger className="w-32 h-9 text-xs text-foreground dark:text-slate-100 bg-background dark:bg-slate-900/80 border-input">
+                    <SelectValue placeholder="Projeto" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover dark:bg-slate-900 text-popover-foreground dark:text-slate-100 border-border">
+                    <SelectItem
+                      value="Todos"
+                      className="dark:focus:bg-slate-800 dark:focus:text-white"
+                    >
+                      Todos
+                    </SelectItem>
+                    {PROJETO_OPTIONS.map((p) => (
+                      <SelectItem
+                        key={p}
+                        value={p}
+                        className="dark:focus:bg-slate-800 dark:focus:text-white"
+                      >
+                        {p}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger className="w-36 h-9 text-xs text-foreground dark:text-slate-100 bg-background dark:bg-slate-900/80 border-input">
+                    <SelectValue placeholder="Função" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover dark:bg-slate-900 text-popover-foreground dark:text-slate-100 border-border">
+                    <SelectItem
+                      value="Todos"
+                      className="dark:focus:bg-slate-800 dark:focus:text-white"
+                    >
+                      Todos
+                    </SelectItem>
+                    {ROLE_OPTIONS.map((r) => (
+                      <SelectItem
+                        key={r}
+                        value={r}
+                        className="dark:focus:bg-slate-800 dark:focus:text-white"
+                      >
+                        {r}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="flex items-center gap-1.5 bg-muted/50 p-1 rounded-lg border border-border shrink-0 self-start sm:self-auto">

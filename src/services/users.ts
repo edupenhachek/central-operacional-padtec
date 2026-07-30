@@ -19,7 +19,7 @@ export interface UserItem {
 
 export const getUsers = async (): Promise<UserItem[]> => {
   const records = await pb.collection('users').getFullList({
-    sort: '-created',
+    sort: 'name',
   })
   return records.map((r) => ({
     id: r.id,
