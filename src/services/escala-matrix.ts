@@ -18,6 +18,7 @@ export const upsertEscala = async (data: {
   Projeto: string
   Turno: string
   Status?: string
+  observacao?: string
 }) => {
   try {
     const existing = await pb
@@ -26,6 +27,8 @@ export const upsertEscala = async (data: {
     return pb.collection('escalas').update(existing.id, {
       Turno: data.Turno,
       Status: data.Status || 'Previsto',
+      Projeto: data.Projeto,
+      observacao: data.observacao,
     })
   } catch {
     return pb.collection('escalas').create({
@@ -33,6 +36,35 @@ export const upsertEscala = async (data: {
       Status: data.Status || 'Previsto',
     })
   }
+}
+
+export const launchVacation = async (
+  usuarioId: string,
+  dataInicio: string,
+  dataFim: string,
+  projeto: string,
+) => {
+  const start = new Date(dataInicio + 'T00:00:00')
+  const end = new Date(dataFim + 'T00:00:00')
+  const records: EscalaBatchRecord[] = []
+  const current = new Date(start)
+  while (current <= end) {
+    const y = current.getFullYear()
+    const m = String(current.getMonth() + 1).padStart(2, '0')
+    const d = String(current.getDate()).padStart(2, '0')
+    records.push({
+      Data: `${y}-${m}-${d}`,
+      Usuario_ID: usuarioId,
+      Projeto: projeto,
+      Turno: '',
+      Status: 'FÉRIAS',
+    })
+    current.setDate(current.getDate() + 1)
+  }
+  const results = await Promise.allSettled(records.map((r) => upsertEscala(r)))
+  const succeeded = results.filter((r) => r.status === 'fulfilled').length
+  const failed = results.length - succeeded
+  return { succeeded, failed }
 }
 
 export const generateMonthlySchedule = async (

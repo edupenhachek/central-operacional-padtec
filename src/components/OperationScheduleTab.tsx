@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Plus, CalendarDays } from 'lucide-react'
+import { Plus, CalendarDays, Plane } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { useRealtime } from '@/hooks/use-realtime'
 import { getUsers, type UserItem } from '@/services/users'
@@ -7,6 +7,7 @@ import { getEscalasForMonth } from '@/services/escala-matrix'
 import { type EscalaRecord } from '@/services/escalas'
 import { MatrixGrid } from '@/components/MatrixGrid'
 import { BatchEscalaModal } from '@/components/BatchEscalaModal'
+import { VacationModal } from '@/components/VacationModal'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -19,12 +20,13 @@ import {
 } from '@/components/ui/select'
 import {
   FOCAL_ROLES,
-  PROJECT_FILTER_OPTIONS,
+  QUICK_FILTER_PILLS,
   MONTH_OPTIONS,
   YEAR_OPTIONS,
-  filterUsersByProject,
+  filterUsersByPill,
   getDaysInMonth,
 } from '@/lib/escala-utils'
+import { cn } from '@/lib/utils'
 
 interface OperationScheduleTabProps {
   monthFilter: string
@@ -48,6 +50,7 @@ export function OperationScheduleTab({
   const [escalas, setEscalas] = useState<EscalaRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [batchOpen, setBatchOpen] = useState(false)
+  const [vacationOpen, setVacationOpen] = useState(false)
 
   const canManage = user?.role ? FOCAL_ROLES.includes(user.role) : false
 
@@ -75,7 +78,11 @@ export function OperationScheduleTab({
   useRealtime('escalas', () => loadData())
 
   const filteredUsers = useMemo(
-    () => filterUsersByProject(users, projetoFilter),
+    () =>
+      filterUsersByPill(
+        users.filter((u) => u.participa_escala !== false),
+        projetoFilter,
+      ),
     [users, projetoFilter],
   )
   const days = useMemo(
@@ -86,20 +93,22 @@ export function OperationScheduleTab({
   return (
     <div className="space-y-4">
       {canManage && (
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          <Button onClick={() => setVacationOpen(true)} variant="outline" className="text-sm gap-2">
+            <Plane className="w-4 h-4" /> Lançar Férias
+          </Button>
           <Button
             onClick={() => setBatchOpen(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white text-sm gap-2"
           >
-            <Plus className="w-4 h-4" />
-            Gerar Escala
+            <Plus className="w-4 h-4" /> Gerar Escala
           </Button>
         </div>
       )}
 
       <Card className="border-border bg-card dark:bg-slate-900">
         <CardContent className="p-4">
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Select value={monthFilter} onValueChange={onMonthChange}>
               <SelectTrigger className="h-9 w-36 text-xs bg-background dark:bg-slate-900/80">
                 <SelectValue />
@@ -124,18 +133,22 @@ export function OperationScheduleTab({
                 ))}
               </SelectContent>
             </Select>
-            <Select value={projetoFilter} onValueChange={onProjetoChange}>
-              <SelectTrigger className="h-9 w-44 text-xs bg-background dark:bg-slate-900/80">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PROJECT_FILTER_OPTIONS.map((p) => (
-                  <SelectItem key={p.value} value={p.value}>
-                    {p.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex gap-1.5">
+              {QUICK_FILTER_PILLS.map((pill) => (
+                <button
+                  key={pill.value}
+                  onClick={() => onProjetoChange(pill.value)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-full text-xs font-semibold transition-colors',
+                    projetoFilter === pill.value
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-muted text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {pill.label}
+                </button>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -171,6 +184,11 @@ export function OperationScheduleTab({
         onSaved={loadData}
         defaultMonth={monthFilter}
         defaultYear={yearFilter}
+      />
+      <VacationModal
+        open={vacationOpen}
+        onClose={() => setVacationOpen(false)}
+        onSaved={loadData}
       />
     </div>
   )

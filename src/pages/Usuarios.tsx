@@ -236,6 +236,7 @@ export default function Usuarios() {
     projeto?: string[]
     horario_trabalho?: string
     cargo?: string
+    participa_escala?: boolean
   }) => {
     if (!isAdmin) {
       toast.error('Apenas administradores podem criar usuários.')
@@ -258,6 +259,7 @@ export default function Usuarios() {
         projeto: data.projeto || [],
         horario_trabalho: data.horario_trabalho,
         cargo: data.cargo,
+        participa_escala: data.participa_escala,
       })
       toast.success('Usuário criado com sucesso')
       setCreateOpen(false)
@@ -279,6 +281,7 @@ export default function Usuarios() {
     projeto?: string[]
     horario_trabalho?: string
     cargo?: string
+    participa_escala?: boolean
   }) => {
     if (!editUser) return
     if (data.role === 'SUPERADMIN' && currentUser?.role !== 'SUPERADMIN') {
@@ -295,6 +298,7 @@ export default function Usuarios() {
         projeto: data.projeto,
         horario_trabalho: data.horario_trabalho,
         cargo: data.cargo,
+        participa_escala: data.participa_escala,
       })
       toast.success('Usuário atualizado com sucesso')
       setEditUser(null)

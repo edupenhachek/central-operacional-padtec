@@ -13,6 +13,7 @@ export interface UserItem {
   cargo?: string
   Ativo?: boolean
   primeiro_acesso?: boolean
+  participa_escala?: boolean
   created: string
   updated: string
 }
@@ -32,6 +33,7 @@ export const getUsers = async (): Promise<UserItem[]> => {
     cargo: r.cargo || '',
     Ativo: r.Ativo !== false,
     primeiro_acesso: r.primeiro_acesso,
+    participa_escala: r.participa_escala !== false,
     created: r.created || '',
     updated: r.updated || '',
   }))
@@ -50,6 +52,7 @@ export const createUser = (data: {
   projeto?: string[]
   horario_trabalho?: string
   cargo?: string
+  participa_escala?: boolean
 }) =>
   pb.collection('users').create<UserItem>({
     name: data.name,
@@ -65,6 +68,7 @@ export const createUser = (data: {
     projeto: data.projeto || [],
     horario_trabalho: data.horario_trabalho || '',
     cargo: data.cargo || '',
+    participa_escala: data.participa_escala !== false,
   })
 
 export const updateUser = (
@@ -79,6 +83,7 @@ export const updateUser = (
     cargo: string
     Ativo: boolean
     avatar: File
+    participa_escala: boolean
   }>,
 ) => {
   const payload: Record<string, any> = {}
@@ -90,6 +95,7 @@ export const updateUser = (
   if (data.horario_trabalho !== undefined) payload.horario_trabalho = data.horario_trabalho
   if (data.cargo !== undefined) payload.cargo = data.cargo
   if (data.Ativo !== undefined) payload.Ativo = data.Ativo
+  if (data.participa_escala !== undefined) payload.participa_escala = data.participa_escala
   if (data.avatar !== undefined) payload.avatar = data.avatar
   return pb.collection('users').update<UserItem>(id, payload)
 }

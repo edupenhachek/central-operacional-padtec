@@ -75,3 +75,49 @@ export function filterUsersByProject<T extends { projeto?: string[] }>(
   if (!projects) return users
   return users.filter((u) => (u.projeto || []).some((p) => projects.includes(p)))
 }
+
+export const QUICK_FILTER_PILLS = [
+  { value: 'all', label: 'TODOS' },
+  { value: 'BKO', label: 'BKO' },
+  { value: 'COPE', label: 'COPE' },
+  { value: 'NOC', label: 'NOC' },
+] as const
+
+export const ESCALA_STATUS_OPTIONS = [
+  'Horário Normal do Perfil',
+  'FOLGA',
+  'BANCO DE HORAS',
+  'FÉRIAS',
+  'ATESTADO',
+  'TREINAMENTO',
+  'FOLGA COMPENSATÓRIA',
+] as const
+
+export const STATUS_CELL_LABELS: Record<string, string> = {
+  FÉRIAS: 'FÉR',
+  ATESTADO: 'ATE',
+  TREINAMENTO: 'TRE',
+  'BANCO DE HORAS': 'BH',
+  'FOLGA COMPENSATÓRIA': 'FC',
+}
+
+export const STATUS_CELL_COLORS: Record<string, string> = {
+  FÉRIAS: 'text-purple-600 dark:text-purple-400',
+  ATESTADO: 'text-orange-600 dark:text-orange-400',
+  TREINAMENTO: 'text-green-600 dark:text-green-400',
+  'BANCO DE HORAS': 'text-amber-600 dark:text-amber-400',
+  'FOLGA COMPENSATÓRIA': 'text-cyan-600 dark:text-cyan-400',
+}
+
+export const STATUS_CELL_BG: Record<string, string> = {
+  FÉRIAS: 'bg-purple-50 dark:bg-purple-950/20',
+  ATESTADO: 'bg-orange-50 dark:bg-orange-950/20',
+  TREINAMENTO: 'bg-green-50 dark:bg-green-950/20',
+  'BANCO DE HORAS': 'bg-amber-50 dark:bg-amber-950/20',
+  'FOLGA COMPENSATÓRIA': 'bg-cyan-50 dark:bg-cyan-950/20',
+}
+
+export function filterUsersByPill<T extends { projeto?: string[] }>(users: T[], pill: string): T[] {
+  if (pill === 'all') return users
+  return users.filter((u) => (u.projeto || []).includes(pill))
+}

@@ -44,7 +44,7 @@ export function BatchEscalaModal({
   useEffect(() => {
     if (open) {
       getUsers()
-        .then(setUsers)
+        .then((u) => setUsers(u.filter((x) => x.participa_escala !== false)))
         .catch(() => {})
       setUsuarioId('')
       setMonth(defaultMonth)

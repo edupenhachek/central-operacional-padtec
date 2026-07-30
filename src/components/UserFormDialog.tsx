@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
 import { MultiSelect } from '@/components/MultiSelect'
 import type { UserRole } from '@/services/users'
 import type { FieldErrors } from '@/lib/pocketbase/errors'
@@ -35,6 +36,7 @@ interface UserFormDialogProps {
     projeto?: string[]
     horario_trabalho?: string
     cargo?: string
+    participa_escala?: boolean
   } | null
   fieldErrors?: FieldErrors
   loading?: boolean
@@ -48,6 +50,7 @@ interface UserFormDialogProps {
     projeto?: string[]
     horario_trabalho?: string
     cargo?: string
+    participa_escala?: boolean
   }) => void
   onResetPassword?: (email: string) => void
   onChangeEmail?: (userId: string, newEmail: string) => Promise<void>
@@ -76,6 +79,7 @@ export function UserFormDialog({
   const [projeto, setProjeto] = useState<string[]>([])
   const [horarioTrabalho, setHorarioTrabalho] = useState('')
   const [cargo, setCargo] = useState('')
+  const [participaEscala, setParticipaEscala] = useState(true)
   const [emailError, setEmailError] = useState('')
 
   const [showEmailChangeDialog, setShowEmailChangeDialog] = useState(false)
@@ -99,6 +103,7 @@ export function UserFormDialog({
       setProjeto(user?.projeto || [])
       setHorarioTrabalho(user?.horario_trabalho || '')
       setCargo(user?.cargo || '')
+      setParticipaEscala(user?.participa_escala !== false)
       setEmailError('')
       setShowEmailChangeDialog(false)
       setOldEmailInput('')
@@ -155,6 +160,7 @@ export function UserFormDialog({
       projeto,
       horario_trabalho: horarioTrabalho || undefined,
       cargo: cargo.trim() || undefined,
+      participa_escala: participaEscala,
     })
   }
 
@@ -326,6 +332,17 @@ export function UserFormDialog({
             {fieldErrors.role && (
               <p className="text-xs text-red-500 dark:text-red-400">{fieldErrors.role}</p>
             )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="participa_escala"
+              checked={participaEscala}
+              onCheckedChange={(v) => setParticipaEscala(v === true)}
+            />
+            <Label htmlFor="participa_escala" className="text-xs font-semibold cursor-pointer">
+              Participa da Escala de Trabalho
+            </Label>
           </div>
 
           {mode === 'edit' && (
