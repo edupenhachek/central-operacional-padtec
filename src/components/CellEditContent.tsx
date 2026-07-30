@@ -67,7 +67,7 @@ export function CellEditContent({
         turno = 'FOLGA'
         escalaStatus = 'FOLGA'
       } else {
-        turno = ''
+        turno = currentTurno || userHorario || ''
         escalaStatus = status
       }
 
