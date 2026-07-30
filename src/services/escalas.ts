@@ -42,7 +42,15 @@ export interface EscalaRecord {
   Status: string
   observacao?: string
   expand?: {
-    Usuario_ID?: { id: string; name: string; email: string; avatar?: string }
+    Usuario_ID?: {
+      id: string
+      name: string
+      email: string
+      phone?: string
+      projeto?: string[]
+      avatar?: string
+      horario_trabalho?: string
+    }
   }
 }
 

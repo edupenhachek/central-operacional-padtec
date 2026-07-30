@@ -58,7 +58,7 @@ export function OperationScheduleTab({
     setLoading(true)
     try {
       const [u, e] = await Promise.all([
-        getUsers(),
+        getUsers('participa_escala = true'),
         getEscalasForMonth(Number(monthFilter), Number(yearFilter)),
       ])
       setUsers(u)

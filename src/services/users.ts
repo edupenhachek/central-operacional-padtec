@@ -18,9 +18,10 @@ export interface UserItem {
   updated: string
 }
 
-export const getUsers = async (): Promise<UserItem[]> => {
+export const getUsers = async (filter?: string): Promise<UserItem[]> => {
   const records = await pb.collection('users').getFullList({
     sort: 'name',
+    ...(filter ? { filter } : {}),
   })
   return records.map((r) => ({
     id: r.id,

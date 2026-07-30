@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { CellEditContent } from '@/components/CellEditContent'
+import { CollaboratorCell } from '@/components/CollaboratorCell'
+import { ShiftFooterRow } from '@/components/ShiftFooterRow'
 import { cn } from '@/lib/utils'
 import {
   getShiftLabel,
@@ -80,7 +82,7 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
 
   return (
     <div className="overflow-x-auto rounded-lg border border-border">
-      <table className="border-collapse">
+      <table className="border-collapse w-full">
         <thead>
           <tr className="bg-muted/50 dark:bg-slate-800/50">
             <th className="sticky left-0 z-20 bg-muted/50 dark:bg-slate-800/50 px-3 py-2 text-left text-xs font-semibold border-r border-border min-w-[180px]">
@@ -107,13 +109,8 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
         <tbody>
           {users.map((user) => (
             <tr key={user.id} className="hover:bg-muted/20 dark:hover:bg-slate-800/20">
-              <td className="sticky left-0 z-10 bg-card dark:bg-slate-900 px-3 py-2 border-r border-border min-w-[180px]">
-                <div className="text-xs font-semibold text-foreground truncate max-w-[160px]">
-                  {user.name || user.email}
-                </div>
-                <div className="text-[10px] text-muted-foreground truncate max-w-[160px]">
-                  {user.cargo || user.role || '-'}
-                </div>
+              <td className="sticky left-0 z-10 bg-card dark:bg-slate-900 px-2 py-2 border-r border-border min-w-[180px]">
+                <CollaboratorCell user={user} />
               </td>
               {days.map((day) => {
                 const dateStr = formatDateStr(day)
@@ -181,6 +178,7 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
             </tr>
           ))}
         </tbody>
+        <ShiftFooterRow escalas={escalas} days={days} />
       </table>
     </div>
   )
