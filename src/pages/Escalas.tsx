@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { CalendarDays, Users } from 'lucide-react'
+import { CalendarDays, Users, Clock } from 'lucide-react'
 import { MyScheduleTab } from '@/components/MyScheduleTab'
 import { OperationScheduleTab } from '@/components/OperationScheduleTab'
+import { TodayScheduleTab } from '@/components/TodayScheduleTab'
 import { cn } from '@/lib/utils'
 
-type TabKey = 'operacao' | 'minha'
+type TabKey = 'operacao' | 'minha' | 'hoje'
 
 export default function Escalas() {
   const [activeTab, setActiveTab] = useState<TabKey>('operacao')
@@ -15,10 +16,11 @@ export default function Escalas() {
   const tabs: { key: TabKey; label: string; icon: typeof Users }[] = [
     { key: 'operacao', label: 'Escala da Operação', icon: CalendarDays },
     { key: 'minha', label: 'Minha Escala', icon: Users },
+    { key: 'hoje', label: 'Escala HOJE', icon: Clock },
   ]
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-6xl">
+    <div className="space-y-6 animate-fade-in w-full px-4">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Escalas de Trabalho</h1>
         <p className="text-sm text-muted-foreground mt-1">Gerencie os plantões da equipe.</p>
@@ -45,7 +47,9 @@ export default function Escalas() {
         })}
       </div>
 
-      {activeTab === 'operacao' ? (
+      {activeTab === 'hoje' ? (
+        <TodayScheduleTab />
+      ) : activeTab === 'operacao' ? (
         <OperationScheduleTab
           monthFilter={monthFilter}
           yearFilter={yearFilter}
