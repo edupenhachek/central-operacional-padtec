@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Select,
   SelectContent,
@@ -12,31 +12,34 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { getUsers, type UserItem } from '@/services/users'
-import {
-  TURNO_OPTIONS,
-  PATTERN_OPTIONS,
-  generateEscalaDates,
-  batchCreateEscalas,
-} from '@/services/escalas'
-import { extractFieldErrors, type FieldErrors } from '@/lib/pocketbase/errors'
+import { TURNO_OPTIONS } from '@/services/escalas'
+import { generateMonthlySchedule } from '@/services/escala-matrix'
+import { SHIFT_SHORT_LABELS, MONTH_OPTIONS, YEAR_OPTIONS } from '@/lib/escala-utils'
 import { cn } from '@/lib/utils'
 
 interface BatchEscalaModalProps {
   open: boolean
   onClose: () => void
   onSaved: () => void
+  defaultMonth: string
+  defaultYear: string
 }
 
-export function BatchEscalaModal({ open, onClose, onSaved }: BatchEscalaModalProps) {
+export function BatchEscalaModal({
+  open,
+  onClose,
+  onSaved,
+  defaultMonth,
+  defaultYear,
+}: BatchEscalaModalProps) {
   const [usuarioId, setUsuarioId] = useState('')
-  const [dataInicial, setDataInicial] = useState('')
-  const [dataFinal, setDataFinal] = useState('')
-  const [padrao, setPadrao] = useState<string>(PATTERN_OPTIONS[0])
-  const [turno, setTurno] = useState('')
+  const [month, setMonth] = useState(defaultMonth)
+  const [year, setYear] = useState(defaultYear)
+  const [useProfile, setUseProfile] = useState(true)
+  const [turno, setTurno] = useState(TURNO_OPTIONS[0])
   const [users, setUsers] = useState<UserItem[]>([])
   const [loading, setLoading] = useState(false)
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
-  const [validationErrors, setValidationErrors] = useState<Record<string, boolean>>({})
+  const [errors, setErrors] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     if (open) {
@@ -44,65 +47,54 @@ export function BatchEscalaModal({ open, onClose, onSaved }: BatchEscalaModalPro
         .then(setUsers)
         .catch(() => {})
       setUsuarioId('')
-      setDataInicial('')
-      setDataFinal('')
-      setPadrao(PATTERN_OPTIONS[0])
-      setTurno('')
-      setFieldErrors({})
-      setValidationErrors({})
+      setMonth(defaultMonth)
+      setYear(defaultYear)
+      setUseProfile(true)
+      setTurno(TURNO_OPTIONS[0])
+      setErrors({})
     }
-  }, [open])
+  }, [open, defaultMonth, defaultYear])
 
   const selectedUser = useMemo(() => users.find((u) => u.id === usuarioId), [users, usuarioId])
-  const userProjeto = selectedUser?.projeto?.[0] || ''
-
-  const validateForm = () => {
-    const errors: Record<string, boolean> = {}
-    if (!usuarioId) errors.usuarioId = true
-    if (!dataInicial) errors.dataInicial = true
-    if (!dataFinal) errors.dataFinal = true
-    if (!turno) errors.turno = true
-    if (dataInicial && dataFinal && new Date(dataInicial) > new Date(dataFinal)) {
-      errors.dataFinal = true
-    }
-    setValidationErrors(errors)
-    return Object.keys(errors).length === 0
-  }
+  const userProjeto = (selectedUser?.projeto || [])[0] || ''
+  const userHorario = selectedUser?.horario_trabalho || ''
 
   const handleSubmit = async () => {
-    setFieldErrors({})
-    if (!validateForm()) {
+    const errs: Record<string, boolean> = {}
+    if (!usuarioId) errs.usuarioId = true
+    if (!month) errs.month = true
+    if (!year) errs.year = true
+    setErrors(errs)
+    if (Object.keys(errs).length > 0) {
       toast.error('Preencha todos os campos obrigatórios.')
       return
     }
+    if (useProfile && !userHorario) {
+      toast.error('O colaborador não possui horário de trabalho definido.')
+      return
+    }
     if (!userProjeto) {
-      toast.error('O colaborador selecionado não possui projeto definido.')
+      toast.error('O colaborador não possui projeto definido.')
       return
     }
     setLoading(true)
     try {
-      const dates = generateEscalaDates(dataInicial, dataFinal, padrao)
-      if (dates.length === 0) {
-        toast.error('Nenhuma data encontrada no período selecionado.')
-        return
-      }
-      const records = dates.map((date) => ({
-        Data: date,
-        Usuario_ID: usuarioId,
-        Projeto: userProjeto,
-        Turno: turno,
-        Status: 'Previsto',
-      }))
-      const { succeeded, failed } = await batchCreateEscalas(records)
-      if (failed > 0) {
-        toast.warning(`${succeeded} plantões criados, ${failed} falharam.`)
+      const shiftForWeekdays = useProfile ? userHorario : turno
+      const result = await generateMonthlySchedule(
+        usuarioId,
+        Number(month),
+        Number(year),
+        shiftForWeekdays,
+        userProjeto,
+      )
+      if (result.failed > 0) {
+        toast.warning(`${result.succeeded} plantões criados, ${result.failed} falharam.`)
       } else {
-        toast.success(`${succeeded} plantões criados com sucesso!`)
+        toast.success(`${result.succeeded} plantões gerados com sucesso!`)
       }
       onSaved()
       onClose()
-    } catch (err) {
-      setFieldErrors(extractFieldErrors(err))
+    } catch {
       toast.error('Erro ao gerar escala.')
     } finally {
       setLoading(false)
@@ -110,7 +102,7 @@ export function BatchEscalaModal({ open, onClose, onSaved }: BatchEscalaModalPro
   }
 
   const inputCls = 'h-10 text-sm bg-background dark:bg-slate-900/80 border-input'
-  const requiredMark = <span className="text-red-500 ml-0.5">*</span>
+  const reqMark = <span className="text-red-500 ml-0.5">*</span>
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -120,95 +112,95 @@ export function BatchEscalaModal({ open, onClose, onSaved }: BatchEscalaModalPro
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Colaborador {requiredMark}</Label>
+            <Label className="text-xs font-semibold">Colaborador {reqMark}</Label>
             <Select value={usuarioId} onValueChange={setUsuarioId}>
-              <SelectTrigger
-                className={cn(inputCls, validationErrors.usuarioId && 'border-red-500')}
-              >
+              <SelectTrigger className={cn(inputCls, errors.usuarioId && 'border-red-500')}>
                 <SelectValue placeholder="Selecionar" />
               </SelectTrigger>
               <SelectContent>
                 {users.map((u) => (
-                  <SelectItem key={u.id} value={u.id}>
-                    {u.name || u.email}
+                  <SelectItem key={u.id} value={u.id} textValue={u.name || u.email}>
+                    {`${u.name || u.email}${(u.projeto || []).length ? ` (${u.projeto.join('/')})` : ''}`}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {validationErrors.usuarioId && (
-              <p className="text-xs text-red-500">Colaborador é obrigatório.</p>
-            )}
-            {fieldErrors.Usuario_ID && (
-              <p className="text-xs text-red-500">{fieldErrors.Usuario_ID}</p>
-            )}
+            {errors.usuarioId && <p className="text-xs text-red-500">Colaborador é obrigatório.</p>}
           </div>
-
           {userProjeto && (
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Projeto (automático)</Label>
-              <div className="h-10 flex items-center px-3 rounded-md border border-input bg-muted/50 text-sm text-muted-foreground">
-                {userProjeto}
-              </div>
+            <div className="flex gap-3 text-xs text-muted-foreground">
+              <span>
+                Projeto: <strong className="text-foreground">{userProjeto}</strong>
+              </span>
+              {userHorario && (
+                <span>
+                  Horário:{' '}
+                  <strong className="text-foreground">
+                    {SHIFT_SHORT_LABELS[userHorario] || userHorario}
+                  </strong>
+                </span>
+              )}
             </div>
           )}
-
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Data Inicial {requiredMark}</Label>
-              <Input
-                type="date"
-                value={dataInicial}
-                onChange={(e) => setDataInicial(e.target.value)}
-                className={cn(inputCls, validationErrors.dataInicial && 'border-red-500')}
-              />
-              {validationErrors.dataInicial && <p className="text-xs text-red-500">Obrigatória.</p>}
+              <Label className="text-xs font-semibold">Mês {reqMark}</Label>
+              <Select value={month} onValueChange={setMonth}>
+                <SelectTrigger className={cn(inputCls, errors.month && 'border-red-500')}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTH_OPTIONS.map((m) => (
+                    <SelectItem key={m.value} value={m.value}>
+                      {m.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Data Final {requiredMark}</Label>
-              <Input
-                type="date"
-                value={dataFinal}
-                onChange={(e) => setDataFinal(e.target.value)}
-                className={cn(inputCls, validationErrors.dataFinal && 'border-red-500')}
-              />
-              {validationErrors.dataFinal && <p className="text-xs text-red-500">Obrigatória.</p>}
+              <Label className="text-xs font-semibold">Ano {reqMark}</Label>
+              <Select value={year} onValueChange={setYear}>
+                <SelectTrigger className={cn(inputCls, errors.year && 'border-red-500')}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {YEAR_OPTIONS.map((y) => (
+                    <SelectItem key={y} value={y}>
+                      {y}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Padrão de Escala {requiredMark}</Label>
-            <Select value={padrao} onValueChange={setPadrao}>
-              <SelectTrigger className={inputCls}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PATTERN_OPTIONS.map((p) => (
-                  <SelectItem key={p} value={p}>
-                    {p}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="useProfile"
+              checked={useProfile}
+              onCheckedChange={(v) => setUseProfile(v === true)}
+            />
+            <Label htmlFor="useProfile" className="text-xs font-semibold cursor-pointer">
+              Preencher com Horário Padrão do Perfil (5x2)
+            </Label>
           </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Turno {requiredMark}</Label>
-            <Select value={turno} onValueChange={setTurno}>
-              <SelectTrigger className={cn(inputCls, validationErrors.turno && 'border-red-500')}>
-                <SelectValue placeholder="Selecionar" />
-              </SelectTrigger>
-              <SelectContent>
-                {TURNO_OPTIONS.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {validationErrors.turno && <p className="text-xs text-red-500">Turno é obrigatório.</p>}
-            {fieldErrors.Turno && <p className="text-xs text-red-500">{fieldErrors.Turno}</p>}
-          </div>
-
+          {!useProfile && (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Turno para Dias Úteis {reqMark}</Label>
+              <Select value={turno} onValueChange={setTurno}>
+                <SelectTrigger className={inputCls}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TURNO_OPTIONS.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={onClose} className="text-sm">
               Cancelar
