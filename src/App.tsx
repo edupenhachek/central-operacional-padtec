@@ -3,11 +3,13 @@ import { Toaster } from '@/components/ui/toaster'
 import { Toaster as Sonner } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AuthProvider } from '@/hooks/use-auth'
-import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { ProtectedRoute, FirstAccessRoute } from '@/components/ProtectedRoute'
 import Layout from '@/components/Layout'
 
 import Index from '@/pages/Index'
 import Login from '@/pages/Login'
+import ForgotPassword from '@/pages/ForgotPassword'
+import SetNewPassword from '@/pages/SetNewPassword'
 import ValidadorOPS from '@/pages/ValidadorOPS'
 import Documentacao from '@/pages/Documentacao'
 import Treinamentos from '@/pages/Treinamentos'
@@ -26,6 +28,15 @@ const App = () => (
         <Sonner />
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route
+            path="/set-new-password"
+            element={
+              <FirstAccessRoute>
+                <SetNewPassword />
+              </FirstAccessRoute>
+            }
+          />
 
           <Route
             element={

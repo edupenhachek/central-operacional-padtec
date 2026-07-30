@@ -23,11 +23,37 @@ export function ProtectedRoute({
     return <Navigate to="/login" replace />
   }
 
+  if (user?.primeiro_acesso) {
+    return <Navigate to="/set-new-password" replace />
+  }
+
   if (requiredRole) {
     const userRole = user?.role
     if (userRole !== requiredRole && userRole !== 'SUPERADMIN') {
       return <Navigate to="/" replace />
     }
+  }
+
+  return <>{children}</>
+}
+
+export function FirstAccessRoute({ children }: { children: ReactNode }) {
+  const { isAuthenticated, loading, user } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-muted-foreground">
+        Carregando...
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (!user?.primeiro_acesso) {
+    return <Navigate to="/" replace />
   }
 
   return <>{children}</>

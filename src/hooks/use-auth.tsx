@@ -13,12 +13,13 @@ export interface UserRecord {
   projeto?: string[]
   horario_trabalho?: string
   cargo?: string
+  primeiro_acesso?: boolean
 }
 
 interface AuthContextType {
   user: UserRecord | null
   isAuthenticated: boolean
-  signIn: (email: string, password: string) => Promise<{ error: any }>
+  signIn: (email: string, password: string) => Promise<{ error: any; user?: UserRecord }>
   signUp: (email: string, password: string, name?: string) => Promise<{ error: any }>
   signOut: () => void
   loading: boolean
@@ -68,9 +69,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       const res = await pb.collection('users').authWithPassword(email, password)
-      setUser(res.record as unknown as UserRecord)
+      const userRecord = res.record as unknown as UserRecord
+      setUser(userRecord)
       setIsAuthenticated(true)
-      return { error: null }
+      return { error: null, user: userRecord }
     } catch (error) {
       return { error }
     }
