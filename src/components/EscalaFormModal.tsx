@@ -12,20 +12,36 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { getUsers, type UserItem } from '@/services/users'
-import { TURNO_OPTIONS, PROJETO_ESCALA_OPTIONS, createEscala } from '@/services/escalas'
+import {
+  TURNO_OPTIONS,
+  PROJETO_ESCALA_OPTIONS,
+  STATUS_OPTIONS,
+  createEscala,
+  updateEscala,
+} from '@/services/escalas'
 import { extractFieldErrors, type FieldErrors } from '@/lib/pocketbase/errors'
 
 interface EscalaFormModalProps {
   open: boolean
+  mode: 'create' | 'edit'
+  escala?: {
+    id: string
+    Data: string
+    Usuario_ID: string
+    Projeto: string
+    Turno: string
+    Status: string
+  } | null
   onClose: () => void
-  onCreated: () => void
+  onSaved: () => void
 }
 
-export function EscalaFormModal({ open, onClose, onCreated }: EscalaFormModalProps) {
+export function EscalaFormModal({ open, mode, escala, onClose, onSaved }: EscalaFormModalProps) {
   const [data, setData] = useState('')
   const [usuarioId, setUsuarioId] = useState('')
   const [projeto, setProjeto] = useState('')
   const [turno, setTurno] = useState('')
+  const [status, setStatus] = useState('Previsto')
   const [users, setUsers] = useState<UserItem[]>([])
   const [loading, setLoading] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
@@ -35,25 +51,40 @@ export function EscalaFormModal({ open, onClose, onCreated }: EscalaFormModalPro
       getUsers()
         .then(setUsers)
         .catch(() => {})
-      setData('')
-      setUsuarioId('')
-      setProjeto('')
-      setTurno('')
+      if (mode === 'edit' && escala) {
+        setData(escala.Data ? escala.Data.split(' ')[0] : '')
+        setUsuarioId(escala.Usuario_ID || '')
+        setProjeto(escala.Projeto || '')
+        setTurno(escala.Turno || '')
+        setStatus(escala.Status || 'Previsto')
+      } else {
+        setData('')
+        setUsuarioId('')
+        setProjeto('')
+        setTurno('')
+        setStatus('Previsto')
+      }
       setFieldErrors({})
     }
-  }, [open])
+  }, [open, mode, escala])
 
   const handleSubmit = async () => {
     setFieldErrors({})
     setLoading(true)
     try {
-      await createEscala({ Data: data, Usuario_ID: usuarioId, Projeto: projeto, Turno: turno })
-      toast.success('Plantão criado com sucesso!')
-      onCreated()
+      const payload = { Data: data, Usuario_ID: usuarioId, Projeto: projeto, Turno: turno }
+      if (mode === 'edit' && escala) {
+        await updateEscala(escala.id, { ...payload, Status: status })
+        toast.success('Plantão atualizado com sucesso!')
+      } else {
+        await createEscala(payload)
+        toast.success('Plantão criado com sucesso!')
+      }
+      onSaved()
       onClose()
     } catch (err) {
       setFieldErrors(extractFieldErrors(err))
-      toast.error('Erro ao criar plantão.')
+      toast.error(mode === 'edit' ? 'Erro ao atualizar plantão.' : 'Erro ao criar plantão.')
     } finally {
       setLoading(false)
     }
@@ -65,7 +96,9 @@ export function EscalaFormModal({ open, onClose, onCreated }: EscalaFormModalPro
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-md bg-card dark:bg-slate-900 text-card-foreground dark:text-slate-100 border-border">
         <DialogHeader>
-          <DialogTitle className="font-bold">Novo Plantão</DialogTitle>
+          <DialogTitle className="font-bold">
+            {mode === 'edit' ? 'Editar Plantão' : 'Novo Plantão'}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
@@ -128,6 +161,24 @@ export function EscalaFormModal({ open, onClose, onCreated }: EscalaFormModalPro
             </Select>
             {fieldErrors.Turno && <p className="text-xs text-red-500">{fieldErrors.Turno}</p>}
           </div>
+          {mode === 'edit' && (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Status</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className={inputCls}>
+                  <SelectValue placeholder="Selecionar" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {fieldErrors.Status && <p className="text-xs text-red-500">{fieldErrors.Status}</p>}
+            </div>
+          )}
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={onClose} className="text-sm">
               Cancelar
