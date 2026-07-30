@@ -2,8 +2,6 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import pb from '@/lib/pocketbase/client'
-import { getErrorMessage } from '@/lib/pocketbase/errors'
-import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,7 +9,6 @@ import { PadtecEmblem } from '@/components/PadtecLogo'
 import { PadtecBackground } from '@/components/PadtecBackground'
 
 export default function SetNewPassword() {
-  const { user } = useAuth()
   const navigate = useNavigate()
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -44,24 +41,12 @@ export default function SetNewPassword() {
       await pb.collection('users').authRefresh()
       navigate('/', { replace: true })
     } catch (err: any) {
-      try {
-        if (user?.id) {
-          await pb.collection('users').update(user.id, {
-            password,
-            passwordConfirm: confirmPassword,
-            primeiro_acesso: false,
-          })
-          await pb.collection('users').authRefresh()
-          navigate('/', { replace: true })
-          return
-        }
-      } catch (fallbackErr: any) {
-        const msg = getErrorMessage(err) || getErrorMessage(fallbackErr)
-        setErrorMsg(
-          msg && msg !== 'An unexpected error occurred.'
-            ? msg
-            : 'Erro ao atualizar senha. Tente novamente.',
-        )
+      const status = err?.status || 0
+      if (status === 401 || status === 403) {
+        setErrorMsg('Sessão expirada. Faça login novamente.')
+        setTimeout(() => navigate('/login', { replace: true }), 2000)
+      } else {
+        setErrorMsg('Erro ao atualizar senha. Tente novamente.')
       }
     } finally {
       setIsSubmitting(false)

@@ -4,7 +4,7 @@ routerAdd(
   (e) => {
     var userId = e.auth ? e.auth.id : ''
     if (!userId) {
-      return e.unauthorizedError('Autenticação necessária.')
+      return e.unauthorizedError('Sessão expirada. Faça login novamente.')
     }
 
     var body = e.requestInfo().body || {}
@@ -27,7 +27,7 @@ routerAdd(
 
       return e.json(200, { success: true })
     } catch (err) {
-      return e.badRequestError('Erro ao atualizar a senha: ' + (err.message || String(err)))
+      return e.json(500, { error: 'Erro ao atualizar senha. Tente novamente.' })
     }
   },
   $apis.requireAuth(),
