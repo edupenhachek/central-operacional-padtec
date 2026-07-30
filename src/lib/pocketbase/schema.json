@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-30T17:14:58.057Z",
+  "generatedAt": "2026-07-30T18:00:35.899Z",
   "collections": [
     {
       "name": "users",
@@ -120,6 +120,12 @@
         },
         {
           "name": "primeiro_acesso",
+          "type": "bool",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "participa_escala",
           "type": "bool",
           "required": false,
           "system": false
@@ -326,6 +332,12 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "observacao",
+          "type": "text",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": []

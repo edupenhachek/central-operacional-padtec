@@ -40,6 +40,7 @@ export interface EscalaRecord {
   Projeto: string
   Turno: string
   Status: string
+  observacao?: string
   expand?: {
     Usuario_ID?: { id: string; name: string; email: string; avatar?: string }
   }
@@ -97,6 +98,7 @@ export type EscalaBatchRecord = {
   Projeto: string
   Turno: string
   Status: string
+  observacao?: string
 }
 
 export function generateEscalaDates(startDate: string, endDate: string, pattern: string): string[] {
@@ -161,6 +163,7 @@ export const upsertEscala = async (data: {
   Projeto: string
   Turno: string
   Status?: string
+  observacao?: string
 }) => {
   const date = new Date(data.Data + 'T00:00:00')
   const month = date.getMonth()

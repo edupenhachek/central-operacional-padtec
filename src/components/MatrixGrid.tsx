@@ -2,7 +2,15 @@ import { useState, useMemo } from 'react'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { CellEditContent } from '@/components/CellEditContent'
 import { cn } from '@/lib/utils'
-import { getShiftLabel, getDayHeader, isWeekend, formatDateStr } from '@/lib/escala-utils'
+import {
+  getShiftLabel,
+  getDayHeader,
+  isWeekend,
+  formatDateStr,
+  STATUS_CELL_LABELS,
+  STATUS_CELL_COLORS,
+  STATUS_CELL_BG,
+} from '@/lib/escala-utils'
 import type { EscalaRecord } from '@/services/escalas'
 import type { UserItem } from '@/services/users'
 
@@ -27,18 +35,31 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
     return map
   }, [escalas])
 
-  const cellBg = (turno: string, weekend: boolean) =>
+  const cellBg = (turno: string, status: string, weekend: boolean) =>
     cn(
-      weekend && 'bg-muted/40 dark:bg-slate-800/40',
-      turno === 'FOLGA' && 'bg-red-50 dark:bg-red-950/20',
+      weekend && !STATUS_CELL_BG[status] && 'bg-muted/40 dark:bg-slate-800/40',
+      turno === 'FOLGA' && !STATUS_CELL_BG[status] && 'bg-red-50 dark:bg-red-950/20',
+      STATUS_CELL_BG[status] || '',
     )
 
-  const renderCellContent = (turno: string) => {
+  const renderCellContent = (turno: string, status: string) => {
+    if (status && STATUS_CELL_LABELS[status]) {
+      return (
+        <span className={cn('text-[10px] font-bold', STATUS_CELL_COLORS[status])}>
+          {STATUS_CELL_LABELS[status]}
+        </span>
+      )
+    }
     if (!turno) return <span className="text-muted-foreground/40">—</span>
     if (turno === 'FOLGA')
       return <span className="text-[10px] font-bold text-red-600 dark:text-red-400">FOLGA</span>
     return <span className="text-[10px] font-medium text-foreground">{getShiftLabel(turno)}</span>
   }
+
+  const renderObsDot = (observacao: string) =>
+    observacao ? (
+      <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-blue-500" />
+    ) : null
 
   if (users.length === 0) {
     return (
@@ -90,20 +111,29 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
                 const cellKey = `${user.id}_${dateStr}`
                 const escala = escalaMap.get(cellKey)
                 const turno = escala?.Turno || ''
+                const status = escala?.Status || ''
+                const observacao = escala?.observacao || ''
                 const we = isWeekend(day)
                 if (canEdit) {
                   return (
                     <td
                       key={dateStr}
-                      className={cn('p-0 text-center border-r border-border/50', cellBg(turno, we))}
+                      className={cn(
+                        'p-0 text-center border-r border-border/50',
+                        cellBg(turno, status, we),
+                      )}
                     >
                       <Popover
                         open={editKey === cellKey}
                         onOpenChange={(open) => setEditKey(open ? cellKey : null)}
                       >
                         <PopoverTrigger asChild>
-                          <button className="w-full h-10 flex items-center justify-center cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors">
-                            {renderCellContent(turno)}
+                          <button
+                            className="w-full h-10 flex items-center justify-center cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors relative"
+                            title={observacao || undefined}
+                          >
+                            {renderCellContent(turno, status)}
+                            {renderObsDot(observacao)}
                           </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-2" side="bottom" align="center">
@@ -113,6 +143,8 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
                             userHorario={user.horario_trabalho || ''}
                             dateStr={dateStr}
                             currentTurno={turno}
+                            currentStatus={status}
+                            currentObservacao={observacao}
                             onSaved={onCellSaved}
                             onClose={() => setEditKey(null)}
                           />
@@ -126,11 +158,13 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
                     key={dateStr}
                     className={cn(
                       'h-10 px-1 text-center align-middle border-r border-border/50',
-                      cellBg(turno, we),
+                      cellBg(turno, status, we),
                     )}
+                    title={observacao || undefined}
                   >
-                    <div className="flex items-center justify-center h-full">
-                      {renderCellContent(turno)}
+                    <div className="flex items-center justify-center h-full relative">
+                      {renderCellContent(turno, status)}
+                      {renderObsDot(observacao)}
                     </div>
                   </td>
                 )
