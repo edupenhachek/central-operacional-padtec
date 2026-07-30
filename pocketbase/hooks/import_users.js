@@ -1,4 +1,3 @@
-// @deps xlsx@0.18.5
 routerAdd(
   'POST',
   '/backend/v1/import-users',
@@ -14,40 +13,10 @@ routerAdd(
       return e.forbiddenError('Você não tem permissão para importar usuários.')
     }
 
-    var uploadedFiles = e.findUploadedFiles('file')
-    if (!uploadedFiles || uploadedFiles.length === 0) {
-      return e.badRequestError('Nenhum arquivo enviado.')
-    }
-
-    var uploadedFile = uploadedFiles[0]
-    var fileName = (uploadedFile.name || uploadedFile.Name || '').toLowerCase()
-    if (!fileName.endsWith('.xlsx')) {
-      return e.badRequestError('Apenas arquivos .xlsx são suportados.')
-    }
-
-    var XLSX = require('xlsx')
-    var fileBytes = uploadedFile.bytes || uploadedFile.Bytes
-    if (!fileBytes) {
-      return e.badRequestError('Não foi possível ler o conteúdo do arquivo.')
-    }
-
-    var workbook
-    try {
-      workbook = XLSX.read(fileBytes, { type: 'array' })
-    } catch (err) {
-      return e.badRequestError('Erro ao ler o arquivo Excel: ' + String(err))
-    }
-
-    var sheetName = workbook.SheetNames[0]
-    if (!sheetName) {
-      return e.badRequestError('Planilha vazia ou inválida.')
-    }
-
-    var sheet = workbook.Sheets[sheetName]
-    var rows = XLSX.utils.sheet_to_json(sheet, { defval: '' })
-
-    if (!rows || rows.length === 0) {
-      return e.badRequestError('Nenhuma linha de dados encontrada na planilha.')
+    var body = e.requestInfo().body || {}
+    var rows = body.rows
+    if (!rows || !Array.isArray(rows) || rows.length === 0) {
+      return e.badRequestError('Nenhuma linha de dados encontrada.')
     }
 
     for (var i = 0; i < rows.length; i++) {
@@ -122,14 +91,15 @@ routerAdd(
         .filter(function (p) {
           return p.length > 0
         })
+      var result = []
       for (var i = 0; i < parts.length; i++) {
         for (var j = 0; j < validProjetos.length; j++) {
           if (parts[i].toUpperCase() === validProjetos[j].toUpperCase()) {
-            return [validProjetos[j]]
+            result.push(validProjetos[j])
           }
         }
       }
-      return []
+      return result
     }
 
     var created = 0
