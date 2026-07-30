@@ -27,7 +27,7 @@ export const getUsers = async (): Promise<UserItem[]> => {
     email: r.email || '',
     role: r.role as UserRole | undefined,
     phone: r.phone || '',
-    projeto: Array.isArray(r.projeto) ? r.projeto : [],
+    projeto: Array.isArray(r.projeto) ? r.projeto : r.projeto ? [r.projeto] : [],
     horario_trabalho: r.horario_trabalho || '',
     cargo: r.cargo || '',
     Ativo: r.Ativo !== false,

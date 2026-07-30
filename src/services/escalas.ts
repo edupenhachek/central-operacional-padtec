@@ -41,7 +41,7 @@ export interface EscalaRecord {
   Turno: string
   Status: string
   expand?: {
-    Usuario_ID?: { id: string; name: string; email: string }
+    Usuario_ID?: { id: string; name: string; email: string; avatar?: string }
   }
 }
 
@@ -83,3 +83,83 @@ export const updateEscala = (
 ) => pb.collection('escalas').update(id, data)
 
 export const deleteEscala = (id: string) => pb.collection('escalas').delete(id)
+
+export const PATTERN_OPTIONS = [
+  'Personalizado',
+  '5x2 – Folga Seg/Ter',
+  '5x2 – Folga Sáb/Dom',
+  '12x36',
+] as const
+
+export type EscalaBatchRecord = {
+  Data: string
+  Usuario_ID: string
+  Projeto: string
+  Turno: string
+  Status: string
+}
+
+export function generateEscalaDates(startDate: string, endDate: string, pattern: string): string[] {
+  const dates: string[] = []
+  const start = new Date(startDate + 'T00:00:00')
+  const end = new Date(endDate + 'T00:00:00')
+  if (start > end) return dates
+  const current = new Date(start)
+  let isWorkDay = true
+  while (current <= end) {
+    const dow = current.getDay()
+    let include = false
+    switch (pattern) {
+      case 'Personalizado':
+        include = true
+        break
+      case '5x2 – Folga Seg/Ter':
+        include = dow !== 1 && dow !== 2
+        break
+      case '5x2 – Folga Sáb/Dom':
+        include = dow !== 0 && dow !== 6
+        break
+      case '12x36':
+        include = isWorkDay
+        isWorkDay = !isWorkDay
+        break
+    }
+    if (include) {
+      const y = current.getFullYear()
+      const m = String(current.getMonth() + 1).padStart(2, '0')
+      const d = String(current.getDate()).padStart(2, '0')
+      dates.push(`${y}-${m}-${d}`)
+    }
+    current.setDate(current.getDate() + 1)
+  }
+  return dates
+}
+
+export const getEscalasByUser = async (userId: string, month: number, year: number) => {
+  const startMonth = `${year}-${String(month + 1).padStart(2, '0')}-01`
+  const lastDay = new Date(year, month + 1, 0).getDate()
+  const endMonth = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+  return pb.collection('escalas').getFullList({
+    sort: 'Data',
+    expand: 'Usuario_ID',
+    filter: `Usuario_ID = "${userId}" && Data >= "${startMonth}" && Data <= "${endMonth}"`,
+  })
+}
+
+export const getTodayEscalas = async () => {
+  const today = new Date()
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  return pb.collection('escalas').getFullList({
+    filter: `Data >= "${todayStr}" && Data <= "${todayStr}"`,
+    expand: 'Usuario_ID',
+  })
+}
+
+export const batchCreateEscalas = async (records: EscalaBatchRecord[]) => {
+  const results = await Promise.allSettled(
+    records.map((record) => pb.collection('escalas').create(record)),
+  )
+  const succeeded = results.filter((r) => r.status === 'fulfilled').length
+  const failed = results.length - succeeded
+  return { succeeded, failed }
+}
