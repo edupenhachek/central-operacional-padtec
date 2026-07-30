@@ -155,6 +155,31 @@ export const getTodayEscalas = async () => {
   })
 }
 
+export const upsertEscala = async (data: {
+  Data: string
+  Usuario_ID: string
+  Projeto: string
+  Turno: string
+  Status?: string
+}) => {
+  const date = new Date(data.Data + 'T00:00:00')
+  const month = date.getMonth()
+  const year = date.getFullYear()
+  const existing = await pb.collection('escalas').getFullList({
+    filter: `Usuario_ID = "${data.Usuario_ID}" && Data = "${data.Data}"`,
+  })
+  if (existing.length > 0) {
+    return pb.collection('escalas').update(existing[0].id, {
+      ...data,
+      Status: data.Status || 'Previsto',
+    })
+  }
+  return pb.collection('escalas').create({
+    ...data,
+    Status: data.Status || 'Previsto',
+  })
+}
+
 export const batchCreateEscalas = async (records: EscalaBatchRecord[]) => {
   const results = await Promise.allSettled(
     records.map((record) => pb.collection('escalas').create(record)),
