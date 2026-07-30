@@ -57,3 +57,16 @@ export function getRoleOptionsForUser(role?: UserRole | null): UserRole[] {
   if (role === 'SUPERADMIN') return ROLE_OPTIONS
   return ROLE_OPTIONS.filter((r) => r !== 'SUPERADMIN')
 }
+
+export const IMPORT_ALLOWED_ROLES: UserRole[] = [
+  'SUPERADMIN',
+  'ADMIN',
+  'FOCAL NOC',
+  'FOCAL COPE',
+  'FOCAL BKO',
+]
+
+export function canImportUsers(role?: UserRole | null): boolean {
+  if (!role) return false
+  return IMPORT_ALLOWED_ROLES.includes(role)
+}
