@@ -70,3 +70,19 @@ export function canImportUsers(role?: UserRole | null): boolean {
   if (!role) return false
   return IMPORT_ALLOWED_ROLES.includes(role)
 }
+
+const FOCAL_ROLES: UserRole[] = ['FOCAL BKO', 'FOCAL NOC', 'FOCAL COPE']
+
+export function canBatchDelete(role?: UserRole | null): boolean {
+  return role === 'SUPERADMIN'
+}
+
+export function canBatchActivateDeactivate(role?: UserRole | null): boolean {
+  if (!role) return false
+  return role === 'ADMIN' || role === 'SUPERADMIN' || FOCAL_ROLES.includes(role)
+}
+
+export function canBatchExport(role?: UserRole | null): boolean {
+  if (!role) return false
+  return role === 'ADMIN' || role === 'SUPERADMIN' || FOCAL_ROLES.includes(role)
+}

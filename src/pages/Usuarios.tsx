@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import {
   Users,
   UserPlus,
@@ -11,9 +11,12 @@ import {
   Trash2,
   ShieldCheck,
   Upload,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Select,
   SelectContent,
@@ -34,6 +37,8 @@ import {
 import { UserFormDialog } from '@/components/UserFormDialog'
 import { BulkImportDialog } from '@/components/BulkImportDialog'
 import { RolesTab } from '@/components/RolesTab'
+import { BatchActionBar } from '@/components/BatchActionBar'
+import { exportUsersToCSV } from '@/lib/batch-export'
 import {
   getUsers,
   updateUserRole,
@@ -43,6 +48,9 @@ import {
   reactivateUser,
   deleteUserPermanently,
   requestPasswordReset,
+  batchDeactivateUsers,
+  batchActivateUsers,
+  batchDeleteUsers,
   type UserItem,
   type UserRole,
 } from '@/services/users'
@@ -52,10 +60,17 @@ import { extractFieldErrors, getErrorMessage, type FieldErrors } from '@/lib/poc
 import {
   getRoleOptionsForUser,
   canImportUsers,
+  canBatchDelete,
+  canBatchActivateDeactivate,
+  canBatchExport,
   PROJETO_OPTIONS,
   ROLE_OPTIONS,
 } from '@/lib/user-constants'
 import { toast } from 'sonner'
+
+const ITEMS_PER_PAGE = 10
+
+type BatchAction = 'activate' | 'deactivate' | 'delete' | null
 
 export default function Usuarios() {
   const { user: currentUser } = useAuth()
@@ -83,6 +98,11 @@ export default function Usuarios() {
   const [searchTerm, setSearchTerm] = useState('')
   const [projectFilter, setProjectFilter] = useState<string>('Todos')
   const [roleFilter, setRoleFilter] = useState<string>('Todos')
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [currentPage, setCurrentPage] = useState(1)
+  const [batchAction, setBatchAction] = useState<BatchAction>(null)
+  const [batchLoading, setBatchLoading] = useState(false)
 
   const loadUsers = async () => {
     try {
@@ -128,8 +148,58 @@ export default function Usuarios() {
       .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'))
   }, [users, searchTerm, statusFilter, projectFilter, roleFilter])
 
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / ITEMS_PER_PAGE))
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE
+    return filteredUsers.slice(start, start + ITEMS_PER_PAGE)
+  }, [filteredUsers, currentPage])
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(1)
+  }, [totalPages, currentPage])
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set())
+  }, [])
+
+  useEffect(() => {
+    clearSelection()
+    setCurrentPage(1)
+  }, [searchTerm, statusFilter, projectFilter, roleFilter, clearSelection])
+
   const activeCount = useMemo(() => users.filter((u) => u.Ativo !== false).length, [users])
   const inactiveCount = useMemo(() => users.filter((u) => u.Ativo === false).length, [users])
+
+  const allPageSelected =
+    paginatedUsers.length > 0 && paginatedUsers.every((u) => selectedIds.has(u.id))
+  const somePageSelected = paginatedUsers.some((u) => selectedIds.has(u.id)) && !allPageSelected
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (allPageSelected) {
+        paginatedUsers.forEach((u) => next.delete(u.id))
+      } else {
+        paginatedUsers.forEach((u) => next.add(u.id))
+      }
+      return next
+    })
+  }
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const selectedUsers = useMemo(
+    () => users.filter((u) => selectedIds.has(u.id)),
+    [users, selectedIds],
+  )
+  const selectedCount = selectedIds.size
 
   const handleRoleChange = async (id: string, role: UserRole) => {
     if (!isAdmin) {
@@ -223,9 +293,7 @@ export default function Usuarios() {
       loadUsers()
     } catch (err) {
       setEditErrors(extractFieldErrors(err))
-      toast.error('Erro ao atualizar usuário', {
-        description: getErrorMessage(err),
-      })
+      toast.error('Erro ao atualizar usuário', { description: getErrorMessage(err) })
     } finally {
       setSaving(false)
     }
@@ -297,9 +365,7 @@ export default function Usuarios() {
       toast.success(`E-mail de redefinição enviado para ${email}`)
       setResetTargetEmail(null)
     } catch (err) {
-      toast.error('Erro ao solicitar redefinição de senha', {
-        description: getErrorMessage(err),
-      })
+      toast.error('Erro ao solicitar redefinição de senha', { description: getErrorMessage(err) })
     } finally {
       setResetting(false)
     }
@@ -332,7 +398,6 @@ export default function Usuarios() {
       `"${u.Ativo !== false ? 'Ativo' : 'Desativado'}"`,
       `"${u.created ? new Date(u.created).toLocaleDateString('pt-BR') : ''}"`,
     ])
-
     const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
@@ -348,7 +413,57 @@ export default function Usuarios() {
     toast.success('Base de usuários exportada com sucesso!')
   }
 
+  const handleBatchExport = () => {
+    if (selectedCount === 0) return
+    exportUsersToCSV(selectedUsers)
+    toast.success(`${selectedCount} usuário(s) exportado(s) para CSV.`)
+    clearSelection()
+  }
+
+  const handleBatchAction = async () => {
+    if (!batchAction || selectedCount === 0) return
+    const ids = Array.from(selectedIds)
+    setBatchLoading(true)
+    try {
+      let successCount = 0
+      let failCount = 0
+      if (batchAction === 'deactivate') {
+        const results = await batchDeactivateUsers(ids)
+        results.forEach((r) => (r.status === 'fulfilled' ? successCount++ : failCount++))
+      } else if (batchAction === 'activate') {
+        const results = await batchActivateUsers(ids)
+        results.forEach((r) => (r.status === 'fulfilled' ? successCount++ : failCount++))
+      } else if (batchAction === 'delete') {
+        const results = await batchDeleteUsers(ids)
+        results.forEach((r) => (r.status === 'fulfilled' ? successCount++ : failCount++))
+      }
+      const actionLabel =
+        batchAction === 'activate'
+          ? 'ativado(s)'
+          : batchAction === 'deactivate'
+            ? 'desativado(s)'
+            : 'excluído(s)'
+      if (failCount === 0) {
+        toast.success(`${successCount} usuário(s) ${actionLabel} com sucesso.`)
+      } else {
+        toast.warning(
+          `${successCount} concluído(s), ${failCount} falhou/falharam ao ser ${actionLabel}.`,
+        )
+      }
+      setBatchAction(null)
+      clearSelection()
+      loadUsers()
+    } catch (err) {
+      toast.error('Erro na operação em lote', { description: getErrorMessage(err) })
+    } finally {
+      setBatchLoading(false)
+    }
+  }
+
   const isEditingSelf = editUser?.id === currentUser?.id
+  const batchActivateOk = canBatchActivateDeactivate(currentUser?.role)
+  const batchExportOk = canBatchExport(currentUser?.role)
+  const batchDeleteOk = canBatchDelete(currentUser?.role)
 
   return (
     <div className="space-y-6 animate-fade-in max-w-5xl pb-8">
@@ -361,7 +476,6 @@ export default function Usuarios() {
             Controle de colaboradores, permissões e perfis de acesso da Central Operacional.
           </p>
         </div>
-
         <div className="flex items-center gap-2">
           {isSuperAdmin && (
             <Button
@@ -369,29 +483,24 @@ export default function Usuarios() {
               onClick={handleExportCSV}
               className="text-xs font-medium gap-1.5 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
-              <Download className="w-3.5 h-3.5" />
-              Exportar Base (CSV)
+              <Download className="w-3.5 h-3.5" /> Exportar Base (CSV)
             </Button>
           )}
-
           {canImportUsers(currentUser?.role) && activeSubTab === 'users' && (
             <Button
               variant="outline"
               onClick={() => setImportOpen(true)}
               className="text-xs font-medium gap-1.5 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
-              <Upload className="w-3.5 h-3.5" />
-              Importar Usuários
+              <Upload className="w-3.5 h-3.5" /> Importar Usuários
             </Button>
           )}
-
           {isAdmin && activeSubTab === 'users' && (
             <Button
               onClick={() => setCreateOpen(true)}
               className="bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs gap-1.5"
             >
-              <UserPlus className="w-4 h-4" />
-              Novo Usuário
+              <UserPlus className="w-4 h-4" /> Novo Usuário
             </Button>
           )}
         </div>
@@ -407,8 +516,7 @@ export default function Usuarios() {
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
-            <Users className="w-4 h-4" />
-            Usuários
+            <Users className="w-4 h-4" /> Usuários
           </button>
           <button
             onClick={() => setActiveSubTab('roles')}
@@ -418,8 +526,7 @@ export default function Usuarios() {
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
-            <ShieldCheck className="w-4 h-4" />
-            Perfis de Acesso
+            <ShieldCheck className="w-4 h-4" /> Perfis de Acesso
           </button>
         </div>
       )}
@@ -440,7 +547,6 @@ export default function Usuarios() {
                   className="w-full h-9 pl-9 pr-4 rounded-lg border border-input bg-background dark:bg-slate-900/80 text-foreground dark:text-slate-100 text-xs placeholder:text-muted-foreground dark:placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
-
               <div className="flex items-center gap-2 shrink-0">
                 <Select value={projectFilter} onValueChange={setProjectFilter}>
                   <SelectTrigger className="w-32 h-9 text-xs text-foreground dark:text-slate-100 bg-background dark:bg-slate-900/80 border-input">
@@ -464,7 +570,6 @@ export default function Usuarios() {
                     ))}
                   </SelectContent>
                 </Select>
-
                 <Select value={roleFilter} onValueChange={setRoleFilter}>
                   <SelectTrigger className="w-36 h-9 text-xs text-foreground dark:text-slate-100 bg-background dark:bg-slate-900/80 border-input">
                     <SelectValue placeholder="Função" />
@@ -489,7 +594,6 @@ export default function Usuarios() {
                 </Select>
               </div>
             </div>
-
             <div className="flex items-center gap-1.5 bg-muted/50 p-1 rounded-lg border border-border shrink-0 self-start sm:self-auto">
               <button
                 onClick={() => setStatusFilter('ativos')}
@@ -514,12 +618,33 @@ export default function Usuarios() {
             </div>
           </div>
 
+          <BatchActionBar
+            selectedCount={selectedCount}
+            canActivateDeactivate={batchActivateOk}
+            canExport={batchExportOk}
+            canDelete={batchDeleteOk}
+            onClear={clearSelection}
+            onActivate={() => setBatchAction('activate')}
+            onDeactivate={() => setBatchAction('deactivate')}
+            onExport={handleBatchExport}
+            onDelete={() => setBatchAction('delete')}
+          />
+
           <Card className="border-border bg-card dark:bg-slate-900">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground dark:text-slate-100">
-                <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                {statusFilter === 'ativos' ? 'Colaboradores Ativos' : 'Contas Desativadas'}
-              </CardTitle>
+              <div className="flex items-center gap-3">
+                {!loading && paginatedUsers.length > 0 && (
+                  <Checkbox
+                    checked={allPageSelected ? true : somePageSelected ? 'indeterminate' : false}
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="Selecionar todos da página"
+                  />
+                )}
+                <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground dark:text-slate-100">
+                  <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  {statusFilter === 'ativos' ? 'Colaboradores Ativos' : 'Contas Desativadas'}
+                </CardTitle>
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y border-t border-border">
@@ -527,23 +652,28 @@ export default function Usuarios() {
                   <div className="p-8 text-center text-xs text-muted-foreground dark:text-slate-400">
                     Carregando colaboradores...
                   </div>
-                ) : filteredUsers.length === 0 ? (
+                ) : paginatedUsers.length === 0 ? (
                   <div className="p-8 text-center text-xs text-muted-foreground dark:text-slate-400">
                     Nenhum usuário encontrado.
                   </div>
                 ) : (
-                  filteredUsers.map((u) => {
+                  paginatedUsers.map((u) => {
                     const isDeactivated = u.Ativo === false
                     const canPermanentlyDelete = isSuperAdmin || (isAdmin && isDeactivated)
-
+                    const isSelected = selectedIds.has(u.id)
                     return (
                       <div
                         key={u.id}
                         className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                           isDeactivated ? 'bg-amber-50/20 dark:bg-amber-950/10' : ''
-                        }`}
+                        } ${isSelected ? 'ring-1 ring-inset ring-blue-300 dark:ring-blue-800 bg-blue-50/30 dark:bg-blue-950/20' : ''}`}
                       >
                         <div className="flex items-center gap-3">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleSelection(u.id)}
+                            aria-label={`Selecionar ${u.name || u.email}`}
+                          />
                           <div
                             className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
                               isDeactivated
@@ -569,7 +699,6 @@ export default function Usuarios() {
                             </p>
                           </div>
                         </div>
-
                         <div className="flex items-center gap-2 self-end sm:self-auto">
                           <div className="w-36">
                             <Select
@@ -593,7 +722,6 @@ export default function Usuarios() {
                               </SelectContent>
                             </Select>
                           </div>
-
                           {(isAdmin || u.id === currentUser?.id) && (
                             <Button
                               variant="ghost"
@@ -605,7 +733,6 @@ export default function Usuarios() {
                               <Pencil className="w-3.5 h-3.5" />
                             </Button>
                           )}
-
                           {isAdmin && (
                             <Button
                               variant="ghost"
@@ -617,7 +744,6 @@ export default function Usuarios() {
                               <KeyRound className="w-3.5 h-3.5" />
                             </Button>
                           )}
-
                           {isAdmin && (
                             <>
                               {!isDeactivated ? (
@@ -643,7 +769,6 @@ export default function Usuarios() {
                               )}
                             </>
                           )}
-
                           {canPermanentlyDelete && (
                             <Button
                               variant="ghost"
@@ -661,6 +786,33 @@ export default function Usuarios() {
                   })
                 )}
               </div>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+                  <p className="text-xs text-muted-foreground dark:text-slate-400">
+                    Página {currentPage} de {totalPages} • {filteredUsers.length} usuário(s)
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="h-8 w-8"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="h-8 w-8"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -671,7 +823,6 @@ export default function Usuarios() {
         onClose={() => setImportOpen(false)}
         onImported={loadUsers}
       />
-
       <UserFormDialog
         open={createOpen}
         mode="create"
@@ -681,7 +832,6 @@ export default function Usuarios() {
         onSubmit={handleCreate}
         currentUserRole={currentUser?.role}
       />
-
       <UserFormDialog
         open={!!editUser}
         mode="edit"
@@ -791,6 +941,101 @@ export default function Usuarios() {
               className="bg-amber-600 hover:bg-amber-700 text-white"
             >
               {resetting ? 'Enviando...' : 'Enviar E-mail'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={batchAction === 'activate'}
+        onOpenChange={(open) => !open && !batchLoading && setBatchAction(null)}
+      >
+        <AlertDialogContent className="bg-card dark:bg-slate-900 text-card-foreground dark:text-slate-100 border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground dark:text-slate-100">
+              Ativar Usuários em Lote
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground dark:text-slate-300">
+              Deseja realmente ativar os {selectedCount} usuário(s) selecionado(s)?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={batchLoading}
+              className="dark:border-slate-700 dark:text-slate-200"
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBatchAction}
+              disabled={batchLoading}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              {batchLoading ? 'Ativando...' : 'Sim, ativar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={batchAction === 'deactivate'}
+        onOpenChange={(open) => !open && !batchLoading && setBatchAction(null)}
+      >
+        <AlertDialogContent className="bg-card dark:bg-slate-900 text-card-foreground dark:text-slate-100 border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground dark:text-slate-100">
+              Desativar Usuários em Lote
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground dark:text-slate-300">
+              Deseja realmente desativar os {selectedCount} usuário(s) selecionado(s)? Os usuários
+              não conseguirão realizar login até serem reativados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={batchLoading}
+              className="dark:border-slate-700 dark:text-slate-200"
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBatchAction}
+              disabled={batchLoading}
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              {batchLoading ? 'Desativando...' : 'Sim, desativar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={batchAction === 'delete'}
+        onOpenChange={(open) => !open && !batchLoading && setBatchAction(null)}
+      >
+        <AlertDialogContent className="bg-card dark:bg-slate-900 text-card-foreground dark:text-slate-100 border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground dark:text-slate-100 text-red-600 dark:text-red-400">
+              Excluir Usuários em Lote
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground dark:text-slate-300">
+              Deseja realmente excluir permanentemente os {selectedCount} usuário(s) selecionado(s)?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={batchLoading}
+              className="dark:border-slate-700 dark:text-slate-200"
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBatchAction}
+              disabled={batchLoading}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {batchLoading ? 'Excluindo...' : 'Sim, excluir'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

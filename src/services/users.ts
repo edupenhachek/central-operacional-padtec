@@ -104,3 +104,12 @@ export const deleteUserPermanently = (id: string) => pb.collection('users').dele
 
 export const requestPasswordReset = (email: string) =>
   pb.collection('users').requestPasswordReset(email)
+
+export const batchDeactivateUsers = (ids: string[]) =>
+  Promise.allSettled(ids.map((id) => deactivateUser(id)))
+
+export const batchActivateUsers = (ids: string[]) =>
+  Promise.allSettled(ids.map((id) => reactivateUser(id)))
+
+export const batchDeleteUsers = (ids: string[]) =>
+  Promise.allSettled(ids.map((id) => deleteUserPermanently(id)))
