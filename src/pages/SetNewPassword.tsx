@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
 import pb from '@/lib/pocketbase/client'
+import { toast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -38,8 +39,13 @@ export default function SetNewPassword() {
         headers: { 'Content-Type': 'application/json' },
       })
 
-      await pb.collection('users').authRefresh()
-      navigate('/', { replace: true })
+      pb.authStore.clear()
+      toast({
+        title: 'Senha atualizada com sucesso! Redirecionando...',
+        className:
+          'bg-green-50 dark:bg-green-950/40 border-green-200 dark:border-green-900 text-green-700 dark:text-green-400',
+      })
+      setTimeout(() => navigate('/login', { replace: true }), 2000)
     } catch (err: any) {
       const status = err?.status || 0
       if (status === 401 || status === 403) {
