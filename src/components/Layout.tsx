@@ -315,7 +315,7 @@ export default function Layout() {
           </div>
         </div>
 
-        <main className="flex-1 lg:p-6 p-4 overflow-y-auto max-w-7xl mx-auto w-full flex flex-col min-h-0">
+        <main className="flex-1 lg:p-6 p-4 overflow-y-auto w-full flex flex-col min-h-0">
           {tabs.length === 0 ? (
             <div className="flex items-center justify-center h-full text-sm text-muted-foreground dark:text-slate-400">
               Nenhuma aba aberta. Clique em um item do menu para começar.
