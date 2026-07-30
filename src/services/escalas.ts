@@ -64,10 +64,11 @@ export const createEscala = (data: {
   Usuario_ID: string
   Projeto: string
   Turno: string
+  Status?: string
 }) =>
   pb.collection('escalas').create({
     ...data,
-    Status: 'Previsto',
+    Status: data.Status || 'Previsto',
   })
 
 export const updateEscala = (
