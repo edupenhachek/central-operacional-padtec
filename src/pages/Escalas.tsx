@@ -63,8 +63,8 @@ export default function Escalas() {
   const [deleteTarget, setDeleteTarget] = useState<EscalaRecord | null>(null)
   const [deleting, setDeleting] = useState(false)
 
-  const [monthFilter, setMonthFilter] = useState<string>('all')
-  const [yearFilter, setYearFilter] = useState<string>('all')
+  const [monthFilter, setMonthFilter] = useState<string>(String(new Date().getMonth()))
+  const [yearFilter, setYearFilter] = useState<string>(String(new Date().getFullYear()))
   const [projetoFilter, setProjetoFilter] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -142,7 +142,7 @@ export default function Escalas() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Escalas de Trabalho</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gerencie os plantões da sua equipe.</p>
+          <p className="text-sm text-muted-foreground mt-1">Gerencie os plantões da equipe.</p>
         </div>
         {canManage && (
           <Button

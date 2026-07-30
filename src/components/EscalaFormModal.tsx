@@ -20,6 +20,7 @@ import {
   updateEscala,
 } from '@/services/escalas'
 import { extractFieldErrors, type FieldErrors } from '@/lib/pocketbase/errors'
+import { cn } from '@/lib/utils'
 
 interface EscalaFormModalProps {
   open: boolean
@@ -45,6 +46,7 @@ export function EscalaFormModal({ open, mode, escala, onClose, onSaved }: Escala
   const [users, setUsers] = useState<UserItem[]>([])
   const [loading, setLoading] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+  const [validationErrors, setValidationErrors] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     if (open) {
@@ -65,11 +67,27 @@ export function EscalaFormModal({ open, mode, escala, onClose, onSaved }: Escala
         setStatus('Previsto')
       }
       setFieldErrors({})
+      setValidationErrors({})
     }
   }, [open, mode, escala])
 
+  const validateForm = () => {
+    const errors: Record<string, boolean> = {}
+    if (!data) errors.data = true
+    if (!usuarioId) errors.usuarioId = true
+    if (!projeto) errors.projeto = true
+    if (!turno) errors.turno = true
+    if (!status) errors.status = true
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
   const handleSubmit = async () => {
     setFieldErrors({})
+    if (!validateForm()) {
+      toast.error('Preencha todos os campos obrigatórios.')
+      return
+    }
     setLoading(true)
     try {
       const payload = { Data: data, Usuario_ID: usuarioId, Projeto: projeto, Turno: turno }
@@ -77,7 +95,7 @@ export function EscalaFormModal({ open, mode, escala, onClose, onSaved }: Escala
         await updateEscala(escala.id, { ...payload, Status: status })
         toast.success('Plantão atualizado com sucesso!')
       } else {
-        await createEscala(payload)
+        await createEscala({ ...payload, Status: status })
         toast.success('Plantão criado com sucesso!')
       }
       onSaved()
@@ -91,6 +109,7 @@ export function EscalaFormModal({ open, mode, escala, onClose, onSaved }: Escala
   }
 
   const inputCls = 'h-10 text-sm bg-background dark:bg-slate-900/80 border-input'
+  const requiredMark = <span className="text-red-500 ml-0.5">*</span>
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -102,19 +121,22 @@ export function EscalaFormModal({ open, mode, escala, onClose, onSaved }: Escala
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Data</Label>
+            <Label className="text-xs font-semibold">Data {requiredMark}</Label>
             <Input
               type="date"
               value={data}
               onChange={(e) => setData(e.target.value)}
-              className={inputCls}
+              className={cn(inputCls, validationErrors.data && 'border-red-500')}
             />
+            {validationErrors.data && <p className="text-xs text-red-500">Data é obrigatória.</p>}
             {fieldErrors.Data && <p className="text-xs text-red-500">{fieldErrors.Data}</p>}
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Usuário</Label>
+            <Label className="text-xs font-semibold">Usuário {requiredMark}</Label>
             <Select value={usuarioId} onValueChange={setUsuarioId}>
-              <SelectTrigger className={inputCls}>
+              <SelectTrigger
+                className={cn(inputCls, validationErrors.usuarioId && 'border-red-500')}
+              >
                 <SelectValue placeholder="Selecionar" />
               </SelectTrigger>
               <SelectContent>
@@ -125,14 +147,17 @@ export function EscalaFormModal({ open, mode, escala, onClose, onSaved }: Escala
                 ))}
               </SelectContent>
             </Select>
+            {validationErrors.usuarioId && (
+              <p className="text-xs text-red-500">Usuário é obrigatório.</p>
+            )}
             {fieldErrors.Usuario_ID && (
               <p className="text-xs text-red-500">{fieldErrors.Usuario_ID}</p>
             )}
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Projeto</Label>
+            <Label className="text-xs font-semibold">Projeto {requiredMark}</Label>
             <Select value={projeto} onValueChange={setProjeto}>
-              <SelectTrigger className={inputCls}>
+              <SelectTrigger className={cn(inputCls, validationErrors.projeto && 'border-red-500')}>
                 <SelectValue placeholder="Selecionar" />
               </SelectTrigger>
               <SelectContent>
@@ -143,12 +168,15 @@ export function EscalaFormModal({ open, mode, escala, onClose, onSaved }: Escala
                 ))}
               </SelectContent>
             </Select>
+            {validationErrors.projeto && (
+              <p className="text-xs text-red-500">Projeto é obrigatório.</p>
+            )}
             {fieldErrors.Projeto && <p className="text-xs text-red-500">{fieldErrors.Projeto}</p>}
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Turno</Label>
+            <Label className="text-xs font-semibold">Turno {requiredMark}</Label>
             <Select value={turno} onValueChange={setTurno}>
-              <SelectTrigger className={inputCls}>
+              <SelectTrigger className={cn(inputCls, validationErrors.turno && 'border-red-500')}>
                 <SelectValue placeholder="Selecionar" />
               </SelectTrigger>
               <SelectContent>
@@ -159,26 +187,28 @@ export function EscalaFormModal({ open, mode, escala, onClose, onSaved }: Escala
                 ))}
               </SelectContent>
             </Select>
+            {validationErrors.turno && <p className="text-xs text-red-500">Turno é obrigatório.</p>}
             {fieldErrors.Turno && <p className="text-xs text-red-500">{fieldErrors.Turno}</p>}
           </div>
-          {mode === 'edit' && (
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Status</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className={inputCls}>
-                  <SelectValue placeholder="Selecionar" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {fieldErrors.Status && <p className="text-xs text-red-500">{fieldErrors.Status}</p>}
-            </div>
-          )}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Status {requiredMark}</Label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className={cn(inputCls, validationErrors.status && 'border-red-500')}>
+                <SelectValue placeholder="Selecionar" />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {validationErrors.status && (
+              <p className="text-xs text-red-500">Status é obrigatório.</p>
+            )}
+            {fieldErrors.Status && <p className="text-xs text-red-500">{fieldErrors.Status}</p>}
+          </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={onClose} className="text-sm">
               Cancelar

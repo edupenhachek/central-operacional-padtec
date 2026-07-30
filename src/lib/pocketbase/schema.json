@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-30T15:49:13.914Z",
+  "generatedAt": "2026-07-30T16:02:04.677Z",
   "collections": [
     {
       "name": "users",
@@ -697,6 +697,72 @@
           "required": false,
           "system": false,
           "selectValues": ["daily", "milestone"]
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": []
+    },
+    {
+      "name": "challenges",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != '' && (@request.auth.role = 'ADMIN' || @request.auth.role = 'SUPERADMIN')",
+        "view": "@request.auth.id != '' && (@request.auth.role = 'ADMIN' || @request.auth.role = 'SUPERADMIN')",
+        "create": "@request.auth.id != '' && (@request.auth.role = 'ADMIN' || @request.auth.role = 'SUPERADMIN')",
+        "update": "@request.auth.id != '' && (@request.auth.role = 'ADMIN' || @request.auth.role = 'SUPERADMIN')",
+        "delete": "@request.auth.id != '' && (@request.auth.role = 'ADMIN' || @request.auth.role = 'SUPERADMIN')"
+      },
+      "fields": [
+        {
+          "name": "title",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "type",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["speaking", "writing"]
+        },
+        {
+          "name": "level",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["A1 Starter", "A2 Básico", "B1 Intermediário"]
+        },
+        {
+          "name": "instruction",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "content",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "correct_answer",
+          "type": "text",
+          "required": true,
+          "system": false
         },
         {
           "name": "created",
