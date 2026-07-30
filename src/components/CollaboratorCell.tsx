@@ -5,11 +5,11 @@ import { cn } from '@/lib/utils'
 import {
   getCollaboratorBadgeLabel,
   getProjectBadgeLabel,
-  getShiftLabel,
   COLLAB_BADGE_COLORS,
   PROJECT_BADGE_COLORS,
   getTeamsUrl,
 } from '@/lib/collab-utils'
+import { getShiftLabel } from '@/lib/escala-utils'
 import type { UserItem } from '@/services/users'
 
 interface CollaboratorCellProps {

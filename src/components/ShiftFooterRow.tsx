@@ -1,4 +1,5 @@
-import { formatDateStr, getShiftCountsPerDay } from '@/lib/collab-utils'
+import { getShiftCountsPerDay } from '@/lib/collab-utils'
+import { formatDateStr } from '@/lib/escala-utils'
 import type { EscalaRecord } from '@/services/escalas'
 
 interface ShiftFooterRowProps {

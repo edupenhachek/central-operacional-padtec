@@ -5,12 +5,8 @@ import { getTodayEscalas, type EscalaRecord } from '@/services/escalas'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
-import {
-  getShiftLabel,
-  getProjectBadgeLabel,
-  PROJECT_BADGE_COLORS,
-  getTeamsUrl,
-} from '@/lib/collab-utils'
+import { getProjectBadgeLabel, PROJECT_BADGE_COLORS, getTeamsUrl } from '@/lib/collab-utils'
+import { getShiftLabel } from '@/lib/escala-utils'
 import { cn } from '@/lib/utils'
 
 interface TodayUser {
