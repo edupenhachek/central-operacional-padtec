@@ -4,7 +4,7 @@ onRecordAfterUpdateSuccess((e) => {
 
   var oldStatus = e.record.original().getString('Status')
   var newStatus = e.record.getString('Status')
-  var isVacation = newStatus === 'FÉRIAS' || newStatus === 'Férias'
+  var isVacation = newStatus === 'FÉRIAS' || newStatus === 'Férias' || newStatus === 'Aprovado' || newStatus === 'Aprovada'
 
   if (oldStatus !== newStatus && isVacation) return e.next()
   if (isVacation) return e.next()

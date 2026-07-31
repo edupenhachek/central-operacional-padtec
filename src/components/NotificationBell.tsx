@@ -6,7 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/use-auth'
 import { useRealtime } from '@/hooks/use-realtime'
-import { getNotifications, markAllAsRead, type NotificationRecord } from '@/services/notifications'
+import { getNotifications, markAllAsRead, markAsRead, type NotificationRecord } from '@/services/notifications'
 import { cn } from '@/lib/utils'
 
 const TYPE_CONFIG: Record<string, { icon: typeof Bell; color: string; bg: string }> = {
@@ -32,11 +32,11 @@ function formatRelativeTime(dateStr: string): string {
   const diffMs = Date.now() - date.getTime()
   const diffMin = Math.floor(diffMs / 60000)
   if (diffMin < 1) return 'agora'
-  if (diffMin < 60) return `${diffMin}min atrás`
+  if (diffMin < 60) return `há ${diffMin} min`
   const diffH = Math.floor(diffMin / 60)
-  if (diffH < 24) return `${diffH}h atrás`
+  if (diffH < 24) return `há ${diffH} h`
   const diffD = Math.floor(diffH / 24)
-  if (diffD < 7) return `${diffD}d atrás`
+  if (diffD < 7) return `há ${diffD} d`
   return date.toLocaleDateString('pt-BR')
 }
 
@@ -80,6 +80,13 @@ export function NotificationBell() {
   const handleMarkAllRead = useCallback(async () => {
     await markAllAsRead()
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+  }, [])
+
+  const handleItemClick = useCallback(async (n: NotificationRecord) => {
+    if (!n.read) {
+      await markAsRead(n.id)
+      setNotifications((prev) => prev.map((item) => (item.id === n.id ? { ...item, read: true } : item)))
+    }
   }, [])
 
   if (!user) return null
@@ -132,8 +139,9 @@ export function NotificationBell() {
                 return (
                   <div
                     key={n.id}
+                    onClick={() => handleItemClick(n)}
                     className={cn(
-                      'flex gap-3 px-4 py-3 transition-colors hover:bg-muted/50',
+                      'flex gap-3 px-4 py-3 transition-colors hover:bg-muted/50 cursor-pointer',
                       !n.read && 'bg-blue-50/50 dark:bg-blue-950/20',
                     )}
                   >

@@ -6,7 +6,7 @@ onRecordAfterCreateSuccess((e) => {
   var data = e.record.getString('Data')
   var turno = e.record.getString('Turno')
   var projeto = e.record.getString('Projeto')
-  var isVacation = status === 'FÉRIAS' || status === 'Férias'
+  var isVacation = status === 'FÉRIAS' || status === 'Férias' || status === 'Aprovado' || status === 'Aprovada'
 
   var title, content, type
   if (isVacation) {
