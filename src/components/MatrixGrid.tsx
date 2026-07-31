@@ -5,7 +5,6 @@ import { CollaboratorCell } from '@/components/CollaboratorCell'
 import { ShiftFooterRow } from '@/components/ShiftFooterRow'
 import { cn } from '@/lib/utils'
 import {
-  getShiftLabel,
   getDayHeader,
   isWeekend,
   formatDateStr,
@@ -16,6 +15,7 @@ import {
   SHIFT_CELL_COLOR,
   WEEKEND_HEADER_CLS,
   WEEKEND_CELL_BG,
+  sortUsersBySchedule,
 } from '@/lib/escala-utils'
 import type { EscalaRecord } from '@/services/escalas'
 import type { UserItem } from '@/services/users'
@@ -39,6 +39,8 @@ export function MatrixGrid({
 }: MatrixGridProps) {
   const [editKey, setEditKey] = useState<string | null>(null)
 
+  const sortedUsers = useMemo(() => sortUsersBySchedule(users), [users])
+
   const escalaMap = useMemo(() => {
     const map = new Map<string, EscalaRecord>()
     for (const e of escalas) {
@@ -57,6 +59,21 @@ export function MatrixGrid({
     return ''
   }
 
+  const getCellTitle = (turno: string, status: string, observacao: string, userHorario: string) => {
+    const parts: string[] = []
+    if (status && STATUS_CELL_LABELS[status]) {
+      parts.push(status)
+    } else if (turno === 'FOLGA') {
+      parts.push('FOLGA')
+    } else if (turno) {
+      parts.push(turno)
+    } else if (userHorario) {
+      parts.push(userHorario)
+    }
+    if (observacao) parts.push(observacao)
+    return parts.length > 0 ? parts.join(' — ') : undefined
+  }
+
   const renderCellContent = (turno: string, status: string) => {
     if (status && STATUS_CELL_LABELS[status]) {
       return (
@@ -68,11 +85,7 @@ export function MatrixGrid({
     if (!turno) return <span className="text-muted-foreground/40">—</span>
     if (turno === 'FOLGA')
       return <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400">FOLGA</span>
-    return (
-      <span className={cn('text-[10px] font-medium', SHIFT_CELL_COLOR)}>
-        {getShiftLabel(turno)}
-      </span>
-    )
+    return <span className={cn('text-[10px] font-medium', SHIFT_CELL_COLOR)}>T</span>
   }
 
   const renderObsDot = (observacao: string) =>
@@ -80,7 +93,7 @@ export function MatrixGrid({
       <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-blue-500" />
     ) : null
 
-  if (users.length === 0) {
+  if (sortedUsers.length === 0) {
     return (
       <p className="text-sm text-muted-foreground text-center py-8">
         Nenhum colaborador encontrado.
@@ -92,11 +105,11 @@ export function MatrixGrid({
     <div className="overflow-x-auto rounded-lg border border-border">
       <table className="border-collapse w-full">
         <thead>
-          <tr className="bg-muted/50 dark:bg-slate-800/50">
-            <th className="sticky left-0 z-20 bg-muted/50 dark:bg-slate-800/50 px-3 py-1.5 text-left text-xs font-semibold border-r border-border min-w-[160px]">
+          <tr>
+            <th className="sticky left-0 top-0 z-20 w-[260px] min-w-[260px] bg-card px-3 py-1.5 text-left text-xs font-semibold border-r border-border">
               Colaborador
             </th>
-            <th className="px-2 py-1.5 text-center text-[10px] font-semibold border-r border-border/50 min-w-[110px]">
+            <th className="sticky left-[260px] top-0 z-20 w-[140px] min-w-[140px] bg-card px-2 py-1.5 text-center text-[10px] font-semibold border-r border-border">
               Horário
             </th>
             {days.map((day) => {
@@ -106,7 +119,7 @@ export function MatrixGrid({
                 <th
                   key={d}
                   className={cn(
-                    'px-1 py-1.5 text-center text-[10px] font-semibold border-r border-border/50 min-w-[42px]',
+                    'sticky top-0 z-20 bg-muted dark:bg-slate-800 px-1 py-1.5 text-center text-[10px] font-semibold border-r border-border/50 min-w-[42px]',
                     we && WEEKEND_HEADER_CLS,
                   )}
                 >
@@ -118,12 +131,12 @@ export function MatrixGrid({
           </tr>
         </thead>
         <tbody>
-          {users.map((user) => (
+          {sortedUsers.map((user) => (
             <tr key={user.id} className="hover:bg-muted/20 dark:hover:bg-slate-800/20">
-              <td className="sticky left-0 z-10 bg-card dark:bg-slate-900 px-2 py-1 border-r border-border min-w-[160px]">
+              <td className="sticky left-0 z-20 w-[260px] min-w-[260px] bg-card px-2 py-1 border-r border-border">
                 <CollaboratorCell user={user} />
               </td>
-              <td className="px-2 py-1 text-center text-[10px] text-muted-foreground border-r border-border/50 min-w-[110px] align-middle">
+              <td className="sticky left-[260px] z-20 w-[140px] min-w-[140px] bg-card px-2 py-1 text-center text-[10px] text-muted-foreground border-r border-border align-middle">
                 {user.horario_trabalho || '—'}
               </td>
               {days.map((day) => {
@@ -134,6 +147,12 @@ export function MatrixGrid({
                 const status = escala?.Status || ''
                 const observacao = escala?.observacao || ''
                 const we = isWeekend(day)
+                const cellTitle = getCellTitle(
+                  turno,
+                  status,
+                  observacao,
+                  user.horario_trabalho || '',
+                )
                 if (canEdit) {
                   return (
                     <td
@@ -150,7 +169,7 @@ export function MatrixGrid({
                         <PopoverTrigger asChild>
                           <button
                             className="w-full h-9 flex items-center justify-center cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors relative"
-                            title={observacao || undefined}
+                            title={cellTitle}
                           >
                             {renderCellContent(turno, status)}
                             {renderObsDot(observacao)}
@@ -180,7 +199,7 @@ export function MatrixGrid({
                       'h-9 px-1 text-center align-middle border-r border-border/50',
                       cellBg(turno, status, we),
                     )}
-                    title={observacao || undefined}
+                    title={cellTitle}
                   >
                     <div className="flex items-center justify-center h-full relative">
                       {renderCellContent(turno, status)}

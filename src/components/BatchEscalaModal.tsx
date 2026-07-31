@@ -3,7 +3,6 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Select,
   SelectContent,
@@ -35,7 +34,7 @@ export function BatchEscalaModal({
   const [usuarioId, setUsuarioId] = useState('')
   const [month, setMonth] = useState(defaultMonth)
   const [year, setYear] = useState(defaultYear)
-  const [useProfile, setUseProfile] = useState(true)
+  const [generationMode, setGenerationMode] = useState('fixo-5x2')
   const [turno, setTurno] = useState(TURNO_OPTIONS[0])
   const [users, setUsers] = useState<UserItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -49,7 +48,7 @@ export function BatchEscalaModal({
       setUsuarioId('')
       setMonth(defaultMonth)
       setYear(defaultYear)
-      setUseProfile(true)
+      setGenerationMode('fixo-5x2')
       setTurno(TURNO_OPTIONS[0])
       setErrors({})
     }
@@ -69,7 +68,7 @@ export function BatchEscalaModal({
       toast.error('Preencha todos os campos obrigatórios.')
       return
     }
-    if (useProfile && !userHorario) {
+    if (generationMode === 'fixo-5x2' && !userHorario) {
       toast.error('O colaborador não possui horário de trabalho definido.')
       return
     }
@@ -79,7 +78,7 @@ export function BatchEscalaModal({
     }
     setLoading(true)
     try {
-      const shiftForWeekdays = useProfile ? userHorario : turno
+      const shiftForWeekdays = generationMode === 'fixo-5x2' ? userHorario : turno
       const result = await generateMonthlySchedule(
         usuarioId,
         Number(month),
@@ -174,17 +173,24 @@ export function BatchEscalaModal({
               </Select>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="useProfile"
-              checked={useProfile}
-              onCheckedChange={(v) => setUseProfile(v === true)}
-            />
-            <Label htmlFor="useProfile" className="text-xs font-semibold cursor-pointer">
-              Preencher com Horário Padrão do Perfil (5x2)
-            </Label>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Modo de Geração {reqMark}</Label>
+            <Select value={generationMode} onValueChange={setGenerationMode}>
+              <SelectTrigger className={inputCls}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="fixo-5x2">Fixo / 5x2 Padrão</SelectItem>
+                <SelectItem value="personalizado">Turno Personalizado</SelectItem>
+              </SelectContent>
+            </Select>
+            {generationMode === 'fixo-5x2' && userHorario && (
+              <p className="text-[10px] text-muted-foreground">
+                Horário do perfil: {SHIFT_SHORT_LABELS[userHorario] || userHorario}
+              </p>
+            )}
           </div>
-          {!useProfile && (
+          {generationMode === 'personalizado' && (
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">Turno para Dias Úteis {reqMark}</Label>
               <Select value={turno} onValueChange={setTurno}>

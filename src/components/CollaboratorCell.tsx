@@ -27,7 +27,7 @@ export function CollaboratorCell({ user }: CollaboratorCellProps) {
     <Popover>
       <PopoverTrigger asChild>
         <button className="text-left w-full cursor-pointer hover:bg-muted/30 rounded px-1 py-0.5 transition-colors">
-          <div className="text-xs font-semibold text-foreground truncate max-w-[160px]">
+          <div className="text-xs font-semibold text-foreground truncate max-w-[240px]">
             {user.name || user.email}
           </div>
           {badgeText && (
