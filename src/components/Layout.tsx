@@ -52,6 +52,7 @@ export default function Layout() {
   const navItems = [
     { label: 'Dashboard', path: '/', icon: LayoutDashboard },
     { label: 'Escalas', path: '/escalas', icon: CalendarDays },
+    { label: 'Transbordo', path: '/transbordo', icon: CalendarDays },
     { label: 'Documentação', path: '/documentacao', icon: FileText },
     { label: 'Treinamentos', path: '/treinamentos', icon: GraduationCap },
     { label: 'Gutenberg AI', path: '/gutenberg', icon: BrainCircuit },

@@ -6,7 +6,13 @@ onRecordAfterUpdateSuccess((e) => {
   var newStatus = e.record.getString('Status')
 
   if (oldStatus === newStatus) return e.next()
-  if (newStatus !== 'FÉRIAS' && newStatus !== 'Férias' && newStatus !== 'Aprovado' && newStatus !== 'Aprovada') return e.next()
+  if (
+    newStatus !== 'FÉRIAS' &&
+    newStatus !== 'Férias' &&
+    newStatus !== 'Aprovado' &&
+    newStatus !== 'Aprovada'
+  )
+    return e.next()
 
   var data = e.record.getString('Data')
 
