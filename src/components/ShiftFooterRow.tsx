@@ -13,10 +13,10 @@ export function ShiftFooterRow({ escalas, days }: ShiftFooterRowProps) {
   return (
     <tfoot className="bg-muted/50 dark:bg-slate-800/50 border-t-2 border-border">
       <tr>
-        <th className="sticky left-0 z-20 bg-muted dark:bg-slate-800 px-3 py-1.5 text-left text-xs font-semibold border-r border-border min-w-[160px]">
+        <th className="sticky left-0 z-20 w-[260px] min-w-[260px] bg-muted/90 dark:bg-slate-800 px-3 py-1.5 text-left text-xs font-bold border-r border-border">
           Total/dia
         </th>
-        <th className="sticky left-[160px] z-20 bg-muted dark:bg-slate-800 px-2 py-1.5 text-center text-[10px] font-semibold border-r border-border/50 min-w-[110px]">
+        <th className="sticky left-[260px] z-20 w-[140px] min-w-[140px] bg-muted/90 dark:bg-slate-800 px-2 py-1.5 text-center text-[10px] font-semibold border-r-2 border-slate-300 dark:border-slate-700">
           —
         </th>
         {days.map((day) => {

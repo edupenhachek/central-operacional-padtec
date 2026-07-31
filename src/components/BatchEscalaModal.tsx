@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -10,32 +11,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { MultiSelect } from '@/components/MultiSelect'
 import { getUsers, type UserItem } from '@/services/users'
-import { TURNO_OPTIONS } from '@/services/escalas'
-import { generateMonthlySchedule } from '@/services/escala-matrix'
-import { SHIFT_SHORT_LABELS, MONTH_OPTIONS, YEAR_OPTIONS } from '@/lib/escala-utils'
+import { generateScheduleRange } from '@/services/escala-matrix'
+import {
+  SHIFT_SHORT_LABELS,
+  MONTH_OPTIONS,
+  YEAR_OPTIONS,
+  PATTERN_OPTIONS,
+  getCycleOptions,
+} from '@/lib/escala-utils'
 import { cn } from '@/lib/utils'
 
 interface BatchEscalaModalProps {
   open: boolean
   onClose: () => void
   onSaved: () => void
-  defaultMonth: string
-  defaultYear: string
+  defaultStartDate: string
+  defaultEndDate: string
 }
 
 export function BatchEscalaModal({
   open,
   onClose,
   onSaved,
-  defaultMonth,
-  defaultYear,
+  defaultStartDate,
+  defaultEndDate,
 }: BatchEscalaModalProps) {
-  const [usuarioId, setUsuarioId] = useState('')
-  const [month, setMonth] = useState(defaultMonth)
-  const [year, setYear] = useState(defaultYear)
-  const [generationMode, setGenerationMode] = useState('fixo-5x2')
-  const [turno, setTurno] = useState(TURNO_OPTIONS[0])
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
+  const [startDate, setStartDate] = useState(defaultStartDate)
+  const [endDate, setEndDate] = useState(defaultEndDate)
+  const [pattern, setPattern] = useState('fixo-5x2')
+  const [initialCycle, setInitialCycle] = useState('')
   const [users, setUsers] = useState<UserItem[]>([])
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, boolean>>({})
@@ -45,46 +52,65 @@ export function BatchEscalaModal({
       getUsers()
         .then((u) => setUsers(u.filter((x) => x.participa_escala !== false)))
         .catch(() => {})
-      setUsuarioId('')
-      setMonth(defaultMonth)
-      setYear(defaultYear)
-      setGenerationMode('fixo-5x2')
-      setTurno(TURNO_OPTIONS[0])
+      setSelectedUserIds([])
+      setStartDate(defaultStartDate)
+      setEndDate(defaultEndDate)
+      setPattern('fixo-5x2')
+      setInitialCycle('')
       setErrors({})
     }
-  }, [open, defaultMonth, defaultYear])
+  }, [open, defaultStartDate, defaultEndDate])
 
-  const selectedUser = useMemo(() => users.find((u) => u.id === usuarioId), [users, usuarioId])
-  const userProjeto = (selectedUser?.projeto || [])[0] || ''
-  const userHorario = selectedUser?.horario_trabalho || ''
+  const userOptions = useMemo(
+    () =>
+      users.map((u) => ({
+        value: u.id,
+        label: `${u.name || u.email}${(u.projeto || []).length ? ` (${u.projeto.join('/')})` : ''}`,
+      })),
+    [users],
+  )
+
+  const cycleOptions = useMemo(() => getCycleOptions(pattern), [pattern])
+
+  const handlePatternChange = (value: string) => {
+    setPattern(value)
+    const opts = getCycleOptions(value)
+    setInitialCycle(opts.length > 0 ? opts[0] : '')
+  }
 
   const handleSubmit = async () => {
     const errs: Record<string, boolean> = {}
-    if (!usuarioId) errs.usuarioId = true
-    if (!month) errs.month = true
-    if (!year) errs.year = true
+    if (selectedUserIds.length === 0) errs.users = true
+    if (!startDate) errs.startDate = true
+    if (!endDate) errs.endDate = true
     setErrors(errs)
     if (Object.keys(errs).length > 0) {
       toast.error('Preencha todos os campos obrigatórios.')
       return
     }
-    if (generationMode === 'fixo-5x2' && !userHorario) {
-      toast.error('O colaborador não possui horário de trabalho definido.')
+
+    const selectedUsers = users
+      .filter((u) => selectedUserIds.includes(u.id))
+      .map((u) => ({
+        id: u.id,
+        horario: u.horario_trabalho || '',
+        projeto: (u.projeto || [])[0] || '',
+      }))
+
+    const invalidUsers = selectedUsers.filter((u) => !u.horario || !u.projeto)
+    if (invalidUsers.length > 0) {
+      toast.error('Alguns colaboradores não possuem horário ou projeto definido.')
       return
     }
-    if (!userProjeto) {
-      toast.error('O colaborador não possui projeto definido.')
-      return
-    }
+
     setLoading(true)
     try {
-      const shiftForWeekdays = generationMode === 'fixo-5x2' ? userHorario : turno
-      const result = await generateMonthlySchedule(
-        usuarioId,
-        Number(month),
-        Number(year),
-        shiftForWeekdays,
-        userProjeto,
+      const result = await generateScheduleRange(
+        selectedUsers,
+        startDate,
+        endDate,
+        pattern,
+        initialCycle,
       )
       if (result.failed > 0) {
         toast.warning(`${result.succeeded} plantões criados, ${result.failed} falharam.`)
@@ -111,96 +137,63 @@ export function BatchEscalaModal({
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Colaborador {reqMark}</Label>
-            <Select value={usuarioId} onValueChange={setUsuarioId}>
-              <SelectTrigger className={cn(inputCls, errors.usuarioId && 'border-red-500')}>
-                <SelectValue placeholder="Selecionar" />
-              </SelectTrigger>
-              <SelectContent>
-                {users.map((u) => (
-                  <SelectItem key={u.id} value={u.id} textValue={u.name || u.email}>
-                    {`${u.name || u.email}${(u.projeto || []).length ? ` (${u.projeto.join('/')})` : ''}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.usuarioId && <p className="text-xs text-red-500">Colaborador é obrigatório.</p>}
+            <Label className="text-xs font-semibold">Colaboradores {reqMark}</Label>
+            <MultiSelect
+              options={userOptions}
+              selected={selectedUserIds}
+              onChange={setSelectedUserIds}
+              placeholder="Selecionar colaboradores"
+            />
+            {errors.users && (
+              <p className="text-xs text-red-500">Selecione ao menos um colaborador.</p>
+            )}
           </div>
-          {userProjeto && (
-            <div className="flex gap-3 text-xs text-muted-foreground">
-              <span>
-                Projeto: <strong className="text-foreground">{userProjeto}</strong>
-              </span>
-              {userHorario && (
-                <span>
-                  Horário:{' '}
-                  <strong className="text-foreground">
-                    {SHIFT_SHORT_LABELS[userHorario] || userHorario}
-                  </strong>
-                </span>
-              )}
-            </div>
-          )}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Mês {reqMark}</Label>
-              <Select value={month} onValueChange={setMonth}>
-                <SelectTrigger className={cn(inputCls, errors.month && 'border-red-500')}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {MONTH_OPTIONS.map((m) => (
-                    <SelectItem key={m.value} value={m.value}>
-                      {m.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="text-xs font-semibold">Data de Início {reqMark}</Label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className={cn(inputCls, errors.startDate && 'border-red-500')}
+              />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Ano {reqMark}</Label>
-              <Select value={year} onValueChange={setYear}>
-                <SelectTrigger className={cn(inputCls, errors.year && 'border-red-500')}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {YEAR_OPTIONS.map((y) => (
-                    <SelectItem key={y} value={y}>
-                      {y}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="text-xs font-semibold">Data de Fim {reqMark}</Label>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className={cn(inputCls, errors.endDate && 'border-red-500')}
+              />
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Modo de Geração {reqMark}</Label>
-            <Select value={generationMode} onValueChange={setGenerationMode}>
+            <Label className="text-xs font-semibold">Padrão de Escala {reqMark}</Label>
+            <Select value={pattern} onValueChange={handlePatternChange}>
               <SelectTrigger className={inputCls}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="fixo-5x2">Fixo / 5x2 Padrão</SelectItem>
-                <SelectItem value="personalizado">Turno Personalizado</SelectItem>
+                {PATTERN_OPTIONS.map((p) => (
+                  <SelectItem key={p.value} value={p.value}>
+                    {p.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            {generationMode === 'fixo-5x2' && userHorario && (
-              <p className="text-[10px] text-muted-foreground">
-                Horário do perfil: {SHIFT_SHORT_LABELS[userHorario] || userHorario}
-              </p>
-            )}
           </div>
-          {generationMode === 'personalizado' && (
+          {cycleOptions.length > 0 && (
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Turno para Dias Úteis {reqMark}</Label>
-              <Select value={turno} onValueChange={setTurno}>
+              <Label className="text-xs font-semibold">Ciclo Inicial (Dia 1º) {reqMark}</Label>
+              <Select value={initialCycle} onValueChange={setInitialCycle}>
                 <SelectTrigger className={inputCls}>
-                  <SelectValue />
+                  <SelectValue placeholder="Selecionar" />
                 </SelectTrigger>
                 <SelectContent>
-                  {TURNO_OPTIONS.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
+                  {cycleOptions.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
                     </SelectItem>
                   ))}
                 </SelectContent>

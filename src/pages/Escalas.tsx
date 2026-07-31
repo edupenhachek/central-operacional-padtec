@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { CalendarDays, Users, Clock, Plus, Plane } from 'lucide-react'
 import { MyScheduleTab } from '@/components/MyScheduleTab'
 import { OperationScheduleTab } from '@/components/OperationScheduleTab'
@@ -7,7 +7,7 @@ import { BatchEscalaModal } from '@/components/BatchEscalaModal'
 import { VacationModal } from '@/components/VacationModal'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/use-auth'
-import { FOCAL_ROLES } from '@/lib/escala-utils'
+import { FOCAL_ROLES, formatDateStr } from '@/lib/escala-utils'
 import { cn } from '@/lib/utils'
 
 type TabKey = 'operacao' | 'minha' | 'hoje'
@@ -23,6 +23,15 @@ export default function Escalas() {
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   const canManage = user?.role ? FOCAL_ROLES.includes(user.role) : false
+
+  const defaultStartDate = useMemo(
+    () => formatDateStr(new Date(Number(yearFilter), Number(monthFilter), 1)),
+    [monthFilter, yearFilter],
+  )
+  const defaultEndDate = useMemo(() => {
+    const lastDay = new Date(Number(yearFilter), Number(monthFilter) + 1, 0).getDate()
+    return formatDateStr(new Date(Number(yearFilter), Number(monthFilter), lastDay))
+  }, [monthFilter, yearFilter])
 
   const tabs: { key: TabKey; label: string; icon: typeof Users }[] = [
     { key: 'operacao', label: 'Escala da Operação', icon: CalendarDays },
@@ -102,8 +111,8 @@ export default function Escalas() {
         open={batchOpen}
         onClose={() => setBatchOpen(false)}
         onSaved={() => setRefreshTrigger((t) => t + 1)}
-        defaultMonth={monthFilter}
-        defaultYear={yearFilter}
+        defaultStartDate={defaultStartDate}
+        defaultEndDate={defaultEndDate}
       />
       <VacationModal
         open={vacationOpen}
