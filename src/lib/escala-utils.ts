@@ -160,3 +160,114 @@ export function filterUsersByPill<T extends { projeto?: string[] }>(users: T[], 
   if (pill === 'all') return users
   return users.filter((u) => (u.projeto || []).includes(pill))
 }
+
+export const PATTERN_OPTIONS = [
+  { value: 'fixo-5x2', label: 'Fixo (5x2 Padrão)' },
+  { value: 'rotativo-cope', label: 'Rotativo COPE (3 Semanas)' },
+  { value: 'rotativo-pf', label: 'Rotativo Ponto Focal (2 Semanas)' },
+] as const
+
+export const COPE_CYCLES = ['Semana A', 'Semana B', 'Semana C']
+export const PF_CYCLES = ['Semana PF A', 'Semana PF B']
+
+export function getCycleOptions(pattern: string): string[] {
+  if (pattern === 'rotativo-cope') return COPE_CYCLES
+  if (pattern === 'rotativo-pf') return PF_CYCLES
+  return []
+}
+
+export function isWorkDay(pattern: string, cycle: string, dayOfWeek: number): boolean {
+  const isSat = dayOfWeek === 6
+  const isSun = dayOfWeek === 0
+  const isWed = dayOfWeek === 3
+  const isThu = dayOfWeek === 4
+  const isFri = dayOfWeek === 5
+
+  if (pattern === 'fixo-5x2') {
+    return !isSat && !isSun
+  }
+  if (pattern === 'rotativo-cope') {
+    if (cycle === 'Semana A') return !isSat && !isSun
+    if (cycle === 'Semana B') return !isWed
+    if (cycle === 'Semana C') return !isThu
+    return true
+  }
+  if (pattern === 'rotativo-pf') {
+    if (cycle === 'Semana PF A') return !isSat && !isSun
+    if (cycle === 'Semana PF B') return !isFri && !isSun
+    return true
+  }
+  return true
+}
+
+export function advanceCycle(pattern: string, currentCycle: string): string {
+  if (pattern === 'rotativo-cope') {
+    const idx = COPE_CYCLES.indexOf(currentCycle)
+    return COPE_CYCLES[(idx + 1) % COPE_CYCLES.length]
+  }
+  if (pattern === 'rotativo-pf') {
+    const idx = PF_CYCLES.indexOf(currentCycle)
+    return PF_CYCLES[(idx + 1) % PF_CYCLES.length]
+  }
+  return currentCycle
+}
+
+export interface PendingChange {
+  userId: string
+  dateStr: string
+  turno: string
+  status: string
+  observacao: string
+  projeto: string
+}
+
+export const BULK_STATUS_OPTIONS = [
+  { value: 'T', label: 'Trabalho' },
+  { value: 'F', label: 'Folga' },
+  { value: 'Férias', label: 'Férias' },
+  { value: 'B', label: 'Banco de Horas' },
+  { value: 'Atestado', label: 'Atestado' },
+  { value: 'Treinamento', label: 'Treinamento' },
+  { value: 'FC', label: 'Folga Compensatória' },
+] as const
+
+export function getCellDisplayValue(status: string, turno: string, userHorario: string): string {
+  if (!status && !turno) return ''
+  if (status === 'T' || status === 'Previsto' || status === 'Confirmado') {
+    const shift = turno && turno !== 'FOLGA' ? turno : userHorario
+    return shift ? SHIFT_SHORT_LABELS[shift] || 'T' : 'T'
+  }
+  if (status === 'F' || status === 'FOLGA') return 'F'
+  if (status === 'FÉRIAS' || status === 'Férias') return 'Férias'
+  if (status === 'B' || status === 'BANCO DE HORAS') return 'B'
+  if (status === 'ATESTADO' || status === 'Atestado') return 'At'
+  if (status === 'TREINAMENTO' || status === 'Treinamento') return 'Tr'
+  if (status === 'FOLGA COMPENSATÓRIA' || status === 'FC') return 'FC'
+  if (turno === 'FOLGA') return 'F'
+  if (turno) return SHIFT_SHORT_LABELS[turno] || 'T'
+  return status || ''
+}
+
+export function getCellBgByValue(displayValue: string, weekend: boolean): string {
+  if (!displayValue) return weekend ? WEEKEND_CELL_BG : ''
+  if (displayValue === 'Férias') return 'bg-purple-200 dark:bg-purple-900/70'
+  if (displayValue.startsWith('T')) return SHIFT_CELL_BG
+  if (displayValue.startsWith('F')) return 'bg-red-500/25 dark:bg-red-500/30'
+  if (displayValue.startsWith('B')) return 'bg-yellow-200 dark:bg-yellow-900/70'
+  if (displayValue.startsWith('At')) return 'bg-amber-200 dark:bg-amber-900/70'
+  if (displayValue.startsWith('Tr')) return 'bg-blue-200 dark:bg-blue-900/70'
+  if (displayValue.startsWith('FC')) return 'bg-slate-200 dark:bg-slate-700/80'
+  return ''
+}
+
+export function getCellColorByValue(displayValue: string): string {
+  if (!displayValue) return 'text-muted-foreground/40'
+  if (displayValue === 'Férias') return 'text-purple-950 dark:text-purple-100 font-bold'
+  if (displayValue.startsWith('T')) return SHIFT_CELL_COLOR
+  if (displayValue.startsWith('F')) return 'text-red-950 dark:text-red-100 font-bold'
+  if (displayValue.startsWith('B')) return 'text-yellow-950 dark:text-yellow-100 font-bold'
+  if (displayValue.startsWith('At')) return 'text-amber-950 dark:text-amber-100 font-bold'
+  if (displayValue.startsWith('Tr')) return 'text-blue-950 dark:text-blue-100 font-bold'
+  if (displayValue.startsWith('FC')) return 'text-slate-950 dark:text-slate-100 font-bold'
+  return 'text-foreground font-bold'
+}

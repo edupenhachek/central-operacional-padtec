@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -10,8 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { upsertEscala } from '@/services/escalas'
-import { ESCALA_STATUS_OPTIONS, SHIFT_SHORT_LABELS } from '@/lib/escala-utils'
+import { BULK_STATUS_OPTIONS, SHIFT_SHORT_LABELS } from '@/lib/escala-utils'
 
 interface CellEditContentProps {
   userId: string
@@ -21,72 +19,38 @@ interface CellEditContentProps {
   currentTurno: string
   currentStatus: string
   currentObservacao: string
-  onSaved: () => void
+  onPendingChange: (change: { turno: string; status: string; observacao: string }) => void
   onClose: () => void
 }
 
 export function CellEditContent({
-  userId,
-  userProjeto,
   userHorario,
-  dateStr,
   currentTurno,
   currentStatus,
   currentObservacao,
-  onSaved,
+  onPendingChange,
   onClose,
 }: CellEditContentProps) {
   const getInitialStatus = () => {
-    if (
-      currentStatus &&
-      currentStatus !== 'Previsto' &&
-      currentStatus !== 'Confirmado' &&
-      currentStatus !== 'Falta' &&
-      currentStatus !== 'FOLGA'
-    ) {
-      return currentStatus
-    }
-    if (currentTurno === 'FOLGA') return 'FOLGA'
-    return 'Horário Normal do Perfil'
+    const s = currentStatus
+    if (s === 'T' || s === 'Previsto' || s === 'Confirmado') return 'T'
+    if (s === 'F' || s === 'FOLGA') return 'F'
+    if (s === 'FÉRIAS' || s === 'Férias') return 'Férias'
+    if (s === 'B' || s === 'BANCO DE HORAS') return 'B'
+    if (s === 'ATESTADO' || s === 'Atestado') return 'Atestado'
+    if (s === 'TREINAMENTO' || s === 'Treinamento') return 'Treinamento'
+    if (s === 'FOLGA COMPENSATÓRIA' || s === 'FC') return 'FC'
+    if (currentTurno === 'FOLGA') return 'F'
+    return 'T'
   }
 
   const [status, setStatus] = useState(getInitialStatus())
   const [observacao, setObservacao] = useState(currentObservacao || '')
-  const [saving, setSaving] = useState(false)
 
-  const handleSave = async () => {
-    setSaving(true)
-    try {
-      let turno = ''
-      let escalaStatus = 'Previsto'
-
-      if (status === 'Horário Normal do Perfil') {
-        turno = userHorario
-        escalaStatus = 'Previsto'
-      } else if (status === 'FOLGA') {
-        turno = 'FOLGA'
-        escalaStatus = 'FOLGA'
-      } else {
-        turno = currentTurno || userHorario || ''
-        escalaStatus = status
-      }
-
-      await upsertEscala({
-        Data: dateStr,
-        Usuario_ID: userId,
-        Projeto: userProjeto,
-        Turno: turno,
-        Status: escalaStatus,
-        observacao: observacao.trim(),
-      })
-      toast.success('Plantão atualizado!')
-      onSaved()
-      onClose()
-    } catch {
-      toast.error('Erro ao atualizar plantão.')
-    } finally {
-      setSaving(false)
-    }
+  const handleApply = () => {
+    const turno = status === 'T' ? userHorario || currentTurno : ''
+    onPendingChange({ turno, status, observacao: observacao.trim() })
+    onClose()
   }
 
   return (
@@ -98,14 +62,14 @@ export function CellEditContent({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {ESCALA_STATUS_OPTIONS.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s}
+            {BULK_STATUS_OPTIONS.map((s) => (
+              <SelectItem key={s.value} value={s.value}>
+                {s.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        {status === 'Horário Normal do Perfil' && userHorario && (
+        {status === 'T' && userHorario && (
           <p className="text-[10px] text-muted-foreground">
             ({SHIFT_SHORT_LABELS[userHorario] || userHorario})
           </p>
@@ -128,11 +92,10 @@ export function CellEditContent({
         </Button>
         <Button
           size="sm"
-          onClick={handleSave}
-          disabled={saving}
+          onClick={handleApply}
           className="text-xs h-8 bg-blue-600 hover:bg-blue-700 text-white"
         >
-          {saving ? 'Salvando...' : 'Salvar'}
+          Aplicar
         </Button>
       </div>
     </div>
