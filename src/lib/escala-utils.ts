@@ -41,7 +41,7 @@ export const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
 }))
 
 const CURRENT_YEAR = new Date().getFullYear()
-export const YEAR_OPTIONS = Array.from({ length: 5 }, (_, i) => String(CURRENT_YEAR - 2 + i))
+export const YEAR_OPTIONS = Array.from({ length: 7 }, (_, i) => String(CURRENT_YEAR - 1 + i))
 
 export function getShiftLabel(turno: string): string {
   if (!turno) return ''
@@ -130,8 +130,31 @@ export const STATUS_CELL_BG: Record<string, string> = {
 export const SHIFT_CELL_BG = 'bg-emerald-500/25 dark:bg-emerald-500/30'
 export const SHIFT_CELL_COLOR = 'text-emerald-950 dark:text-emerald-100 font-bold'
 export const WEEKEND_HEADER_CLS =
-  'bg-rose-500/20 dark:bg-rose-950/70 text-rose-950 dark:text-rose-200 font-bold'
+  'bg-rose-100 dark:bg-rose-950 text-rose-950 dark:text-rose-200 font-bold'
 export const WEEKEND_CELL_BG = 'bg-rose-500/15 dark:bg-rose-950/40'
+
+export const SCHEDULE_ORDER: Record<string, number> = {
+  '06H15 ÁS 15H15': 1,
+  '08H00 ÁS 17H00': 2,
+  '09H00 ÁS 18H00': 3,
+  '10H00 ÁS 19H00': 4,
+  '11H00 ÁS 20H00': 5,
+  '11H30 ÁS 20H30': 6,
+  '13H00 ÁS 22H00': 7,
+  '15H00 ÁS 23H43': 8,
+  '23H30 ÁS 06H30': 9,
+}
+
+export function sortUsersBySchedule<T extends { horario_trabalho?: string; name?: string }>(
+  users: T[],
+): T[] {
+  return [...users].sort((a, b) => {
+    const orderA = SCHEDULE_ORDER[a.horario_trabalho || ''] ?? 99
+    const orderB = SCHEDULE_ORDER[b.horario_trabalho || ''] ?? 99
+    if (orderA !== orderB) return orderA - orderB
+    return (a.name || '').localeCompare(b.name || '')
+  })
+}
 
 export function filterUsersByPill<T extends { projeto?: string[] }>(users: T[], pill: string): T[] {
   if (pill === 'all') return users
