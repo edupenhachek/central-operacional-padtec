@@ -1,3 +1,5 @@
+import logoPadtecSimboloBranco from '@/assets/logo-padtec-simbolo-branco.png'
+
 export function PadtecLogo({ className = 'h-8' }: { className?: string }) {
   return (
     <div
@@ -11,9 +13,13 @@ export function PadtecLogo({ className = 'h-8' }: { className?: string }) {
 export function PadtecEmblem({ className = 'w-9 h-9' }: { className?: string }) {
   return (
     <div
-      className={`bg-[#0B0E14] text-white flex items-center justify-center rounded-lg font-extrabold text-xl shadow-md ${className}`}
+      className={`bg-[#0B0E14] flex items-center justify-center rounded-lg shadow-md overflow-hidden ${className}`}
     >
-      p
+      <img
+        src={logoPadtecSimboloBranco}
+        alt="Padtec"
+        className="w-full h-full object-contain"
+      />
     </div>
   )
 }
