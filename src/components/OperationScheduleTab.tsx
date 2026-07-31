@@ -164,6 +164,22 @@ export function OperationScheduleTab({
         </Card>
       ) : (
         <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                <CalendarDays className="w-5 h-5 text-blue-600" /> Escala da Operação
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <MatrixGrid
+                users={operational}
+                escalas={escalas}
+                days={days}
+                canEdit={canManage}
+                onCellSaved={loadData}
+              />
+            </CardContent>
+          </Card>
           {coordinators.length > 0 && (
             <Card>
               <CardHeader>
@@ -183,23 +199,6 @@ export function OperationScheduleTab({
               </CardContent>
             </Card>
           )}
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <CalendarDays className="w-5 h-5 text-blue-600" /> Escala da Operação
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <MatrixGrid
-                users={operational}
-                escalas={escalas}
-                days={days}
-                canEdit={canManage}
-                onCellSaved={loadData}
-              />
-            </CardContent>
-          </Card>
         </>
       )}
     </div>
