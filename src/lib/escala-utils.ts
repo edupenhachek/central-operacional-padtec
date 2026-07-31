@@ -129,7 +129,8 @@ export const STATUS_CELL_BG: Record<string, string> = {
 
 export const SHIFT_CELL_BG = 'bg-emerald-500/25 dark:bg-emerald-500/30'
 export const SHIFT_CELL_COLOR = 'text-emerald-950 dark:text-emerald-100 font-bold'
-export const WEEKEND_HEADER_CLS = 'bg-rose-500/20 dark:bg-rose-950/70 text-rose-950 dark:text-rose-200 font-bold'
+export const WEEKEND_HEADER_CLS =
+  'bg-rose-500/20 dark:bg-rose-950/70 text-rose-950 dark:text-rose-200 font-bold'
 export const WEEKEND_CELL_BG = 'bg-rose-500/15 dark:bg-rose-950/40'
 
 export function filterUsersByPill<T extends { projeto?: string[] }>(users: T[], pill: string): T[] {

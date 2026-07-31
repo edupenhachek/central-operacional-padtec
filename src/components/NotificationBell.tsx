@@ -6,7 +6,12 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/use-auth'
 import { useRealtime } from '@/hooks/use-realtime'
-import { getNotifications, markAllAsRead, markAsRead, type NotificationRecord } from '@/services/notifications'
+import {
+  getNotifications,
+  markAllAsRead,
+  markAsRead,
+  type NotificationRecord,
+} from '@/services/notifications'
 import { cn } from '@/lib/utils'
 
 const TYPE_CONFIG: Record<string, { icon: typeof Bell; color: string; bg: string }> = {
@@ -85,7 +90,9 @@ export function NotificationBell() {
   const handleItemClick = useCallback(async (n: NotificationRecord) => {
     if (!n.read) {
       await markAsRead(n.id)
-      setNotifications((prev) => prev.map((item) => (item.id === n.id ? { ...item, read: true } : item)))
+      setNotifications((prev) =>
+        prev.map((item) => (item.id === n.id ? { ...item, read: true } : item)),
+      )
     }
   }, [])
 

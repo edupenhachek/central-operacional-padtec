@@ -10,6 +10,7 @@ import {
   Play,
   AlertCircle,
   Clock,
+  ExternalLink,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -23,6 +24,8 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useAuth } from '@/hooks/use-auth'
 import { useNavigate } from 'react-router-dom'
+import { formatDistanceToNow } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
 const DEFAULT_RECENT_DOCUMENTS = [
   { id: '1', title: 'Glossário Técnico BKO' },
@@ -41,6 +44,19 @@ const PRIORITY_LABELS: Record<string, string> = {
   high: 'Alta',
   medium: 'Média',
   low: 'Baixa',
+}
+
+const CLASS_STYLES: Record<string, string> = {
+  Comunicados: 'bg-blue-50 text-blue-600 dark:bg-blue-950',
+  Processos: 'bg-purple-50 text-purple-600 dark:bg-purple-950',
+  Diário: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+  Pendências: 'bg-amber-50 text-amber-600 dark:bg-amber-950',
+}
+
+const URGENCY_STYLES: Record<string, string> = {
+  Alta: 'bg-red-50 text-red-600 dark:bg-red-950',
+  Média: 'bg-amber-50 text-amber-600 dark:bg-amber-950',
+  Baixa: 'bg-blue-50 text-blue-600 dark:bg-blue-950',
 }
 
 export default function Index() {
@@ -80,7 +96,7 @@ export default function Index() {
             setTrainingProgress(Math.round((completed / modules.length) * 100))
           }
         } catch {
-          // Training data unavailable — keep defaults
+          // Training data unavailable
         }
       }
     } catch (err) {
@@ -99,6 +115,7 @@ export default function Index() {
 
   const userName = user?.name ? user.name.split(' ')[0] : 'Carlos'
   const recentDocs = documents.length > 0 ? documents.slice(0, 5) : DEFAULT_RECENT_DOCUMENTS
+  const latestAnnouncement = announcements[0]
 
   const kpis = [
     {
@@ -131,6 +148,10 @@ export default function Index() {
     },
   ]
 
+  const handleNavigateToPublication = (id: string) => {
+    navigate(`/transbordo?highlight=${id}#announcement-${id}`)
+  }
+
   return (
     <div className="space-y-6 animate-fade-in pb-10">
       <div>
@@ -158,6 +179,70 @@ export default function Index() {
           )
         })}
       </div>
+
+      {latestAnnouncement && (
+        <Card
+          onClick={() => handleNavigateToPublication(latestAnnouncement.id)}
+          className="border-border border-l-4 border-l-blue-600 shadow-sm bg-card p-5 hover:shadow-md hover:border-blue-500 transition-all cursor-pointer group"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/50">
+            <div className="flex items-center gap-2">
+              <Megaphone className="w-4 h-4 text-blue-600" />
+              <span className="text-xs font-bold text-foreground uppercase tracking-wide">
+                Última publicação
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <span
+                className={`px-2 py-0.5 rounded font-semibold text-[10px] ${
+                  CLASS_STYLES[latestAnnouncement.class || 'Comunicados'] ||
+                  CLASS_STYLES.Comunicados
+                }`}
+              >
+                {latestAnnouncement.class || 'Comunicados'}
+              </span>
+              <span
+                className={`px-2 py-0.5 rounded font-semibold text-[10px] ${
+                  URGENCY_STYLES[latestAnnouncement.urgency || 'Média'] || URGENCY_STYLES.Média
+                }`}
+              >
+                {latestAnnouncement.urgency || 'Média'}
+              </span>
+              <span className="text-muted-foreground text-[11px]">
+                {latestAnnouncement.created
+                  ? formatDistanceToNow(new Date(latestAnnouncement.created), {
+                      addSuffix: true,
+                      locale: ptBR,
+                    })
+                  : ''}
+              </span>
+            </div>
+          </div>
+
+          <div className="pt-3 flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <h3 className="text-sm font-bold text-foreground group-hover:text-blue-600 transition-colors uppercase">
+                {latestAnnouncement.title}
+              </h3>
+              <p className="text-xs text-muted-foreground line-clamp-2">
+                {latestAnnouncement.content}
+              </p>
+              <div className="flex items-center gap-2 pt-2 text-[11px] text-muted-foreground">
+                <span className="font-semibold text-foreground">
+                  {latestAnnouncement.expand?.author?.name || 'Beatriz Haralambos'}
+                </span>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/50 gap-1 shrink-0"
+            >
+              Ver publicação <ExternalLink className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        </Card>
+      )}
 
       <Card className="border-border shadow-sm bg-card p-5">
         <CardHeader className="p-0 pb-3 border-b border-border/50">
@@ -203,18 +288,19 @@ export default function Index() {
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Megaphone className="w-4 h-4 text-pink-600" />
-            <h2 className="text-base font-bold text-foreground">Anúncios</h2>
+            <h2 className="text-base font-bold text-foreground">Anúncios Recentes</h2>
           </div>
           <div className="space-y-3">
             {announcements.length > 0 ? (
               announcements.slice(0, 4).map((item) => (
                 <Card
                   key={item.id}
-                  className="border-border shadow-sm p-4 bg-card hover:border-blue-300 transition-colors"
+                  onClick={() => handleNavigateToPublication(item.id)}
+                  className="border-border shadow-sm p-4 bg-card hover:border-blue-300 transition-colors cursor-pointer"
                 >
                   <div className="flex justify-between text-[11px] text-muted-foreground mb-1">
                     <span className="font-semibold text-blue-600 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded">
-                      Comunicado
+                      {item.class || 'Comunicado'}
                     </span>
                     <span>
                       {item.created ? new Date(item.created).toLocaleDateString('pt-BR') : ''}
@@ -274,6 +360,7 @@ export default function Index() {
               <div
                 key={doc.id}
                 className="flex items-center gap-2 text-muted-foreground hover:text-foreground py-1 cursor-pointer"
+                onClick={() => navigate('/documentacao')}
               >
                 <File className="w-3.5 h-3.5 text-blue-500 shrink-0" />
                 <span className="truncate">{doc.title}</span>
