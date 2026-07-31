@@ -37,7 +37,7 @@ export default function Escalas() {
         <p className="text-sm text-muted-foreground mt-1">Gerencie os plantões da equipe.</p>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 w-full">
         <div className="inline-flex gap-1 p-1 bg-muted rounded-lg">
           {tabs.map((tab) => {
             const Icon = tab.icon
@@ -58,8 +58,8 @@ export default function Escalas() {
             )
           })}
         </div>
-        {activeTab === 'operacao' && canManage && (
-          <div className="flex gap-2">
+        {canManage && (
+          <div className="flex items-center gap-2 ml-auto">
             <Button
               onClick={() => setVacationOpen(true)}
               variant="outline"

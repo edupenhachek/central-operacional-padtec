@@ -110,27 +110,27 @@ export const STATUS_CELL_LABELS: Record<string, string> = {
 }
 
 export const STATUS_CELL_COLORS: Record<string, string> = {
-  FOLGA: 'text-gray-800 dark:text-gray-200',
-  FÉRIAS: 'text-orange-900 dark:text-orange-200',
-  ATESTADO: 'text-orange-900 dark:text-orange-200',
-  TREINAMENTO: 'text-slate-800 dark:text-slate-100',
-  'BANCO DE HORAS': 'text-yellow-900 dark:text-yellow-100',
-  'FOLGA COMPENSATÓRIA': 'text-slate-800 dark:text-slate-100',
+  FOLGA: 'text-slate-900 dark:text-slate-100 font-bold',
+  FÉRIAS: 'text-amber-950 dark:text-amber-100 font-bold',
+  ATESTADO: 'text-amber-950 dark:text-amber-100 font-bold',
+  TREINAMENTO: 'text-blue-950 dark:text-blue-100 font-bold',
+  'BANCO DE HORAS': 'text-yellow-950 dark:text-yellow-100 font-bold',
+  'FOLGA COMPENSATÓRIA': 'text-slate-950 dark:text-slate-100 font-bold',
 }
 
 export const STATUS_CELL_BG: Record<string, string> = {
-  FOLGA: 'bg-gray-200 dark:bg-gray-800/70',
-  FÉRIAS: 'bg-orange-200 dark:bg-orange-900/50',
-  ATESTADO: 'bg-orange-200 dark:bg-orange-900/50',
-  TREINAMENTO: 'bg-slate-200 dark:bg-slate-800/70',
-  'BANCO DE HORAS': 'bg-yellow-200 dark:bg-yellow-900/50',
-  'FOLGA COMPENSATÓRIA': 'bg-slate-200 dark:bg-slate-800/70',
+  FOLGA: 'bg-slate-300/90 dark:bg-slate-700/90',
+  FÉRIAS: 'bg-amber-200 dark:bg-amber-900/70',
+  ATESTADO: 'bg-amber-200 dark:bg-amber-900/70',
+  TREINAMENTO: 'bg-blue-200 dark:bg-blue-900/70',
+  'BANCO DE HORAS': 'bg-yellow-200 dark:bg-yellow-900/70',
+  'FOLGA COMPENSATÓRIA': 'bg-slate-200 dark:bg-slate-700/80',
 }
 
-export const SHIFT_CELL_BG = 'bg-green-200 dark:bg-green-900/50'
-export const SHIFT_CELL_COLOR = 'text-green-900 dark:text-green-100'
-export const WEEKEND_HEADER_CLS = 'bg-red-200 dark:bg-red-900/50 text-red-800 dark:text-red-100'
-export const WEEKEND_CELL_BG = 'bg-red-100 dark:bg-red-900/30'
+export const SHIFT_CELL_BG = 'bg-emerald-500/25 dark:bg-emerald-500/30'
+export const SHIFT_CELL_COLOR = 'text-emerald-950 dark:text-emerald-100 font-bold'
+export const WEEKEND_HEADER_CLS = 'bg-rose-500/20 dark:bg-rose-950/70 text-rose-950 dark:text-rose-200 font-bold'
+export const WEEKEND_CELL_BG = 'bg-rose-500/15 dark:bg-rose-950/40'
 
 export function filterUsersByPill<T extends { projeto?: string[] }>(users: T[], pill: string): T[] {
   if (pill === 'all') return users
