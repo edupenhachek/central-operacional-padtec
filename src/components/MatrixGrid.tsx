@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { toast } from 'sonner'
 import { CloudUpload } from 'lucide-react'
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import { CellEditContent } from '@/components/CellEditContent'
@@ -27,11 +28,20 @@ interface MatrixGridProps {
   escalas: EscalaRecord[]
   days: Date[]
   canEdit: boolean
+  holidays?: Record<string, string>
   onCellSaved: () => void
-  showFooter?: boolean
+  onPendingChangesChange?: (hasPending: boolean) => void
 }
 
-export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: MatrixGridProps) {
+export function MatrixGrid({
+  users,
+  escalas,
+  days,
+  canEdit,
+  holidays = {},
+  onCellSaved,
+  onPendingChangesChange,
+}: MatrixGridProps) {
   const [editKey, setEditKey] = useState<string | null>(null)
   const [pendingChanges, setPendingChanges] = useState<Map<string, PendingChange>>(new Map())
   const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set())
@@ -46,7 +56,6 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
   const selectedCellsRef = useRef<Set<string>>(new Set())
 
   const sortedUsers = useMemo(() => sortUsersBySchedule(users), [users])
-
   const escalaMap = useMemo(() => {
     const map = new Map<string, EscalaRecord>()
     for (const e of escalas) {
@@ -63,12 +72,15 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
     return map
   }, [days])
 
+  useUnsavedChanges(pendingChanges.size > 0)
+  useEffect(() => {
+    onPendingChangesChange?.(pendingChanges.size > 0)
+  }, [pendingChanges.size, onPendingChangesChange])
+
   useEffect(() => {
     const handler = () => {
       if (mouseDownCellRef.current) {
-        if (isDraggingRef.current && selectedCellsRef.current.size > 0) {
-          setShowBulkEdit(true)
-        }
+        if (isDraggingRef.current && selectedCellsRef.current.size > 0) setShowBulkEdit(true)
         lastSelectedCellRef.current = mouseDownCellRef.current
         mouseDownCellRef.current = null
         isDraggingRef.current = false
@@ -79,14 +91,13 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
   }, [])
 
   const selectRange = useCallback(
-    (userId: string, dateStr1: string, dateStr2: string) => {
-      const idx1 = dateStrToIndex.get(dateStr1)
-      const idx2 = dateStrToIndex.get(dateStr2)
-      if (idx1 === undefined || idx2 === undefined) return
-      const [start, end] = idx1 < idx2 ? [idx1, idx2] : [idx2, idx1]
-      for (let i = start; i <= end; i++) {
+    (userId: string, d1: string, d2: string) => {
+      const i1 = dateStrToIndex.get(d1),
+        i2 = dateStrToIndex.get(d2)
+      if (i1 === undefined || i2 === undefined) return
+      const [s, e] = i1 < i2 ? [i1, i2] : [i2, i1]
+      for (let i = s; i <= e; i++)
         selectedCellsRef.current.add(`${userId}_${formatDateStr(days[i])}`)
-      }
       setSelectedCells(new Set(selectedCellsRef.current))
     },
     [dateStrToIndex, days],
@@ -97,11 +108,16 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
       if (!canEdit) return
       wasDraggingRef.current = false
       shiftClickedRef.current = false
-      if (
-        e.shiftKey &&
-        lastSelectedCellRef.current &&
-        lastSelectedCellRef.current.userId === userId
-      ) {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault()
+        const k = `${userId}_${dateStr}`
+        if (selectedCellsRef.current.has(k)) selectedCellsRef.current.delete(k)
+        else selectedCellsRef.current.add(k)
+        setSelectedCells(new Set(selectedCellsRef.current))
+        lastSelectedCellRef.current = { userId, dateStr }
+        return
+      }
+      if (e.shiftKey && lastSelectedCellRef.current?.userId === userId) {
         e.preventDefault()
         shiftClickedRef.current = true
         selectRange(userId, lastSelectedCellRef.current.dateStr, dateStr)
@@ -131,11 +147,10 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
   const handleCellPendingChange = useCallback(
     (userId: string, dateStr: string, userProjeto: string) =>
       (change: { turno: string; status: string; observacao: string }) => {
-        const cellKey = `${userId}_${dateStr}`
         setPendingChanges((prev) => {
-          const newMap = new Map(prev)
-          newMap.set(cellKey, { userId, dateStr, ...change, projeto: userProjeto })
-          return newMap
+          const m = new Map(prev)
+          m.set(`${userId}_${dateStr}`, { userId, dateStr, ...change, projeto: userProjeto })
+          return m
         })
         setEditKey(null)
       },
@@ -143,20 +158,26 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
   )
 
   const handleBulkApply = useCallback(
-    ({ status, observacao }: { status: string; observacao: string }) => {
+    ({ status, turno: tc, observacao }: { status: string; turno: string; observacao: string }) => {
       setPendingChanges((prev) => {
-        const newMap = new Map(prev)
-        for (const cellKey of selectedCellsRef.current) {
-          const sepIdx = cellKey.indexOf('_')
-          const userId = cellKey.substring(0, sepIdx)
-          const dateStr = cellKey.substring(sepIdx + 1)
-          const user = users.find((u) => u.id === userId)
-          if (!user) continue
-          const turno = status === 'T' ? user.horario_trabalho || '' : ''
-          const projeto = (user.projeto || [])[0] || ''
-          newMap.set(cellKey, { userId, dateStr, turno, status, observacao, projeto })
+        const m = new Map(prev)
+        for (const k of selectedCellsRef.current) {
+          const si = k.indexOf('_')
+          const uid = k.substring(0, si),
+            ds = k.substring(si + 1)
+          const u = users.find((x) => x.id === uid)
+          if (!u) continue
+          const turno = status === 'T' ? (tc === 'default' ? u.horario_trabalho || '' : tc) : ''
+          m.set(k, {
+            userId: uid,
+            dateStr: ds,
+            turno,
+            status,
+            observacao,
+            projeto: (u.projeto || [])[0] || '',
+          })
         }
-        return newMap
+        return m
       })
       selectedCellsRef.current = new Set()
       setSelectedCells(new Set())
@@ -171,11 +192,16 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
       const changes = Array.from(pendingChanges.values())
       const result = await batchUpsertEscalas(changes)
       if (result.failed > 0) {
-        toast.warning(`${result.succeeded} alterações salvas, ${result.failed} falharam.`)
+        toast.warning(
+          `${result.succeeded} salvas. ${result.failed} falharam e permanecem pendentes.`,
+        )
+        const m = new Map<string, PendingChange>()
+        for (const fc of result.failedChanges) m.set(`${fc.userId}_${fc.dateStr}`, fc)
+        setPendingChanges(m)
       } else {
         toast.success('Alterações salvas com sucesso!')
+        setPendingChanges(new Map())
       }
-      setPendingChanges(new Map())
       onCellSaved()
     } catch {
       toast.error('Erro ao salvar alterações.')
@@ -216,21 +242,23 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
         <table className="border-collapse w-full select-none">
           <thead>
             <tr>
-              <th className="sticky left-0 top-0 z-20 w-[260px] min-w-[260px] bg-card px-3 py-1.5 text-left text-xs font-semibold border-r border-border">
+              <th className="sticky left-0 top-0 z-20 w-[200px] min-w-[200px] bg-card px-3 py-1.5 text-left text-xs font-semibold border-r border-border">
                 Colaborador
               </th>
-              <th className="sticky left-[260px] top-0 z-20 w-[140px] min-w-[140px] bg-card px-2 py-1.5 text-center text-[10px] font-semibold border-r-2 border-slate-300 dark:border-slate-700">
+              <th className="sticky left-[200px] top-0 z-20 w-[70px] min-w-[70px] bg-card px-2 py-1.5 text-center text-[10px] font-semibold border-r-2 border-slate-300 dark:border-slate-700">
                 Horário
               </th>
               {days.map((day) => {
                 const { day: d, weekday } = getDayHeader(day)
-                const we = isWeekend(day)
+                const hd = holidays[formatDateStr(day)]
+                const isWeekendOrHoliday = isWeekend(day) || !!hd
                 return (
                   <th
                     key={d}
+                    title={hd ? `Feriado: ${hd}` : undefined}
                     className={cn(
                       'sticky top-0 z-20 bg-muted dark:bg-slate-800 px-1 py-1.5 text-center text-[10px] font-semibold border-r border-border/50 min-w-[42px]',
-                      we && WEEKEND_HEADER_CLS,
+                      isWeekendOrHoliday && WEEKEND_HEADER_CLS,
                     )}
                   >
                     <div>{d}</div>
@@ -247,12 +275,12 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
               return (
                 <tr
                   key={user.id}
-                  className="even:bg-slate-50 dark:even:bg-slate-800/50 hover:bg-muted/20 dark:hover:bg-slate-800/20"
+                  className="even:bg-slate-100 dark:even:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700/50"
                 >
-                  <td className="sticky left-0 z-20 w-[260px] min-w-[260px] bg-inherit px-2 py-1 border-r border-border">
+                  <td className="sticky left-0 z-20 w-[200px] min-w-[200px] bg-inherit px-2 py-1 border-r border-border">
                     <CollaboratorCell user={user} />
                   </td>
-                  <td className="sticky left-[260px] z-20 w-[140px] min-w-[140px] bg-inherit px-2 py-1 text-center text-[10px] text-muted-foreground border-r-2 border-slate-300 dark:border-slate-700 align-middle">
+                  <td className="sticky left-[200px] z-20 w-[70px] min-w-[70px] bg-inherit px-2 py-1 text-center text-[10px] text-muted-foreground border-r-2 border-slate-300 dark:border-slate-700 align-middle">
                     {userHorario || '—'}
                   </td>
                   {days.map((day) => {
@@ -265,7 +293,7 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
                     const observacao = pending?.observacao ?? escala?.observacao ?? ''
                     const isPending = !!pending
                     const isSelected = selectedCells.has(cellKey)
-                    const we = isWeekend(day)
+                    const we = isWeekend(day) || !!holidays[dateStr]
                     const displayValue = getCellDisplayValue(status, turno, userHorario)
                     const bg = getCellBgByValue(displayValue, we)
                     const color = getCellColorByValue(displayValue)
@@ -273,14 +301,6 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
                     if (userHorario) titleParts.push(userHorario)
                     if (observacao) titleParts.push(observacao)
                     const cellTitle = titleParts.length > 0 ? titleParts.join(' — ') : undefined
-                    const renderContent = () => {
-                      if (!displayValue) return <span className="text-muted-foreground/40">—</span>
-                      return <span className={cn('text-[10px]', color)}>{displayValue}</span>
-                    }
-                    const renderObs = () =>
-                      observacao ? (
-                        <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-blue-500" />
-                      ) : null
                     if (canEdit) {
                       return (
                         <td
@@ -309,8 +329,14 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
                                 )}
                                 title={cellTitle}
                               >
-                                {renderContent()}
-                                {renderObs()}
+                                {displayValue ? (
+                                  <span className={cn('text-[10px]', color)}>{displayValue}</span>
+                                ) : (
+                                  <span className="text-muted-foreground/40">—</span>
+                                )}
+                                {observacao && (
+                                  <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                )}
                               </button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-2" side="bottom" align="center">
@@ -345,8 +371,14 @@ export function MatrixGrid({ users, escalas, days, canEdit, onCellSaved }: Matri
                         title={cellTitle}
                       >
                         <div className="flex items-center justify-center h-full relative">
-                          {renderContent()}
-                          {renderObs()}
+                          {displayValue ? (
+                            <span className={cn('text-[10px]', color)}>{displayValue}</span>
+                          ) : (
+                            <span className="text-muted-foreground/40">—</span>
+                          )}
+                          {observacao && (
+                            <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-blue-500" />
+                          )}
                         </div>
                       </td>
                     )

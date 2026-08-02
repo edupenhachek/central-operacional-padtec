@@ -161,55 +161,54 @@ export function filterUsersByPill<T extends { projeto?: string[] }>(users: T[], 
   return users.filter((u) => (u.projeto || []).includes(pill))
 }
 
-export const PATTERN_OPTIONS = [
-  { value: 'fixo-5x2', label: 'Fixo (5x2 Padrão)' },
-  { value: 'rotativo-cope', label: 'Rotativo COPE (3 Semanas)' },
-  { value: 'rotativo-pf', label: 'Rotativo Ponto Focal (2 Semanas)' },
-] as const
+export const DAY_KEYS = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'] as const
+export type DayKey = (typeof DAY_KEYS)[number]
+export type DayValue = 'T' | 'F'
 
-export const COPE_CYCLES = ['Semana A', 'Semana B', 'Semana C']
-export const PF_CYCLES = ['Semana PF A', 'Semana PF B']
-
-export function getCycleOptions(pattern: string): string[] {
-  if (pattern === 'rotativo-cope') return COPE_CYCLES
-  if (pattern === 'rotativo-pf') return PF_CYCLES
-  return []
+export interface WeekConfig {
+  seg: DayValue
+  ter: DayValue
+  qua: DayValue
+  qui: DayValue
+  sex: DayValue
+  sab: DayValue
+  dom: DayValue
 }
 
-export function isWorkDay(pattern: string, cycle: string, dayOfWeek: number): boolean {
-  const isSat = dayOfWeek === 6
-  const isSun = dayOfWeek === 0
-  const isWed = dayOfWeek === 3
-  const isThu = dayOfWeek === 4
-  const isFri = dayOfWeek === 5
+export type PatternConfig = Record<string, WeekConfig>
 
-  if (pattern === 'fixo-5x2') {
-    return !isSat && !isSun
-  }
-  if (pattern === 'rotativo-cope') {
-    if (cycle === 'Semana A') return !isSat && !isSun
-    if (cycle === 'Semana B') return !isWed
-    if (cycle === 'Semana C') return !isThu
-    return true
-  }
-  if (pattern === 'rotativo-pf') {
-    if (cycle === 'Semana PF A') return !isSat && !isSun
-    if (cycle === 'Semana PF B') return !isFri && !isSun
-    return true
-  }
-  return true
+export interface PadraoEscalaRecord {
+  id: string
+  nome: string
+  qtd_semanas: number
+  configuracao: PatternConfig
+  created: string
+  updated: string
 }
 
-export function advanceCycle(pattern: string, currentCycle: string): string {
-  if (pattern === 'rotativo-cope') {
-    const idx = COPE_CYCLES.indexOf(currentCycle)
-    return COPE_CYCLES[(idx + 1) % COPE_CYCLES.length]
-  }
-  if (pattern === 'rotativo-pf') {
-    const idx = PF_CYCLES.indexOf(currentCycle)
-    return PF_CYCLES[(idx + 1) % PF_CYCLES.length]
-  }
-  return currentCycle
+export const FALLBACK_PATTERN_OPTION = { value: 'fixo-5x2', label: '5x2 Padrão' }
+
+export function getDynamicCycleOptions(qtdSemanas: number): string[] {
+  return Array.from({ length: qtdSemanas }, (_, i) => `Semana ${i + 1}`)
+}
+
+export function getDayKey(dayOfWeek: number): DayKey {
+  return DAY_KEYS[(dayOfWeek + 6) % 7]
+}
+
+export function getPatternDayValue(
+  config: PatternConfig,
+  weekNum: number,
+  dayOfWeek: number,
+): DayValue {
+  const weekKey = `semana_${weekNum}`
+  const week = config[weekKey]
+  if (!week) return 'T'
+  return week[getDayKey(dayOfWeek)] || 'T'
+}
+
+export function advanceWeek(currentWeek: number, qtdSemanas: number): number {
+  return currentWeek >= qtdSemanas ? 1 : currentWeek + 1
 }
 
 export interface PendingChange {
@@ -270,4 +269,52 @@ export function getCellColorByValue(displayValue: string): string {
   if (displayValue.startsWith('Tr')) return 'text-blue-950 dark:text-blue-100 font-bold'
   if (displayValue.startsWith('FC')) return 'text-slate-950 dark:text-slate-100 font-bold'
   return 'text-foreground font-bold'
+}
+
+export const TURNO_SELECT_OPTIONS = Object.keys(SHIFT_SHORT_LABELS).map((k) => ({
+  value: k,
+  label: `${SHIFT_SHORT_LABELS[k]} — ${k}`,
+}))
+
+export type PeriodMode = 'mes' | 'ponto-senior'
+
+export interface DateRange {
+  start: Date
+  end: Date
+}
+
+export function getRangeForPeriod(mode: PeriodMode, month: number, year: number): DateRange {
+  if (mode === 'mes') {
+    return { start: new Date(year, month, 1), end: new Date(year, month + 1, 0) }
+  }
+  return { start: new Date(year, month, 16), end: new Date(year, month + 1, 15) }
+}
+
+export function getDaysInRange(start: Date, end: Date): Date[] {
+  const days: Date[] = []
+  const current = new Date(start)
+  while (current <= end) {
+    days.push(new Date(current))
+    current.setDate(current.getDate() + 1)
+  }
+  return days
+}
+
+export function feriadosToMap(feriados: { data: string; nome: string }[]): Record<string, string> {
+  const map: Record<string, string> = {}
+  for (const f of feriados) {
+    const raw = f.data || ''
+    const dateKey = raw.split('T')[0].split(' ')[0]
+    if (dateKey) map[dateKey] = f.nome
+  }
+  return map
+}
+
+export function getPeriodLabel(mode: PeriodMode, month: number, year: number): string {
+  if (mode === 'mes') {
+    return format(new Date(year, month, 1), "MMMM 'de' yyyy", { locale: ptBR })
+  }
+  const start = new Date(year, month, 16)
+  const end = new Date(year, month + 1, 15)
+  return `Ponto Senior: ${format(start, 'dd/MM')} - ${format(end, 'dd/MM/yyyy')}`
 }

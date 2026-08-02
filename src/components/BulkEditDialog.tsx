@@ -10,22 +10,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { BULK_STATUS_OPTIONS } from '@/lib/escala-utils'
+import { BULK_STATUS_OPTIONS, TURNO_SELECT_OPTIONS } from '@/lib/escala-utils'
 
 interface BulkEditDialogProps {
   open: boolean
   onClose: () => void
   selectedCount: number
-  onApply: (change: { status: string; observacao: string }) => void
+  onApply: (change: { status: string; turno: string; observacao: string }) => void
 }
 
 export function BulkEditDialog({ open, onClose, selectedCount, onApply }: BulkEditDialogProps) {
   const [status, setStatus] = useState('F')
+  const [turnoChoice, setTurnoChoice] = useState('default')
   const [observacao, setObservacao] = useState('')
 
   const handleApply = () => {
-    onApply({ status, observacao: observacao.trim() })
+    onApply({ status, turno: turnoChoice, observacao: observacao.trim() })
     setObservacao('')
+    setTurnoChoice('default')
     onClose()
   }
 
@@ -51,6 +53,24 @@ export function BulkEditDialog({ open, onClose, selectedCount, onApply }: BulkEd
               </SelectContent>
             </Select>
           </div>
+          {status === 'T' && (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Turno</Label>
+              <Select value={turnoChoice} onValueChange={setTurnoChoice}>
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">Padrão do colaborador</SelectItem>
+                  {TURNO_SELECT_OPTIONS.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold">Observação</Label>
             <Textarea

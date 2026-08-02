@@ -14,14 +14,16 @@ import {
 import { MultiSelect } from '@/components/MultiSelect'
 import { getUsers, type UserItem } from '@/services/users'
 import { generateScheduleRange } from '@/services/escala-matrix'
-import {
-  SHIFT_SHORT_LABELS,
-  MONTH_OPTIONS,
-  YEAR_OPTIONS,
-  PATTERN_OPTIONS,
-  getCycleOptions,
-} from '@/lib/escala-utils'
+import { getPatterns, type PadraoEscalaRecord } from '@/services/padroes-escala'
+import { FALLBACK_PATTERN_OPTION, getDynamicCycleOptions } from '@/lib/escala-utils'
 import { cn } from '@/lib/utils'
+
+const TEAM_OPTIONS = [
+  { value: 'all', label: 'Todos' },
+  { value: 'NOC', label: 'NOC' },
+  { value: 'COPE', label: 'COPE' },
+  { value: 'BKO', label: 'BKO' },
+]
 
 interface BatchEscalaModalProps {
   open: boolean
@@ -43,7 +45,9 @@ export function BatchEscalaModal({
   const [endDate, setEndDate] = useState(defaultEndDate)
   const [pattern, setPattern] = useState('fixo-5x2')
   const [initialCycle, setInitialCycle] = useState('')
+  const [teamFilter, setTeamFilter] = useState('all')
   const [users, setUsers] = useState<UserItem[]>([])
+  const [patterns, setPatterns] = useState<PadraoEscalaRecord[]>([])
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, boolean>>({})
 
@@ -52,30 +56,51 @@ export function BatchEscalaModal({
       getUsers()
         .then((u) => setUsers(u.filter((x) => x.participa_escala !== false)))
         .catch(() => {})
+      getPatterns()
+        .then(setPatterns)
+        .catch(() => {})
       setSelectedUserIds([])
       setStartDate(defaultStartDate)
       setEndDate(defaultEndDate)
       setPattern('fixo-5x2')
       setInitialCycle('')
+      setTeamFilter('all')
       setErrors({})
     }
   }, [open, defaultStartDate, defaultEndDate])
 
+  const filteredUsers = useMemo(() => {
+    if (teamFilter === 'all') return users
+    return users.filter((u) => (u.projeto || []).includes(teamFilter))
+  }, [users, teamFilter])
+
   const userOptions = useMemo(
-    () =>
-      users.map((u) => ({
-        value: u.id,
-        label: `${u.name || u.email}${(u.projeto || []).length ? ` (${u.projeto.join('/')})` : ''}`,
-      })),
-    [users],
+    () => filteredUsers.map((u) => ({ value: u.id, label: u.name || u.email })),
+    [filteredUsers],
   )
 
-  const cycleOptions = useMemo(() => getCycleOptions(pattern), [pattern])
+  const patternOptions = useMemo(
+    () => [FALLBACK_PATTERN_OPTION, ...patterns.map((p) => ({ value: p.id, label: p.nome }))],
+    [patterns],
+  )
+
+  const selectedPattern = useMemo(
+    () => patterns.find((p) => p.id === pattern) || null,
+    [patterns, pattern],
+  )
+
+  const cycleOptions = useMemo(() => {
+    if (pattern === 'fixo-5x2' || !selectedPattern) return []
+    return getDynamicCycleOptions(selectedPattern.qtd_semanas)
+  }, [pattern, selectedPattern])
 
   const handlePatternChange = (value: string) => {
     setPattern(value)
-    const opts = getCycleOptions(value)
-    setInitialCycle(opts.length > 0 ? opts[0] : '')
+    if (value === 'fixo-5x2') {
+      setInitialCycle('')
+    } else {
+      setInitialCycle('Semana 1')
+    }
   }
 
   const handleSubmit = async () => {
@@ -97,26 +122,28 @@ export function BatchEscalaModal({
         projeto: (u.projeto || [])[0] || '',
       }))
 
-    const invalidUsers = selectedUsers.filter((u) => !u.horario || !u.projeto)
-    if (invalidUsers.length > 0) {
-      toast.error('Alguns colaboradores não possuem horário ou projeto definido.')
+    const validUsers = selectedUsers.filter((u) => u.horario && u.projeto)
+    const invalidCount = selectedUsers.length - validUsers.length
+    if (validUsers.length === 0) {
+      toast.error('Nenhum colaborador possui horário e projeto definidos.')
       return
     }
+    if (invalidCount > 0)
+      toast.warning(`${invalidCount} colaborador(es) sem horário/projeto serão ignorados.`)
 
     setLoading(true)
     try {
       const result = await generateScheduleRange(
-        selectedUsers,
+        validUsers,
         startDate,
         endDate,
         pattern,
         initialCycle,
+        selectedPattern?.configuracao || null,
       )
-      if (result.failed > 0) {
+      if (result.failed > 0)
         toast.warning(`${result.succeeded} plantões criados, ${result.failed} falharam.`)
-      } else {
-        toast.success(`${result.succeeded} plantões gerados com sucesso!`)
-      }
+      else toast.success(`${result.succeeded} plantões gerados com sucesso!`)
       onSaved()
       onClose()
     } catch {
@@ -136,6 +163,21 @@ export function BatchEscalaModal({
           <DialogTitle className="font-bold">Gerar Escala</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Equipe</Label>
+            <Select value={teamFilter} onValueChange={setTeamFilter}>
+              <SelectTrigger className={inputCls}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TEAM_OPTIONS.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold">Colaboradores {reqMark}</Label>
             <MultiSelect
@@ -175,7 +217,7 @@ export function BatchEscalaModal({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {PATTERN_OPTIONS.map((p) => (
+                {patternOptions.map((p) => (
                   <SelectItem key={p.value} value={p.value}>
                     {p.label}
                   </SelectItem>
