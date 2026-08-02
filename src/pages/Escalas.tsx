@@ -1,16 +1,18 @@
 import { useState, useMemo } from 'react'
-import { CalendarDays, Users, Clock, Plus, Plane } from 'lucide-react'
+import { CalendarDays, Users, Clock, Plus, Plane, CalendarRange, CalendarClock } from 'lucide-react'
 import { MyScheduleTab } from '@/components/MyScheduleTab'
 import { OperationScheduleTab } from '@/components/OperationScheduleTab'
 import { TodayScheduleTab } from '@/components/TodayScheduleTab'
+import { PatternManagerTab } from '@/components/PatternManagerTab'
 import { BatchEscalaModal } from '@/components/BatchEscalaModal'
 import { VacationModal } from '@/components/VacationModal'
+import { HolidayModal } from '@/components/HolidayModal'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/use-auth'
-import { FOCAL_ROLES, formatDateStr } from '@/lib/escala-utils'
+import { FOCAL_ROLES, formatDateStr, getRangeForPeriod, type PeriodMode } from '@/lib/escala-utils'
 import { cn } from '@/lib/utils'
 
-type TabKey = 'operacao' | 'minha' | 'hoje'
+type TabKey = 'operacao' | 'minha' | 'hoje' | 'padroes'
 
 export default function Escalas() {
   const { user } = useAuth()
@@ -20,23 +22,26 @@ export default function Escalas() {
   const [projetoFilter, setProjetoFilter] = useState('all')
   const [batchOpen, setBatchOpen] = useState(false)
   const [vacationOpen, setVacationOpen] = useState(false)
+  const [holidayOpen, setHolidayOpen] = useState(false)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
+  const [periodMode, setPeriodMode] = useState<PeriodMode>('mes')
 
   const canManage = user?.role ? FOCAL_ROLES.includes(user.role) : false
 
-  const defaultStartDate = useMemo(
-    () => formatDateStr(new Date(Number(yearFilter), Number(monthFilter), 1)),
-    [monthFilter, yearFilter],
-  )
+  const defaultStartDate = useMemo(() => {
+    const range = getRangeForPeriod(periodMode, Number(monthFilter), Number(yearFilter))
+    return formatDateStr(range.start)
+  }, [periodMode, monthFilter, yearFilter])
   const defaultEndDate = useMemo(() => {
-    const lastDay = new Date(Number(yearFilter), Number(monthFilter) + 1, 0).getDate()
-    return formatDateStr(new Date(Number(yearFilter), Number(monthFilter), lastDay))
-  }, [monthFilter, yearFilter])
+    const range = getRangeForPeriod(periodMode, Number(monthFilter), Number(yearFilter))
+    return formatDateStr(range.end)
+  }, [periodMode, monthFilter, yearFilter])
 
   const tabs: { key: TabKey; label: string; icon: typeof Users }[] = [
     { key: 'operacao', label: 'Escala da Operação', icon: CalendarDays },
     { key: 'minha', label: 'Minha Escala', icon: Users },
     { key: 'hoje', label: 'Escala HOJE', icon: Clock },
+    { key: 'padroes', label: 'Padrões de Escala', icon: CalendarRange },
   ]
 
   return (
@@ -67,35 +72,44 @@ export default function Escalas() {
             )
           })}
         </div>
-        {canManage && (
-          <div className="flex items-center gap-2 ml-auto">
-            <Button
-              onClick={() => setVacationOpen(true)}
-              variant="outline"
-              className="text-sm gap-2"
-            >
-              <Plane className="w-4 h-4" /> Lançar Férias
-            </Button>
-            <Button
-              onClick={() => setBatchOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-sm gap-2"
-            >
-              <Plus className="w-4 h-4" /> Gerar Escala
-            </Button>
-          </div>
-        )}
+        <div className="flex items-center gap-2 ml-auto">
+          <Button onClick={() => setHolidayOpen(true)} variant="outline" className="text-sm gap-2">
+            <CalendarClock className="w-4 h-4" /> Feriados
+          </Button>
+          {canManage && (
+            <>
+              <Button
+                onClick={() => setVacationOpen(true)}
+                variant="outline"
+                className="text-sm gap-2"
+              >
+                <Plane className="w-4 h-4" /> Lançar Férias
+              </Button>
+              <Button
+                onClick={() => setBatchOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-sm gap-2"
+              >
+                <Plus className="w-4 h-4" /> Gerar Escala
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
-      {activeTab === 'hoje' ? (
+      {activeTab === 'padroes' ? (
+        <PatternManagerTab />
+      ) : activeTab === 'hoje' ? (
         <TodayScheduleTab />
       ) : activeTab === 'operacao' ? (
         <OperationScheduleTab
           monthFilter={monthFilter}
           yearFilter={yearFilter}
           projetoFilter={projetoFilter}
+          periodMode={periodMode}
           onMonthChange={setMonthFilter}
           onYearChange={setYearFilter}
           onProjetoChange={setProjetoFilter}
+          onPeriodModeChange={setPeriodMode}
           refreshTrigger={refreshTrigger}
         />
       ) : (
@@ -117,6 +131,14 @@ export default function Escalas() {
       <VacationModal
         open={vacationOpen}
         onClose={() => setVacationOpen(false)}
+        onSaved={() => setRefreshTrigger((t) => t + 1)}
+      />
+      <HolidayModal
+        open={holidayOpen}
+        onClose={() => setHolidayOpen(false)}
+        month={Number(monthFilter)}
+        year={Number(yearFilter)}
+        canManage={canManage}
         onSaved={() => setRefreshTrigger((t) => t + 1)}
       />
     </div>

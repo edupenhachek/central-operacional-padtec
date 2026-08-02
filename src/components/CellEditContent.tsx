@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { BULK_STATUS_OPTIONS, SHIFT_SHORT_LABELS } from '@/lib/escala-utils'
+import { BULK_STATUS_OPTIONS, SHIFT_SHORT_LABELS, TURNO_SELECT_OPTIONS } from '@/lib/escala-utils'
 
 interface CellEditContentProps {
   userId: string
@@ -44,11 +44,19 @@ export function CellEditContent({
     return 'T'
   }
 
+  const getInitialTurnoChoice = () => {
+    if (currentTurno && currentTurno !== userHorario && currentTurno !== 'FOLGA')
+      return currentTurno
+    return 'default'
+  }
+
   const [status, setStatus] = useState(getInitialStatus())
+  const [turnoChoice, setTurnoChoice] = useState(getInitialTurnoChoice())
   const [observacao, setObservacao] = useState(currentObservacao || '')
 
   const handleApply = () => {
-    const turno = status === 'T' ? userHorario || currentTurno : ''
+    const turno =
+      status === 'T' ? (turnoChoice === 'default' ? userHorario || currentTurno : turnoChoice) : ''
     onPendingChange({ turno, status, observacao: observacao.trim() })
     onClose()
   }
@@ -69,12 +77,27 @@ export function CellEditContent({
             ))}
           </SelectContent>
         </Select>
-        {status === 'T' && userHorario && (
-          <p className="text-[10px] text-muted-foreground">
-            ({SHIFT_SHORT_LABELS[userHorario] || userHorario})
-          </p>
-        )}
       </div>
+      {status === 'T' && (
+        <div className="space-y-1.5">
+          <Label className="text-xs font-semibold">Turno</Label>
+          <Select value={turnoChoice} onValueChange={setTurnoChoice}>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">
+                Padrão {userHorario ? `(${SHIFT_SHORT_LABELS[userHorario] || userHorario})` : '—'}
+              </SelectItem>
+              {TURNO_SELECT_OPTIONS.map((t) => (
+                <SelectItem key={t.value} value={t.value}>
+                  {t.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       <div className="space-y-1.5">
         <Label className="text-xs font-semibold">Observação do Dia</Label>
         <Textarea

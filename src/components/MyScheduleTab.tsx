@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { CalendarDays } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { useRealtime } from '@/hooks/use-realtime'
 import { getEscalasByUser, type EscalaRecord } from '@/services/escalas'
 import { MatrixGrid } from '@/components/MatrixGrid'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -13,7 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { MONTH_OPTIONS, YEAR_OPTIONS, getDaysInMonth } from '@/lib/escala-utils'
+import { MONTH_OPTIONS, YEAR_OPTIONS, getDaysInMonth, feriadosToMap } from '@/lib/escala-utils'
+import { getFeriadosForMonth } from '@/services/feriados'
 import type { UserItem } from '@/services/users'
 
 interface MyScheduleTabProps {
@@ -31,16 +33,38 @@ export function MyScheduleTab({
 }: MyScheduleTabProps) {
   const { user } = useAuth()
   const [escalas, setEscalas] = useState<EscalaRecord[]>([])
+  const [holidays, setHolidays] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
+
+  const navigateMonth = (direction: -1 | 1) => {
+    const currentMonth = Number(monthFilter)
+    let newMonth = currentMonth + direction
+    let newYear = Number(yearFilter)
+    if (newMonth < 0) {
+      newMonth = 11
+      newYear--
+    }
+    if (newMonth > 11) {
+      newMonth = 0
+      newYear++
+    }
+    onMonthChange(String(newMonth))
+    onYearChange(String(newYear))
+  }
 
   const loadData = useCallback(async () => {
     if (!user?.id) return
     setLoading(true)
     try {
-      const result = await getEscalasByUser(user.id, Number(monthFilter), Number(yearFilter))
+      const [result, feriados] = await Promise.all([
+        getEscalasByUser(user.id, Number(monthFilter), Number(yearFilter)),
+        getFeriadosForMonth(Number(monthFilter), Number(yearFilter)),
+      ])
       setEscalas(result as unknown as EscalaRecord[])
+      setHolidays(feriadosToMap(feriados as unknown as { data: string; nome: string }[]))
     } catch {
       setEscalas([])
+      setHolidays({})
     } finally {
       setLoading(false)
     }
@@ -51,6 +75,7 @@ export function MyScheduleTab({
   }, [loadData])
 
   useRealtime('escalas', () => loadData())
+  useRealtime('feriados', () => loadData())
 
   const days = useMemo(
     () => getDaysInMonth(Number(monthFilter), Number(yearFilter)),
@@ -84,6 +109,14 @@ export function MyScheduleTab({
       <Card className="border-border bg-card dark:bg-slate-900">
         <CardContent className="p-4">
           <div className="flex gap-3">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={() => navigateMonth(-1)}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
             <Select value={monthFilter} onValueChange={onMonthChange}>
               <SelectTrigger className="h-9 w-36 text-xs bg-background dark:bg-slate-900/80">
                 <SelectValue />
@@ -108,6 +141,14 @@ export function MyScheduleTab({
                 ))}
               </SelectContent>
             </Select>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={() => navigateMonth(1)}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -131,6 +172,7 @@ export function MyScheduleTab({
               escalas={escalas}
               days={days}
               canEdit={false}
+              holidays={holidays}
               onCellSaved={loadData}
             />
           )}

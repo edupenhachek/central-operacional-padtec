@@ -1,13 +1,17 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { CalendarDays, Search, Users } from 'lucide-react'
+import { CalendarDays, Search, Users, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { useRealtime } from '@/hooks/use-realtime'
 import { getUsers, type UserItem } from '@/services/users'
-import { getEscalasForMonth } from '@/services/escala-matrix'
+import { getEscalasForRange } from '@/services/escala-matrix'
 import { type EscalaRecord } from '@/services/escalas'
+import { getFeriadosForRange } from '@/services/feriados'
 import { MatrixGrid } from '@/components/MatrixGrid'
+import { EscalaLegend } from '@/components/EscalaLegend'
+import { ScheduleStandardsGuide } from '@/components/ScheduleStandardsGuide'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -21,8 +25,13 @@ import {
   MONTH_OPTIONS,
   YEAR_OPTIONS,
   filterUsersByPill,
-  getDaysInMonth,
+  getDaysInRange,
+  getRangeForPeriod,
+  getPeriodLabel,
+  formatDateStr,
   isCoordinator,
+  feriadosToMap,
+  type PeriodMode,
 } from '@/lib/escala-utils'
 import { cn } from '@/lib/utils'
 
@@ -30,9 +39,11 @@ interface OperationScheduleTabProps {
   monthFilter: string
   yearFilter: string
   projetoFilter: string
+  periodMode: PeriodMode
   onMonthChange: (v: string) => void
   onYearChange: (v: string) => void
   onProjetoChange: (v: string) => void
+  onPeriodModeChange: (mode: PeriodMode) => void
   refreshTrigger?: number
 }
 
@@ -40,9 +51,11 @@ export function OperationScheduleTab({
   monthFilter,
   yearFilter,
   projetoFilter,
+  periodMode,
   onMonthChange,
   onYearChange,
   onProjetoChange,
+  onPeriodModeChange,
   refreshTrigger,
 }: OperationScheduleTabProps) {
   const { user } = useAuth()
@@ -50,31 +63,56 @@ export function OperationScheduleTab({
   const [escalas, setEscalas] = useState<EscalaRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [holidays, setHolidays] = useState<Record<string, string>>({})
 
   const canManage = user?.role ? FOCAL_ROLES.includes(user.role) : false
+
+  const navigateMonth = (direction: -1 | 1) => {
+    const currentMonth = Number(monthFilter)
+    let newMonth = currentMonth + direction
+    let newYear = Number(yearFilter)
+    if (newMonth < 0) {
+      newMonth = 11
+      newYear--
+    }
+    if (newMonth > 11) {
+      newMonth = 0
+      newYear++
+    }
+    onMonthChange(String(newMonth))
+    onYearChange(String(newYear))
+  }
+
+  const range = useMemo(
+    () => getRangeForPeriod(periodMode, Number(monthFilter), Number(yearFilter)),
+    [periodMode, monthFilter, yearFilter],
+  )
 
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [u, e] = await Promise.all([
+      const [u, e, f] = await Promise.all([
         getUsers('participa_escala = true'),
-        getEscalasForMonth(Number(monthFilter), Number(yearFilter)),
+        getEscalasForRange(formatDateStr(range.start), formatDateStr(range.end)),
+        getFeriadosForRange(formatDateStr(range.start), formatDateStr(range.end)),
       ])
       setUsers(u)
       setEscalas(e as unknown as EscalaRecord[])
+      setHolidays(feriadosToMap(f as unknown as { data: string; nome: string }[]))
     } catch {
       setUsers([])
       setEscalas([])
+      setHolidays({})
     } finally {
       setLoading(false)
     }
-  }, [monthFilter, yearFilter])
+  }, [range.start, range.end])
 
   useEffect(() => {
     loadData()
   }, [loadData, refreshTrigger])
-
   useRealtime('escalas', () => loadData())
+  useRealtime('feriados', () => loadData())
 
   const { coordinators, operational } = useMemo(() => {
     const pillFiltered = filterUsersByPill(
@@ -88,16 +126,23 @@ export function OperationScheduleTab({
     return { coordinators: coords, operational: searched }
   }, [users, projetoFilter, searchQuery])
 
-  const days = useMemo(
-    () => getDaysInMonth(Number(monthFilter), Number(yearFilter)),
-    [monthFilter, yearFilter],
-  )
+  const days = useMemo(() => getDaysInRange(range.start, range.end), [range.start, range.end])
+  const periodLabel = getPeriodLabel(periodMode, Number(monthFilter), Number(yearFilter))
+  const teamLabel = projetoFilter === 'all' ? 'Todos' : projetoFilter
 
   return (
     <div className="space-y-4">
       <Card className="border-border bg-card dark:bg-slate-900">
         <CardContent className="p-4">
           <div className="flex flex-wrap items-center gap-3">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={() => navigateMonth(-1)}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
             <Select value={monthFilter} onValueChange={onMonthChange}>
               <SelectTrigger className="h-9 w-36 text-xs bg-background dark:bg-slate-900/80">
                 <SelectValue />
@@ -122,6 +167,14 @@ export function OperationScheduleTab({
                 ))}
               </SelectContent>
             </Select>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={() => navigateMonth(1)}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
             <div className="flex gap-1.5">
               {QUICK_FILTER_PILLS.map((pill) => (
                 <button
@@ -165,10 +218,35 @@ export function OperationScheduleTab({
       ) : (
         <>
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <CalendarDays className="w-5 h-5 text-blue-600" /> Escala da Operação
-              </CardTitle>
+            <CardHeader className="pb-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <CardTitle className="text-base font-bold flex items-center gap-2 flex-1 justify-center text-center">
+                  <CalendarDays className="w-5 h-5 text-blue-600" />
+                  Escala da Operação — {periodLabel} — {teamLabel}
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className="inline-flex gap-1 p-0.5 bg-muted rounded-md">
+                    <Button
+                      size="sm"
+                      variant={periodMode === 'mes' ? 'default' : 'ghost'}
+                      onClick={() => onPeriodModeChange('mes')}
+                      className="h-7 text-[11px] px-2"
+                    >
+                      Mês Comum
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={periodMode === 'ponto-senior' ? 'default' : 'ghost'}
+                      onClick={() => onPeriodModeChange('ponto-senior')}
+                      className="h-7 text-[11px] px-2"
+                    >
+                      Ponto Senior
+                    </Button>
+                  </div>
+                  <EscalaLegend />
+                  <ScheduleStandardsGuide />
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <MatrixGrid
@@ -176,6 +254,7 @@ export function OperationScheduleTab({
                 escalas={escalas}
                 days={days}
                 canEdit={canManage}
+                holidays={holidays}
                 onCellSaved={loadData}
               />
             </CardContent>
@@ -193,6 +272,7 @@ export function OperationScheduleTab({
                   escalas={escalas}
                   days={days}
                   canEdit={canManage}
+                  holidays={holidays}
                   onCellSaved={loadData}
                   showFooter={false}
                 />
