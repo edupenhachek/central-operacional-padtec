@@ -1,7 +1,6 @@
 import logoPadtecSimboloBranco from '@/assets/logo-padtec-simbolo-branco.png'
 
-const EXTERNAL_PADTEC_LOGO =
-  '/visual-edits/black-white-minimal-simple-bold-modern-professional-photography-letter-k-museum-logo-7-2-da499a7d.png'
+const EXTERNAL_PADTEC_LOGO = '/visual-edits/logo-padtec-simbolo-preto-bba0dd6d.png'
 
 export function PadtecLogo({ className = 'h-8' }: { className?: string }) {
   return (
