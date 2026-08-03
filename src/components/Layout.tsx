@@ -19,6 +19,7 @@ import {
   CalendarDays,
   UserCircle,
   GraduationCap,
+  Megaphone,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { useTheme } from '@/hooks/use-theme'
@@ -52,7 +53,7 @@ export default function Layout() {
   const navItems = [
     { label: 'Dashboard', path: '/', icon: LayoutDashboard },
     { label: 'Escalas', path: '/escalas', icon: CalendarDays },
-    { label: 'Transbordo', path: '/transbordo', icon: CalendarDays },
+    { label: 'Transbordo', path: '/transbordo', icon: Megaphone },
     { label: 'Documentação', path: '/documentacao', icon: FileText },
     { label: 'Treinamentos', path: '/treinamentos', icon: GraduationCap },
     { label: 'Gutenberg AI', path: '/gutenberg', icon: BrainCircuit },
