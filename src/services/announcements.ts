@@ -41,4 +41,7 @@ export const createAnnouncement = (data: FormData | Partial<Announcement>) =>
 export const updateAnnouncementReactions = (id: string, reactions: Record<string, number>) =>
   pb.collection('announcements').update<Announcement>(id, { reactions })
 
+export const updateAnnouncement = (id: string, data: FormData | Partial<Announcement>) =>
+  pb.collection('announcements').update<Announcement>(id, data)
+
 export const deleteAnnouncement = (id: string) => pb.collection('announcements').delete(id)

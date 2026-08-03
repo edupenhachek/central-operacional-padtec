@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-03T16:12:51.296Z",
+  "generatedAt": "2026-08-03T17:16:48.699Z",
   "collections": [
     {
       "name": "users",
@@ -143,8 +143,8 @@
         "list": "@request.auth.id != ''",
         "view": "@request.auth.id != ''",
         "create": "@request.auth.id != ''",
-        "update": "@request.auth.id != ''",
-        "delete": "@request.auth.id != ''"
+        "update": "@request.auth.id != '' && (author = @request.auth.id || @request.auth.role = 'ADMIN' || @request.auth.role = 'SUPERADMIN')",
+        "delete": "@request.auth.id != '' && (author = @request.auth.id || @request.auth.role = 'ADMIN' || @request.auth.role = 'SUPERADMIN')"
       },
       "fields": [
         {
@@ -830,7 +830,7 @@
         "view": "user = @request.auth.id",
         "create": null,
         "update": "user = @request.auth.id",
-        "delete": null
+        "delete": "user = @request.auth.id"
       },
       "fields": [
         {
@@ -853,13 +853,6 @@
           "system": false
         },
         {
-          "name": "type",
-          "type": "select",
-          "required": false,
-          "system": false,
-          "selectValues": ["schedule_created", "schedule_updated", "vacation_approved"]
-        },
-        {
           "name": "read",
           "type": "bool",
           "required": false,
@@ -878,6 +871,18 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "type",
+          "type": "select",
+          "required": false,
+          "system": false,
+          "selectValues": [
+            "schedule_created",
+            "schedule_updated",
+            "vacation_approved",
+            "announcement_high"
+          ]
         }
       ],
       "indexes": [
@@ -969,6 +974,57 @@
         }
       ],
       "indexes": ["CREATE INDEX idx_feriados_data ON feriados (data)"]
+    },
+    {
+      "name": "comments",
+      "type": "base",
+      "apiRules": {
+        "list": "@request.auth.id != ''",
+        "view": "@request.auth.id != ''",
+        "create": "@request.auth.id != ''",
+        "update": "@request.auth.id != '' && (author = @request.auth.id || @request.auth.role = 'ADMIN' || @request.auth.role = 'SUPERADMIN')",
+        "delete": "@request.auth.id != '' && (author = @request.auth.id || @request.auth.role = 'ADMIN' || @request.auth.role = 'SUPERADMIN')"
+      },
+      "fields": [
+        {
+          "name": "content",
+          "type": "text",
+          "required": true,
+          "system": false
+        },
+        {
+          "name": "author",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "users"
+        },
+        {
+          "name": "announcement",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "announcements"
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_comments_announcement ON comments (announcement)",
+        "CREATE INDEX idx_comments_created ON comments (created)"
+      ]
     }
   ]
 }

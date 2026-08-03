@@ -1,6 +1,10 @@
 import pb from '@/lib/pocketbase/client'
 
-export type NotificationType = 'schedule_created' | 'schedule_updated' | 'vacation_approved'
+export type NotificationType =
+  | 'schedule_created'
+  | 'schedule_updated'
+  | 'vacation_approved'
+  | 'announcement_high'
 
 export interface NotificationRecord {
   id: string
@@ -34,3 +38,9 @@ export const markAllAsRead = async (): Promise<void> => {
 
 export const markAsRead = async (id: string): Promise<void> =>
   pb.collection('notifications').update(id, { read: true })
+
+export const deleteNotification = (id: string) => pb.collection('notifications').delete(id)
+
+export const deleteNotifications = async (ids: string[]) => {
+  await Promise.allSettled(ids.map((id) => pb.collection('notifications').delete(id)))
+}

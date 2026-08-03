@@ -6,7 +6,7 @@ export function MarkdownRenderer({ content }: { content: string }) {
 }
 
 function parseInline(text: string): ReactNode {
-  const pattern = /\*\*(.+?)\*\*|`(.+?)`/g
+  const pattern = /\*\*(.+?)\*\*|`(.+?)`|@\[([^\]]+)\]/g
   const parts: ReactNode[] = []
   let lastIndex = 0
   let match: RegExpExecArray | null
@@ -27,6 +27,15 @@ function parseInline(text: string): ReactNode {
         <code key={key++} className="px-1 py-0.5 rounded bg-muted/80 text-xs font-mono">
           {match[2]}
         </code>,
+      )
+    } else if (match[3] !== undefined) {
+      parts.push(
+        <span
+          key={key++}
+          className="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 text-xs font-medium cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900 transition-colors"
+        >
+          @{match[3]}
+        </span>,
       )
     }
     lastIndex = match.index + match[0].length

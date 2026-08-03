@@ -15,7 +15,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { MentionField } from '@/components/MentionField'
 import {
   Select,
   SelectContent,
@@ -256,10 +256,11 @@ export function CreatePublicationModal({ open, onOpenChange, onSuccess }: Props)
                   <Code className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <Textarea
+              <MentionField
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={setContent}
                 placeholder="Escreva sua mensagem para a equipe..."
+                multiline
                 className="min-h-[110px] border-none bg-transparent focus-visible:ring-0 text-sm p-3 resize-none"
               />
             </div>
