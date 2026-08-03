@@ -6,6 +6,7 @@ export interface UserItem {
   id: string
   name: string
   email: string
+  avatar?: string
   role?: UserRole
   phone?: string
   projeto?: string[]
@@ -27,6 +28,7 @@ export const getUsers = async (filter?: string): Promise<UserItem[]> => {
     id: r.id,
     name: r.name || '',
     email: r.email || '',
+    avatar: r.avatar || '',
     role: r.role as UserRole | undefined,
     phone: r.phone || '',
     projeto: Array.isArray(r.projeto) ? r.projeto : r.projeto ? [r.projeto] : [],

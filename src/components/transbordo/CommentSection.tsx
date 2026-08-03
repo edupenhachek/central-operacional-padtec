@@ -51,22 +51,31 @@ export function CommentSection({ announcementId, comments }: CommentSectionProps
           </p>
         )}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="space-y-2">
         <MentionField
           value={newComment}
           onChange={setNewComment}
           placeholder="Escreva um comentário..."
-          className="h-8 text-xs bg-slate-50 dark:bg-slate-800"
-          onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}
+          multiline
+          className="w-full min-h-[52px] text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 resize-none"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              handleAddComment()
+            }
+          }}
           dropdownAbove
         />
-        <Button
-          size="icon"
-          onClick={handleAddComment}
-          className="h-8 w-8 bg-blue-600 hover:bg-blue-700 text-white shrink-0"
-        >
-          <Send className="w-3.5 h-3.5" />
-        </Button>
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            onClick={handleAddComment}
+            className="h-7 text-[11px] bg-blue-600 hover:bg-blue-700 text-white gap-1"
+          >
+            <Send className="w-3 h-3" />
+            Comentar
+          </Button>
+        </div>
       </div>
     </div>
   )

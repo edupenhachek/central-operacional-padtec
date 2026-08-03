@@ -24,10 +24,6 @@ const SHORTCUTS: { label: string; getRange: () => DateTimeRange }[] = [
   },
   { label: 'Última hora', getRange: () => ({ from: subHours(new Date(), 1), to: new Date() }) },
   {
-    label: 'Últimas 12 horas',
-    getRange: () => ({ from: subHours(new Date(), 12), to: new Date() }),
-  },
-  {
     label: 'Últimas 24 horas',
     getRange: () => ({ from: subHours(new Date(), 24), to: new Date() }),
   },
@@ -113,7 +109,7 @@ export function DateTimeRangePicker({ value, onChange }: DateTimeRangePickerProp
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <div className="flex">
-            <div className="border-r border-slate-200 dark:border-slate-800 p-2 min-w-[160px]">
+            <div className="border-r border-slate-200 dark:border-slate-800 p-1.5 min-w-[150px]">
               {SHORTCUTS.map((s) => (
                 <button
                   key={s.label}
@@ -124,7 +120,7 @@ export function DateTimeRangePicker({ value, onChange }: DateTimeRangePickerProp
                 </button>
               ))}
             </div>
-            <div className="p-3">
+            <div className="p-2">
               <Calendar
                 mode="range"
                 selected={draft.from ? { from: draft.from, to: draft.to } : undefined}
@@ -134,7 +130,7 @@ export function DateTimeRangePicker({ value, onChange }: DateTimeRangePickerProp
               />
             </div>
           </div>
-          <div className="border-t border-slate-200 dark:border-slate-800 p-3 space-y-3">
+          <div className="border-t border-slate-200 dark:border-slate-800 p-2 space-y-2">
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-slate-600 dark:text-slate-400">

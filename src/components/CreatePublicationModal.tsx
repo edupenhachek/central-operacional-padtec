@@ -201,7 +201,7 @@ export function CreatePublicationModal({ open, onOpenChange, onSuccess }: Props)
             <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 block">
               Conteúdo
             </label>
-            <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-800/40">
+            <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-visible bg-slate-50 dark:bg-slate-800/40">
               <div className="flex items-center gap-1 p-2 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs">
                 <span className="font-semibold text-slate-500 px-1">Normal</span>
                 <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-700 mx-1" />
