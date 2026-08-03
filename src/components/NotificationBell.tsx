@@ -1,8 +1,18 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Bell, CalendarPlus, CalendarClock, Palmtree, CheckCheck } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import {
+  Bell,
+  CalendarPlus,
+  CalendarClock,
+  Palmtree,
+  CheckCheck,
+  Trash2,
+  Megaphone,
+} from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/use-auth'
 import { useRealtime } from '@/hooks/use-realtime'
@@ -10,6 +20,8 @@ import {
   getNotifications,
   markAllAsRead,
   markAsRead,
+  deleteNotification,
+  deleteNotifications,
   type NotificationRecord,
 } from '@/services/notifications'
 import { cn } from '@/lib/utils'
@@ -30,6 +42,27 @@ const TYPE_CONFIG: Record<string, { icon: typeof Bell; color: string; bg: string
     color: 'text-green-600',
     bg: 'bg-green-100 dark:bg-green-950/60',
   },
+  announcement_high: {
+    icon: Megaphone,
+    color: 'text-red-600',
+    bg: 'bg-red-100 dark:bg-red-950/60',
+  },
+}
+
+const REDIRECT_ROUTES: Record<string, string> = {
+  schedule_created: '/escalas',
+  schedule_updated: '/escalas',
+  vacation_approved: '/escalas',
+  announcement_high: '/transbordo',
+}
+
+function dedup(list: NotificationRecord[]): NotificationRecord[] {
+  const seen = new Set<string>()
+  return list.filter((n) => {
+    if (seen.has(n.id)) return false
+    seen.add(n.id)
+    return true
+  })
 }
 
 function formatRelativeTime(dateStr: string): string {
@@ -47,16 +80,19 @@ function formatRelativeTime(dateStr: string): string {
 
 export function NotificationBell() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [notifications, setNotifications] = useState<NotificationRecord[]>([])
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [selectionMode, setSelectionMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const unreadCount = notifications.filter((n) => !n.read).length
 
   useEffect(() => {
     if (!user) return
     getNotifications()
-      .then(setNotifications)
+      .then((data) => setNotifications(dedup(data)))
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [user])
@@ -66,7 +102,10 @@ export function NotificationBell() {
     (e) => {
       if (e.action === 'create') {
         const rec = e.record as unknown as NotificationRecord
-        setNotifications((prev) => [rec, ...prev])
+        setNotifications((prev) => {
+          if (prev.some((n) => n.id === rec.id)) return prev
+          return [rec, ...prev]
+        })
         toast(rec.title, {
           description: rec.content.length > 100 ? rec.content.slice(0, 100) + '...' : rec.content,
           duration: 4000,
@@ -87,14 +126,73 @@ export function NotificationBell() {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
   }, [])
 
-  const handleItemClick = useCallback(async (n: NotificationRecord) => {
-    if (!n.read) {
-      await markAsRead(n.id)
-      setNotifications((prev) =>
-        prev.map((item) => (item.id === n.id ? { ...item, read: true } : item)),
-      )
+  const handleItemClick = useCallback(
+    async (n: NotificationRecord) => {
+      if (selectionMode) {
+        setSelectedIds((prev) => {
+          const next = new Set(prev)
+          if (next.has(n.id)) next.delete(n.id)
+          else next.add(n.id)
+          return next
+        })
+        return
+      }
+      if (!n.read) {
+        await markAsRead(n.id)
+        setNotifications((prev) =>
+          prev.map((item) => (item.id === n.id ? { ...item, read: true } : item)),
+        )
+      }
+      const route = REDIRECT_ROUTES[n.type] || '/transbordo'
+      navigate(route)
+      setOpen(false)
+    },
+    [selectionMode, navigate],
+  )
+
+  const handleDelete = useCallback(async (id: string) => {
+    try {
+      await deleteNotification(id)
+      setNotifications((prev) => prev.filter((n) => n.id !== id))
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    } catch {
+      toast.error('Erro ao excluir notificação.')
     }
   }, [])
+
+  const handleSelectAll = useCallback(() => {
+    if (selectedIds.size === notifications.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(notifications.map((n) => n.id)))
+    }
+  }, [notifications, selectedIds])
+
+  const handleDeleteSelected = useCallback(async () => {
+    const ids = [...selectedIds]
+    try {
+      await deleteNotifications(ids)
+      setNotifications((prev) => prev.filter((n) => !selectedIds.has(n.id)))
+      setSelectedIds(new Set())
+      setSelectionMode(false)
+      toast.success(`${ids.length} notificação(ões) excluída(s).`)
+    } catch {
+      toast.error('Erro ao excluir notificações.')
+    }
+  }, [selectedIds])
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   if (!user) return null
 
@@ -118,17 +216,64 @@ export function NotificationBell() {
       <PopoverContent align="end" className="w-80 sm:w-96 p-0 rounded-2xl shadow-2xl border-border">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <h3 className="font-semibold text-sm">Notificações</h3>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleMarkAllRead}
-              className="text-xs h-7 text-blue-600 hover:text-blue-700"
-            >
-              <CheckCheck className="w-3.5 h-3.5 mr-1" />
-              Marcar todas como lidas
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {selectionMode ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSelectAll}
+                  className="text-xs h-7 text-blue-600"
+                >
+                  Selecionar tudo
+                </Button>
+                {selectedIds.size > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDeleteSelected}
+                    className="text-xs h-7 text-red-600"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-1" />
+                    Excluir ({selectedIds.size})
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelectionMode(false)
+                    setSelectedIds(new Set())
+                  }}
+                  className="text-xs h-7"
+                >
+                  Cancelar
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectionMode(true)}
+                  className="text-xs h-7"
+                >
+                  Selecionar
+                </Button>
+                {unreadCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleMarkAllRead}
+                    className="text-xs h-7 text-blue-600"
+                  >
+                    <CheckCheck className="w-3.5 h-3.5 mr-1" />
+                    Marcar lidas
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
         </div>
         <ScrollArea className="h-80">
           {loading ? (
@@ -148,10 +293,18 @@ export function NotificationBell() {
                     key={n.id}
                     onClick={() => handleItemClick(n)}
                     className={cn(
-                      'flex gap-3 px-4 py-3 transition-colors hover:bg-muted/50 cursor-pointer',
+                      'group flex gap-3 px-4 py-3 transition-colors hover:bg-muted/50 cursor-pointer relative',
                       !n.read && 'bg-blue-50/50 dark:bg-blue-950/20',
                     )}
                   >
+                    {selectionMode && (
+                      <Checkbox
+                        checked={selectedIds.has(n.id)}
+                        onCheckedChange={() => toggleSelected(n.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="mt-0.5"
+                      />
+                    )}
                     <div
                       className={cn(
                         'shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
@@ -172,6 +325,17 @@ export function NotificationBell() {
                         {formatRelativeTime(n.created)}
                       </p>
                     </div>
+                    {!selectionMode && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(n.id)
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 top-2 p-1 text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 )
               })}
