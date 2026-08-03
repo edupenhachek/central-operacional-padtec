@@ -1,8 +1,15 @@
 import { useState, useEffect, useRef, useMemo, type KeyboardEvent } from 'react'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { getUsers } from '@/services/users'
 import { cn } from '@/lib/utils'
+
+interface MentionUser {
+  id: string
+  name: string
+  avatar?: string
+}
 
 interface MentionFieldProps {
   value: string
@@ -23,7 +30,7 @@ export function MentionField({
   onKeyDown,
   dropdownAbove,
 }: MentionFieldProps) {
-  const [users, setUsers] = useState<{ id: string; name: string }[]>([])
+  const [users, setUsers] = useState<MentionUser[]>([])
   const [showDropdown, setShowDropdown] = useState(false)
   const [query, setQuery] = useState('')
   const [selectedIdx, setSelectedIdx] = useState(0)
@@ -31,7 +38,7 @@ export function MentionField({
 
   useEffect(() => {
     getUsers('Ativo = true')
-      .then((u) => setUsers(u.map((x) => ({ id: x.id, name: x.name }))))
+      .then((u) => setUsers(u.map((x) => ({ id: x.id, name: x.name, avatar: x.avatar }))))
       .catch(() => {})
   }, [])
 
@@ -39,6 +46,11 @@ export function MentionField({
     if (!query) return users.slice(0, 8)
     return users.filter((u) => u.name.toLowerCase().includes(query.toLowerCase())).slice(0, 8)
   }, [users, query])
+
+  const buildAvatarUrl = (user: MentionUser): string | null => {
+    if (!user.avatar) return null
+    return `${import.meta.env.VITE_POCKETBASE_URL}/api/files/users/${user.id}/${user.avatar}`
+  }
 
   const checkMention = (text: string, pos: number) => {
     const before = text.slice(0, pos)
@@ -74,7 +86,7 @@ export function MentionField({
     detectMention(value, pos)
   }
 
-  const insertMention = (user: { id: string; name: string }) => {
+  const insertMention = (user: MentionUser) => {
     const el = fieldRef.current
     if (!el) return
     const pos = el.selectionStart || value.length
@@ -136,26 +148,35 @@ export function MentionField({
       {showDropdown && filtered.length > 0 && (
         <div
           className={cn(
-            'absolute z-50 left-0 w-64 max-h-48 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl',
+            'absolute z-50 left-0 w-72 max-h-52 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl',
             dropdownAbove ? 'bottom-full mb-1' : 'top-full mt-1',
           )}
         >
-          {filtered.map((u, i) => (
-            <button
-              key={u.id}
-              type="button"
-              onMouseDown={(e) => {
-                e.preventDefault()
-                insertMention(u)
-              }}
-              className={cn(
-                'w-full text-left px-3 py-2 text-xs hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors',
-                i === selectedIdx && 'bg-blue-50 dark:bg-blue-950/40',
-              )}
-            >
-              {u.name}
-            </button>
-          ))}
+          {filtered.map((u, i) => {
+            const avatarUrl = buildAvatarUrl(u)
+            return (
+              <button
+                key={u.id}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                  insertMention(u)
+                }}
+                className={cn(
+                  'w-full flex items-center gap-2 text-left px-2.5 py-2 text-xs hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors',
+                  i === selectedIdx && 'bg-blue-50 dark:bg-blue-950/40',
+                )}
+              >
+                <Avatar className="w-6 h-6 shrink-0 border border-slate-200 dark:border-slate-700">
+                  {avatarUrl && <AvatarImage src={avatarUrl} alt={u.name} />}
+                  <AvatarFallback className="text-[10px] bg-slate-200 dark:bg-slate-700 font-semibold text-slate-600 dark:text-slate-300">
+                    {u.name[0]?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="truncate text-slate-700 dark:text-slate-200">{u.name}</span>
+              </button>
+            )
+          })}
         </div>
       )}
     </div>
