@@ -22,9 +22,9 @@ interface TimeSelectorProps {
 
 export function TimeSelector({ hours, minutes, seconds, onChange }: TimeSelectorProps) {
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-0.5">
       <Select value={String(hours)} onValueChange={(v) => onChange('hours', Number(v))}>
-        <SelectTrigger className="w-[55px] h-8 text-xs">
+        <SelectTrigger className="w-[48px] h-7 text-xs px-1.5">
           <SelectValue />
         </SelectTrigger>
         <SelectContent className="max-h-[200px]">
@@ -35,9 +35,9 @@ export function TimeSelector({ hours, minutes, seconds, onChange }: TimeSelector
           ))}
         </SelectContent>
       </Select>
-      <span className="text-xs text-slate-400">:</span>
+      <span className="text-[11px] text-slate-400">:</span>
       <Select value={String(minutes)} onValueChange={(v) => onChange('minutes', Number(v))}>
-        <SelectTrigger className="w-[55px] h-8 text-xs">
+        <SelectTrigger className="w-[48px] h-7 text-xs px-1.5">
           <SelectValue />
         </SelectTrigger>
         <SelectContent className="max-h-[200px]">
@@ -48,9 +48,9 @@ export function TimeSelector({ hours, minutes, seconds, onChange }: TimeSelector
           ))}
         </SelectContent>
       </Select>
-      <span className="text-xs text-slate-400">:</span>
+      <span className="text-[11px] text-slate-400">:</span>
       <Select value={String(seconds)} onValueChange={(v) => onChange('seconds', Number(v))}>
-        <SelectTrigger className="w-[55px] h-8 text-xs">
+        <SelectTrigger className="w-[48px] h-7 text-xs px-1.5">
           <SelectValue />
         </SelectTrigger>
         <SelectContent className="max-h-[200px]">
