@@ -238,14 +238,14 @@ export function MatrixGrid({
           </Button>
         </div>
       )}
-      <div className="overflow-x-auto rounded-lg border border-border">
+      <div className="overflow-x-auto rounded-lg border border-border w-full">
         <table className="border-collapse w-full select-none">
           <thead>
             <tr>
               <th className="sticky left-0 top-0 z-20 w-[200px] min-w-[200px] bg-card px-3 py-1.5 text-left text-xs font-semibold border-r border-border">
                 Colaborador
               </th>
-              <th className="sticky left-[200px] top-0 z-20 w-[70px] min-w-[70px] bg-card px-2 py-1.5 text-center text-[10px] font-semibold border-r-2 border-slate-300 dark:border-slate-700">
+              <th className="sticky left-[200px] top-0 z-20 w-[70px] min-w-[70px] bg-card px-2 py-1.5 text-center text-[10px] font-semibold border-r-2 border-slate-300 dark:border-slate-700 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]">
                 Horário
               </th>
               {days.map((day) => {
@@ -275,12 +275,12 @@ export function MatrixGrid({
               return (
                 <tr
                   key={user.id}
-                  className="even:bg-slate-100 dark:even:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700/50"
+                  className="group even:bg-slate-100 dark:even:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700/50"
                 >
-                  <td className="sticky left-0 z-20 w-[200px] min-w-[200px] bg-inherit px-2 py-1 border-r border-border">
+                  <td className="sticky left-0 z-20 w-[200px] min-w-[200px] bg-white dark:bg-neutral-900 group-even:bg-slate-100 dark:group-even:bg-slate-800 group-hover:bg-blue-50 dark:group-hover:bg-slate-700/50 px-2 py-1 border-r border-border">
                     <CollaboratorCell user={user} />
                   </td>
-                  <td className="sticky left-[200px] z-20 w-[70px] min-w-[70px] bg-inherit px-2 py-1 text-center text-[10px] text-muted-foreground border-r-2 border-slate-300 dark:border-slate-700 align-middle">
+                  <td className="sticky left-[200px] z-20 w-[70px] min-w-[70px] bg-white dark:bg-neutral-900 group-even:bg-slate-100 dark:group-even:bg-slate-800 group-hover:bg-blue-50 dark:group-hover:bg-slate-700/50 px-2 py-1 text-center text-[10px] text-muted-foreground border-r-2 border-slate-300 dark:border-slate-700 align-middle shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]">
                     {userHorario || '—'}
                   </td>
                   {days.map((day) => {
