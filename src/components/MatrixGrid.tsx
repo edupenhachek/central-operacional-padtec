@@ -4,6 +4,13 @@ import { CloudUpload } from 'lucide-react'
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { CellEditContent } from '@/components/CellEditContent'
 import { CollaboratorCell } from '@/components/CollaboratorCell'
 import { BulkEditDialog } from '@/components/BulkEditDialog'
@@ -17,6 +24,7 @@ import {
   getCellDisplayValue,
   getCellBgByValue,
   getCellColorByValue,
+  BULK_STATUS_OPTIONS,
   type PendingChange,
 } from '@/lib/escala-utils'
 import { batchUpsertEscalas } from '@/services/escala-matrix'
@@ -47,6 +55,7 @@ export function MatrixGrid({
   const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set())
   const [showBulkEdit, setShowBulkEdit] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [statusSelectValue, setStatusSelectValue] = useState('')
 
   const mouseDownCellRef = useRef<{ userId: string; dateStr: string } | null>(null)
   const isDraggingRef = useRef(false)
@@ -123,8 +132,9 @@ export function MatrixGrid({
         selectRange(userId, lastSelectedCellRef.current.dateStr, dateStr)
         return
       }
-      selectedCellsRef.current = new Set()
-      setSelectedCells(new Set())
+      const cellKey = `${userId}-${dateStr}`
+      selectedCellsRef.current = new Set([cellKey])
+      setSelectedCells(new Set([cellKey]))
       mouseDownCellRef.current = { userId, dateStr }
       isDraggingRef.current = false
     },
@@ -183,6 +193,33 @@ export function MatrixGrid({
     [users],
   )
 
+  const handleStatusSelect = useCallback(
+    (status: string) => {
+      setPendingChanges((prev) => {
+        const m = new Map(prev)
+        for (const k of selectedCellsRef.current) {
+          const si = k.indexOf('-')
+          const uid = k.substring(0, si)
+          const ds = k.substring(si + 1)
+          const u = users.find((x) => x.id === uid)
+          if (!u) continue
+          const turno = status === 'T' ? u.horario_trabalho || '' : ''
+          m.set(k, {
+            userId: uid,
+            dateStr: ds,
+            turno,
+            status,
+            observacao: '',
+            projeto: (u.projeto || [])[0] || '',
+          })
+        }
+        return m
+      })
+      setStatusSelectValue('')
+    },
+    [users],
+  )
+
   const handleSave = async () => {
     if (pendingChanges.size === 0) return
     setSaving(true)
@@ -226,21 +263,41 @@ export function MatrixGrid({
                 ? `${pendingChanges.size} alteração(ões) pendente(s)`
                 : 'Nenhuma alteração pendente'}
             </span>
-            {selectedCells.size > 0 && (
-              <Button onClick={() => setShowBulkEdit(true)} size="sm" variant="outline">
-                Editar {selectedCells.size} célula(s)
-              </Button>
-            )}
           </div>
-          <Button
-            onClick={handleSave}
-            disabled={pendingChanges.size === 0 || saving}
-            size="sm"
-            className="gap-2"
-          >
-            <CloudUpload className="w-4 h-4" />
-            {saving ? 'Salvando...' : 'Salvar Alterações'}
-          </Button>
+          <div className="flex items-center gap-2">
+            {selectedCells.size > 0 && (
+              <>
+                <span className="text-sm font-medium text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                  {selectedCells.size}{' '}
+                  {selectedCells.size === 1 ? 'célula selecionada' : 'células selecionadas'}
+                </span>
+                <Select value={statusSelectValue || undefined} onValueChange={handleStatusSelect}>
+                  <SelectTrigger className="h-8 w-40 text-xs">
+                    <SelectValue placeholder="Aplicar status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BULK_STATUS_OPTIONS.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button onClick={() => setShowBulkEdit(true)} size="sm" variant="outline">
+                  Editar detalhes
+                </Button>
+              </>
+            )}
+            <Button
+              onClick={handleSave}
+              disabled={pendingChanges.size === 0 || saving}
+              size="sm"
+              className="gap-2"
+            >
+              <CloudUpload className="w-4 h-4" />
+              {saving ? 'Salvando...' : 'Salvar Alterações'}
+            </Button>
+          </div>
         </div>
       )}
       <div className="overflow-x-auto rounded-lg border border-border w-full">
@@ -333,7 +390,7 @@ export function MatrixGrid({
                                 className={cn(
                                   'w-full h-9 flex items-center justify-center cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors relative',
                                   isPending && !isSelected && 'ring-2 ring-inset ring-amber-400',
-                                  isSelected && 'ring-2 ring-inset ring-blue-500',
+                                  isSelected && 'ring-2 ring-blue-500 border-blue-500',
                                 )}
                                 title={cellTitle}
                               >
