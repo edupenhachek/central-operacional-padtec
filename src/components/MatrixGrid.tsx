@@ -311,7 +311,7 @@ export function MatrixGrid({
         </div>
       )}
       <div className="overflow-x-auto rounded-lg border border-border w-full">
-        <table className="border-collapse w-full select-none">
+        <table className="border-separate border-spacing-0 w-full select-none">
           <thead>
             <tr>
               <th
@@ -361,7 +361,7 @@ export function MatrixGrid({
                 >
                   <td
                     className={cn(
-                      'sticky left-0 z-20 w-[200px] min-w-[200px] bg-white dark:bg-neutral-900 group-even:bg-slate-100 dark:group-even:bg-slate-800 group-hover:bg-blue-50 dark:group-hover:bg-slate-700 px-2 py-1',
+                      'sticky left-0 z-20 w-[200px] min-w-[200px] bg-white dark:bg-neutral-900 group-even:bg-slate-100 dark:group-even:bg-slate-800 group-hover:bg-blue-50 dark:group-hover:bg-slate-700 px-2 py-1 border-b border-border/30',
                       STICKY_BORDER,
                     )}
                   >
@@ -369,7 +369,7 @@ export function MatrixGrid({
                   </td>
                   <td
                     className={cn(
-                      'sticky left-[200px] z-20 w-[70px] min-w-[70px] bg-white dark:bg-neutral-900 group-even:bg-slate-100 dark:group-even:bg-slate-800 group-hover:bg-blue-50 dark:group-hover:bg-slate-700 px-2 py-1 text-center text-[10px] text-muted-foreground align-middle',
+                      'sticky left-[200px] z-20 w-[70px] min-w-[70px] bg-white dark:bg-neutral-900 group-even:bg-slate-100 dark:group-even:bg-slate-800 group-hover:bg-blue-50 dark:group-hover:bg-slate-700 px-2 py-1 text-center text-[10px] text-muted-foreground align-middle border-b border-border/30',
                       STICKY_BORDER,
                     )}
                   >
@@ -398,7 +398,7 @@ export function MatrixGrid({
                         <td
                           key={dateStr}
                           className={cn(
-                            'relative z-0 p-0 text-center border-r border-border/50',
+                            'relative z-0 p-0 text-center border-r border-border/50 border-b border-border/30',
                             bg,
                           )}
                         >
@@ -465,7 +465,7 @@ export function MatrixGrid({
                       <td
                         key={dateStr}
                         className={cn(
-                          'relative z-0 h-9 px-1 text-center align-middle border-r border-border/50',
+                          'relative z-0 h-9 px-1 text-center align-middle border-r border-border/50 border-b border-border/30',
                           bg,
                           isPending && 'ring-2 ring-inset ring-amber-400',
                         )}
