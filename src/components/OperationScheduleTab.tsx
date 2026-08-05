@@ -41,10 +41,12 @@ interface OperationScheduleTabProps {
   yearFilter: string
   projetoFilter: string
   periodMode: PeriodMode
+  editMode: boolean
   onMonthChange: (v: string) => void
   onYearChange: (v: string) => void
   onProjetoChange: (v: string) => void
   onPeriodModeChange: (mode: PeriodMode) => void
+  onPendingChangesChange?: (hasPending: boolean) => void
   refreshTrigger?: number
 }
 
@@ -53,10 +55,12 @@ export function OperationScheduleTab({
   yearFilter,
   projetoFilter,
   periodMode,
+  editMode,
   onMonthChange,
   onYearChange,
   onProjetoChange,
   onPeriodModeChange,
+  onPendingChangesChange,
   refreshTrigger,
 }: OperationScheduleTabProps) {
   const { user } = useAuth()
@@ -67,6 +71,7 @@ export function OperationScheduleTab({
   const [holidays, setHolidays] = useState<Record<string, string>>({})
 
   const canManage = user?.role ? FOCAL_ROLES.includes(user.role) : false
+  const canEdit = canManage && editMode
 
   const navigateMonth = (direction: -1 | 1) => {
     const currentMonth = Number(monthFilter)
@@ -267,10 +272,13 @@ export function OperationScheduleTab({
                 users={operational}
                 escalas={escalas}
                 days={days}
-                canEdit={canManage}
+                canEdit={canEdit}
                 holidays={holidays}
                 onCellSaved={loadData}
-                onPendingChangesChange={setHasPending}
+                onPendingChangesChange={(hasPending) => {
+                  setHasPending(hasPending)
+                  onPendingChangesChange?.(hasPending)
+                }}
               />
             </CardContent>
           </Card>
@@ -286,7 +294,7 @@ export function OperationScheduleTab({
                   users={coordinators}
                   escalas={escalas}
                   days={days}
-                  canEdit={canManage}
+                  canEdit={canEdit}
                   holidays={holidays}
                   onCellSaved={loadData}
                   showFooter={false}

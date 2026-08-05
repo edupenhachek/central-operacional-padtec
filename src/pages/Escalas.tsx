@@ -1,15 +1,24 @@
-import { useState, useMemo } from 'react'
-import { CalendarDays, Users, Clock, Plus, Plane, CalendarRange, CalendarClock } from 'lucide-react'
+import { useState } from 'react'
+import {
+  CalendarDays,
+  Users,
+  Clock,
+  Pencil,
+  Check,
+  Plane,
+  CalendarRange,
+  CalendarClock,
+} from 'lucide-react'
+import { toast } from 'sonner'
 import { MyScheduleTab } from '@/components/MyScheduleTab'
 import { OperationScheduleTab } from '@/components/OperationScheduleTab'
 import { TodayScheduleTab } from '@/components/TodayScheduleTab'
 import { PatternManagerTab } from '@/components/PatternManagerTab'
-import { BatchEscalaModal } from '@/components/BatchEscalaModal'
 import { VacationModal } from '@/components/VacationModal'
 import { HolidayModal } from '@/components/HolidayModal'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/use-auth'
-import { FOCAL_ROLES, formatDateStr, getRangeForPeriod, type PeriodMode } from '@/lib/escala-utils'
+import { FOCAL_ROLES, type PeriodMode } from '@/lib/escala-utils'
 import { cn } from '@/lib/utils'
 
 type TabKey = 'operacao' | 'minha' | 'hoje' | 'padroes'
@@ -20,22 +29,22 @@ export default function Escalas() {
   const [monthFilter, setMonthFilter] = useState(String(new Date().getMonth()))
   const [yearFilter, setYearFilter] = useState(String(new Date().getFullYear()))
   const [projetoFilter, setProjetoFilter] = useState('all')
-  const [batchOpen, setBatchOpen] = useState(false)
   const [vacationOpen, setVacationOpen] = useState(false)
   const [holidayOpen, setHolidayOpen] = useState(false)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [periodMode, setPeriodMode] = useState<PeriodMode>('mes')
+  const [editMode, setEditMode] = useState(false)
+  const [hasPendingChanges, setHasPendingChanges] = useState(false)
 
   const canManage = user?.role ? FOCAL_ROLES.includes(user.role) : false
 
-  const defaultStartDate = useMemo(() => {
-    const range = getRangeForPeriod(periodMode, Number(monthFilter), Number(yearFilter))
-    return formatDateStr(range.start)
-  }, [periodMode, monthFilter, yearFilter])
-  const defaultEndDate = useMemo(() => {
-    const range = getRangeForPeriod(periodMode, Number(monthFilter), Number(yearFilter))
-    return formatDateStr(range.end)
-  }, [periodMode, monthFilter, yearFilter])
+  const handleToggleEditMode = () => {
+    if (editMode && hasPendingChanges) {
+      toast.warning('Você tem alterações não salvas. Salve antes de finalizar.')
+      return
+    }
+    setEditMode((prev) => !prev)
+  }
 
   const tabs: { key: TabKey; label: string; icon: typeof Users }[] = [
     { key: 'operacao', label: 'Escala da Operação', icon: CalendarDays },
@@ -86,10 +95,21 @@ export default function Escalas() {
                 <Plane className="w-4 h-4" /> Lançar Férias
               </Button>
               <Button
-                onClick={() => setBatchOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm gap-2"
+                onClick={handleToggleEditMode}
+                className={cn(
+                  'text-white text-sm gap-2',
+                  editMode ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700',
+                )}
               >
-                <Plus className="w-4 h-4" /> Gerar Escala
+                {editMode ? (
+                  <>
+                    <Check className="w-4 h-4" /> Finalizar Edição
+                  </>
+                ) : (
+                  <>
+                    <Pencil className="w-4 h-4" /> Editar Escala
+                  </>
+                )}
               </Button>
             </>
           )}
@@ -106,10 +126,12 @@ export default function Escalas() {
           yearFilter={yearFilter}
           projetoFilter={projetoFilter}
           periodMode={periodMode}
+          editMode={editMode}
           onMonthChange={setMonthFilter}
           onYearChange={setYearFilter}
           onProjetoChange={setProjetoFilter}
           onPeriodModeChange={setPeriodMode}
+          onPendingChangesChange={setHasPendingChanges}
           refreshTrigger={refreshTrigger}
         />
       ) : (
@@ -121,13 +143,6 @@ export default function Escalas() {
         />
       )}
 
-      <BatchEscalaModal
-        open={batchOpen}
-        onClose={() => setBatchOpen(false)}
-        onSaved={() => setRefreshTrigger((t) => t + 1)}
-        defaultStartDate={defaultStartDate}
-        defaultEndDate={defaultEndDate}
-      />
       <VacationModal
         open={vacationOpen}
         onClose={() => setVacationOpen(false)}
