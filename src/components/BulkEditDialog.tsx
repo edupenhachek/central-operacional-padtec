@@ -26,9 +26,6 @@ export function BulkEditDialog({ open, onClose, selectedCount, onApply }: BulkEd
 
   const handleApply = () => {
     onApply({ status, turno: turnoChoice, observacao: observacao.trim() })
-    setObservacao('')
-    setTurnoChoice('default')
-    onClose()
   }
 
   return (

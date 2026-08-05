@@ -61,7 +61,7 @@ export function MatrixGrid({
     for (const e of escalas) {
       const dateKey = e.Data?.split(' ')[0]
       const userId = e.expand?.Usuario_ID?.id
-      if (dateKey && userId) map.set(`${userId}_${dateKey}`, e)
+      if (dateKey && userId) map.set(`${userId}-${dateKey}`, e)
     }
     return map
   }, [escalas])
@@ -97,7 +97,7 @@ export function MatrixGrid({
       if (i1 === undefined || i2 === undefined) return
       const [s, e] = i1 < i2 ? [i1, i2] : [i2, i1]
       for (let i = s; i <= e; i++)
-        selectedCellsRef.current.add(`${userId}_${formatDateStr(days[i])}`)
+        selectedCellsRef.current.add(`${userId}-${formatDateStr(days[i])}`)
       setSelectedCells(new Set(selectedCellsRef.current))
     },
     [dateStrToIndex, days],
@@ -110,7 +110,7 @@ export function MatrixGrid({
       shiftClickedRef.current = false
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault()
-        const k = `${userId}_${dateStr}`
+        const k = `${userId}-${dateStr}`
         if (selectedCellsRef.current.has(k)) selectedCellsRef.current.delete(k)
         else selectedCellsRef.current.add(k)
         setSelectedCells(new Set(selectedCellsRef.current))
@@ -149,7 +149,7 @@ export function MatrixGrid({
       (change: { turno: string; status: string; observacao: string }) => {
         setPendingChanges((prev) => {
           const m = new Map(prev)
-          m.set(`${userId}_${dateStr}`, { userId, dateStr, ...change, projeto: userProjeto })
+          m.set(`${userId}-${dateStr}`, { userId, dateStr, ...change, projeto: userProjeto })
           return m
         })
         setEditKey(null)
@@ -162,7 +162,7 @@ export function MatrixGrid({
       setPendingChanges((prev) => {
         const m = new Map(prev)
         for (const k of selectedCellsRef.current) {
-          const si = k.indexOf('_')
+          const si = k.indexOf('-')
           const uid = k.substring(0, si),
             ds = k.substring(si + 1)
           const u = users.find((x) => x.id === uid)
@@ -179,8 +179,6 @@ export function MatrixGrid({
         }
         return m
       })
-      selectedCellsRef.current = new Set()
-      setSelectedCells(new Set())
     },
     [users],
   )
@@ -196,7 +194,7 @@ export function MatrixGrid({
           `${result.succeeded} salvas. ${result.failed} falharam e permanecem pendentes.`,
         )
         const m = new Map<string, PendingChange>()
-        for (const fc of result.failedChanges) m.set(`${fc.userId}_${fc.dateStr}`, fc)
+        for (const fc of result.failedChanges) m.set(`${fc.userId}-${fc.dateStr}`, fc)
         setPendingChanges(m)
       } else {
         toast.success('Alterações salvas com sucesso!')
@@ -222,11 +220,18 @@ export function MatrixGrid({
     <div className="space-y-3">
       {canEdit && (
         <div className="flex items-center justify-between gap-3">
-          <span className="text-sm text-muted-foreground">
-            {pendingChanges.size > 0
-              ? `${pendingChanges.size} alteração(ões) pendente(s)`
-              : 'Nenhuma alteração pendente'}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">
+              {pendingChanges.size > 0
+                ? `${pendingChanges.size} alteração(ões) pendente(s)`
+                : 'Nenhuma alteração pendente'}
+            </span>
+            {selectedCells.size > 0 && (
+              <Button onClick={() => setShowBulkEdit(true)} size="sm" variant="outline">
+                Editar {selectedCells.size} célula(s)
+              </Button>
+            )}
+          </div>
           <Button
             onClick={handleSave}
             disabled={pendingChanges.size === 0 || saving}
@@ -285,7 +290,7 @@ export function MatrixGrid({
                   </td>
                   {days.map((day) => {
                     const dateStr = formatDateStr(day)
-                    const cellKey = `${user.id}_${dateStr}`
+                    const cellKey = `${user.id}-${dateStr}`
                     const escala = escalaMap.get(cellKey)
                     const pending = pendingChanges.get(cellKey)
                     const turno = pending?.turno ?? escala?.Turno ?? ''
@@ -393,8 +398,6 @@ export function MatrixGrid({
         open={showBulkEdit}
         onClose={() => {
           setShowBulkEdit(false)
-          selectedCellsRef.current = new Set()
-          setSelectedCells(new Set())
         }}
         selectedCount={selectedCells.size}
         onApply={handleBulkApply}
