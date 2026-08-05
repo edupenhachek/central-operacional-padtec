@@ -56,15 +56,16 @@ export function MatrixGrid({
   const [showBulkEdit, setShowBulkEdit] = useState(false)
   const [saving, setSaving] = useState(false)
   const [statusSelectValue, setStatusSelectValue] = useState('')
-
   const mouseDownCellRef = useRef<{ userId: string; dateStr: string } | null>(null)
   const isDraggingRef = useRef(false)
   const wasDraggingRef = useRef(false)
   const shiftClickedRef = useRef(false)
+  const ctrlClickedRef = useRef(false)
   const lastSelectedCellRef = useRef<{ userId: string; dateStr: string } | null>(null)
   const selectedCellsRef = useRef<Set<string>>(new Set())
 
   const sortedUsers = useMemo(() => sortUsersBySchedule(users), [users])
+
   const escalaMap = useMemo(() => {
     const map = new Map<string, EscalaRecord>()
     for (const e of escalas) {
@@ -82,6 +83,7 @@ export function MatrixGrid({
   }, [days])
 
   useUnsavedChanges(pendingChanges.size > 0)
+
   useEffect(() => {
     onPendingChangesChange?.(pendingChanges.size > 0)
   }, [pendingChanges.size, onPendingChangesChange])
@@ -117,8 +119,11 @@ export function MatrixGrid({
       if (!canEdit) return
       wasDraggingRef.current = false
       shiftClickedRef.current = false
+      ctrlClickedRef.current = false
+
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault()
+        ctrlClickedRef.current = true
         const k = `${userId}-${dateStr}`
         if (selectedCellsRef.current.has(k)) selectedCellsRef.current.delete(k)
         else selectedCellsRef.current.add(k)
@@ -126,12 +131,14 @@ export function MatrixGrid({
         lastSelectedCellRef.current = { userId, dateStr }
         return
       }
+
       if (e.shiftKey && lastSelectedCellRef.current?.userId === userId) {
         e.preventDefault()
         shiftClickedRef.current = true
         selectRange(userId, lastSelectedCellRef.current.dateStr, dateStr)
         return
       }
+
       const cellKey = `${userId}-${dateStr}`
       selectedCellsRef.current = new Set([cellKey])
       setSelectedCells(new Set([cellKey]))
@@ -253,6 +260,9 @@ export function MatrixGrid({
     )
   }
 
+  const STICKY_BORDER =
+    'shadow-[2px_0_0_0_rgba(0,0,0,0.08)] dark:shadow-[2px_0_0_0_rgba(255,255,255,0.08)]'
+
   return (
     <div className="space-y-3">
       {canEdit && (
@@ -304,10 +314,20 @@ export function MatrixGrid({
         <table className="border-collapse w-full select-none">
           <thead>
             <tr>
-              <th className="sticky left-0 top-0 z-40 w-[200px] min-w-[200px] bg-white dark:bg-neutral-900 px-3 py-1.5 text-left text-xs font-semibold border-r-2 border-neutral-300 dark:border-neutral-700">
+              <th
+                className={cn(
+                  'sticky left-0 top-0 z-40 w-[200px] min-w-[200px] bg-white dark:bg-neutral-900 px-3 py-1.5 text-left text-xs font-semibold',
+                  STICKY_BORDER,
+                )}
+              >
                 Colaborador
               </th>
-              <th className="sticky left-[200px] top-0 z-40 w-[70px] min-w-[70px] bg-white dark:bg-neutral-900 px-2 py-1.5 text-center text-[10px] font-semibold border-r-2 border-neutral-300 dark:border-neutral-700 shadow-[1px_0_0_0_rgba(0,0,0,0.1)]">
+              <th
+                className={cn(
+                  'sticky left-[200px] top-0 z-40 w-[70px] min-w-[70px] bg-white dark:bg-neutral-900 px-2 py-1.5 text-center text-[10px] font-semibold',
+                  STICKY_BORDER,
+                )}
+              >
                 Horário
               </th>
               {days.map((day) => {
@@ -339,10 +359,20 @@ export function MatrixGrid({
                   key={user.id}
                   className="group even:bg-slate-100 dark:even:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700/50"
                 >
-                  <td className="sticky left-0 z-20 w-[200px] min-w-[200px] bg-white dark:bg-neutral-900 group-even:bg-slate-100 dark:group-even:bg-slate-800 group-hover:bg-blue-50 dark:group-hover:bg-slate-700 px-2 py-1 border-r-2 border-neutral-300 dark:border-neutral-700">
+                  <td
+                    className={cn(
+                      'sticky left-0 z-20 w-[200px] min-w-[200px] bg-white dark:bg-neutral-900 group-even:bg-slate-100 dark:group-even:bg-slate-800 group-hover:bg-blue-50 dark:group-hover:bg-slate-700 px-2 py-1',
+                      STICKY_BORDER,
+                    )}
+                  >
                     <CollaboratorCell user={user} />
                   </td>
-                  <td className="sticky left-[200px] z-20 w-[70px] min-w-[70px] bg-white dark:bg-neutral-900 group-even:bg-slate-100 dark:group-even:bg-slate-800 group-hover:bg-blue-50 dark:group-hover:bg-slate-700 px-2 py-1 text-center text-[10px] text-muted-foreground border-r-2 border-neutral-300 dark:border-neutral-700 align-middle shadow-[1px_0_0_0_rgba(0,0,0,0.1)]">
+                  <td
+                    className={cn(
+                      'sticky left-[200px] z-20 w-[70px] min-w-[70px] bg-white dark:bg-neutral-900 group-even:bg-slate-100 dark:group-even:bg-slate-800 group-hover:bg-blue-50 dark:group-hover:bg-slate-700 px-2 py-1 text-center text-[10px] text-muted-foreground align-middle',
+                      STICKY_BORDER,
+                    )}
+                  >
                     {userHorario || '—'}
                   </td>
                   {days.map((day) => {
@@ -375,9 +405,15 @@ export function MatrixGrid({
                           <Popover
                             open={editKey === cellKey}
                             onOpenChange={(open) => {
-                              if (open && (wasDraggingRef.current || shiftClickedRef.current)) {
+                              if (
+                                open &&
+                                (wasDraggingRef.current ||
+                                  shiftClickedRef.current ||
+                                  ctrlClickedRef.current)
+                              ) {
                                 wasDraggingRef.current = false
                                 shiftClickedRef.current = false
+                                ctrlClickedRef.current = false
                                 return
                               }
                               setEditKey(open ? cellKey : null)
