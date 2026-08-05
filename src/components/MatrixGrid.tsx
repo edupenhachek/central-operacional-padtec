@@ -247,10 +247,10 @@ export function MatrixGrid({
         <table className="border-collapse w-full select-none">
           <thead>
             <tr>
-              <th className="sticky left-0 top-0 z-20 w-[200px] min-w-[200px] bg-card px-3 py-1.5 text-left text-xs font-semibold border-r border-border">
+              <th className="sticky left-0 top-0 z-40 w-[200px] min-w-[200px] bg-white dark:bg-neutral-900 px-3 py-1.5 text-left text-xs font-semibold border-r-2 border-neutral-200 dark:border-neutral-700">
                 Colaborador
               </th>
-              <th className="sticky left-[200px] top-0 z-20 w-[70px] min-w-[70px] bg-card px-2 py-1.5 text-center text-[10px] font-semibold border-r-2 border-slate-300 dark:border-slate-700 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]">
+              <th className="sticky left-[200px] top-0 z-40 w-[70px] min-w-[70px] bg-white dark:bg-neutral-900 px-2 py-1.5 text-center text-[10px] font-semibold border-r-2 border-neutral-200 dark:border-neutral-700 shadow-md">
                 Horário
               </th>
               {days.map((day) => {
@@ -262,7 +262,7 @@ export function MatrixGrid({
                     key={d}
                     title={hd ? `Feriado: ${hd}` : undefined}
                     className={cn(
-                      'sticky top-0 z-20 bg-muted dark:bg-slate-800 px-1 py-1.5 text-center text-[10px] font-semibold border-r border-border/50 min-w-[42px]',
+                      'sticky top-0 z-30 bg-muted dark:bg-slate-800 px-1 py-1.5 text-center text-[10px] font-semibold border-r border-border/50 min-w-[42px]',
                       isWeekendOrHoliday && WEEKEND_HEADER_CLS,
                     )}
                   >
@@ -282,10 +282,10 @@ export function MatrixGrid({
                   key={user.id}
                   className="group even:bg-slate-100 dark:even:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700/50"
                 >
-                  <td className="sticky left-0 z-20 w-[200px] min-w-[200px] bg-white dark:bg-neutral-900 group-even:bg-slate-100 dark:group-even:bg-slate-800 group-hover:bg-blue-50 dark:group-hover:bg-slate-700/50 px-2 py-1 border-r border-border">
+                  <td className="sticky left-0 z-20 w-[200px] min-w-[200px] bg-white dark:bg-neutral-900 group-even:bg-slate-100 dark:group-even:bg-slate-800 group-hover:bg-blue-50 dark:group-hover:bg-slate-700 px-2 py-1 border-r-2 border-neutral-200 dark:border-neutral-700">
                     <CollaboratorCell user={user} />
                   </td>
-                  <td className="sticky left-[200px] z-20 w-[70px] min-w-[70px] bg-white dark:bg-neutral-900 group-even:bg-slate-100 dark:group-even:bg-slate-800 group-hover:bg-blue-50 dark:group-hover:bg-slate-700/50 px-2 py-1 text-center text-[10px] text-muted-foreground border-r-2 border-slate-300 dark:border-slate-700 align-middle shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]">
+                  <td className="sticky left-[200px] z-20 w-[70px] min-w-[70px] bg-white dark:bg-neutral-900 group-even:bg-slate-100 dark:group-even:bg-slate-800 group-hover:bg-blue-50 dark:group-hover:bg-slate-700 px-2 py-1 text-center text-[10px] text-muted-foreground border-r-2 border-neutral-200 dark:border-neutral-700 align-middle shadow-md">
                     {userHorario || '—'}
                   </td>
                   {days.map((day) => {
@@ -310,7 +310,10 @@ export function MatrixGrid({
                       return (
                         <td
                           key={dateStr}
-                          className={cn('p-0 text-center border-r border-border/50', bg)}
+                          className={cn(
+                            'relative z-0 p-0 text-center border-r border-border/50',
+                            bg,
+                          )}
                         >
                           <Popover
                             open={editKey === cellKey}
@@ -369,7 +372,7 @@ export function MatrixGrid({
                       <td
                         key={dateStr}
                         className={cn(
-                          'h-9 px-1 text-center align-middle border-r border-border/50',
+                          'relative z-0 h-9 px-1 text-center align-middle border-r border-border/50',
                           bg,
                           isPending && 'ring-2 ring-inset ring-amber-400',
                         )}
