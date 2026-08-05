@@ -176,6 +176,8 @@ export interface WeekConfig {
   sex: DayValue
   sab: DayValue
   dom: DayValue
+  nome?: string
+  nomeCustomizado?: boolean
 }
 
 export type PatternConfig = Record<string, WeekConfig>
@@ -187,6 +189,26 @@ export interface PadraoEscalaRecord {
   configuracao: PatternConfig
   created: string
   updated: string
+}
+
+export const DAY_ABBR: Record<DayKey, string> = {
+  seg: 'Seg',
+  ter: 'Ter',
+  qua: 'Qua',
+  qui: 'Qui',
+  sex: 'Sex',
+  sab: 'Sáb',
+  dom: 'Dom',
+}
+
+export function generateWeekName(weekNum: number, week: WeekConfig): string {
+  const letter = String.fromCharCode(65 + weekNum - 1)
+  const folgaDays = DAY_KEYS.filter((dk) => week[dk] === 'F')
+  if (folgaDays.length === 0) return `Semana ${letter}`
+  const abbrs = folgaDays.map((dk) => DAY_ABBR[dk])
+  if (abbrs.length === 1) return `Semana ${letter} — Folga ${abbrs[0]}`
+  if (abbrs.length === 2) return `Semana ${letter} — Folga ${abbrs[0]} e ${abbrs[1]}`
+  return `Semana ${letter} — Folga ${abbrs.slice(0, -1).join(', ')} e ${abbrs[abbrs.length - 1]}`
 }
 
 export const FALLBACK_PATTERN_OPTION = { value: 'fixo-5x2', label: '5x2 Padrão' }

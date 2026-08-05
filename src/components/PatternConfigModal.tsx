@@ -14,6 +14,7 @@ import {
 import { createPattern, updatePattern } from '@/services/padroes-escala'
 import {
   DAY_KEYS,
+  generateWeekName,
   type PatternConfig,
   type WeekConfig,
   type PadraoEscalaRecord,
@@ -36,8 +37,38 @@ function createEmptyWeek(): WeekConfig {
 
 function createEmptyConfig(weeks: number): PatternConfig {
   const config: PatternConfig = {}
-  for (let i = 1; i <= weeks; i++) config[`semana_${i}`] = createEmptyWeek()
+  for (let i = 1; i <= weeks; i++) {
+    const week = createEmptyWeek()
+    week.nome = generateWeekName(i, week)
+    week.nomeCustomizado = false
+    config[`semana_${i}`] = week
+  }
   return config
+}
+
+function regenerateNonCustomNames(config: PatternConfig): PatternConfig {
+  const next: PatternConfig = {}
+  const sortedKeys = Object.keys(config).sort((a, b) => {
+    const na = parseInt(a.replace('semana_', ''), 10)
+    const nb = parseInt(b.replace('semana_', ''), 10)
+    return na - nb
+  })
+  let weekNum = 0
+  for (const key of sortedKeys) {
+    weekNum++
+    const week = config[key]
+    if (!week) continue
+    if (week.nomeCustomizado) {
+      next[key] = week
+    } else {
+      next[key] = {
+        ...week,
+        nome: generateWeekName(weekNum, week),
+        nomeCustomizado: false,
+      }
+    }
+  }
+  return next
 }
 
 interface PatternConfigModalProps {
@@ -59,11 +90,10 @@ export function PatternConfigModal({ open, pattern, onClose, onSaved }: PatternC
       if (pattern) {
         setNome(pattern.nome)
         setQtdSemanas(pattern.qtd_semanas)
-        setConfig(
-          pattern.configuracao
-            ? { ...pattern.configuracao }
-            : createEmptyConfig(pattern.qtd_semanas),
-        )
+        const loadedConfig = pattern.configuracao
+          ? { ...pattern.configuracao }
+          : createEmptyConfig(pattern.qtd_semanas)
+        setConfig(regenerateNonCustomNames(loadedConfig))
       } else {
         setNome('')
         setQtdSemanas(1)
@@ -78,8 +108,18 @@ export function PatternConfigModal({ open, pattern, onClose, onSaved }: PatternC
     setQtdSemanas(n)
     setConfig((prev) => {
       const next: PatternConfig = {}
-      for (let i = 1; i <= n; i++) next[`semana_${i}`] = prev[`semana_${i}`] || createEmptyWeek()
-      return next
+      for (let i = 1; i <= n; i++) {
+        const existing = prev[`semana_${i}`]
+        if (existing) {
+          next[`semana_${i}`] = existing
+        } else {
+          const newWeek = createEmptyWeek()
+          newWeek.nome = generateWeekName(i, newWeek)
+          newWeek.nomeCustomizado = false
+          next[`semana_${i}`] = newWeek
+        }
+      }
+      return regenerateNonCustomNames(next)
     })
     if (activeWeek > n) setActiveWeek(n)
   }
@@ -88,7 +128,26 @@ export function PatternConfigModal({ open, pattern, onClose, onSaved }: PatternC
     setConfig((prev) => {
       const week = prev[weekKey]
       if (!week) return prev
-      return { ...prev, [weekKey]: { ...week, [dayKey]: week[dayKey] === 'T' ? 'F' : 'T' } }
+      const updatedWeek: WeekConfig = {
+        ...week,
+        [dayKey]: week[dayKey] === 'T' ? 'F' : 'T',
+      }
+      if (!updatedWeek.nomeCustomizado) {
+        const weekNum = parseInt(weekKey.replace('semana_', ''), 10)
+        updatedWeek.nome = generateWeekName(weekNum, updatedWeek)
+      }
+      return { ...prev, [weekKey]: updatedWeek }
+    })
+  }
+
+  const handleWeekNameChange = (weekKey: string, value: string) => {
+    setConfig((prev) => {
+      const week = prev[weekKey]
+      if (!week) return prev
+      return {
+        ...prev,
+        [weekKey]: { ...week, nome: value, nomeCustomizado: true },
+      }
     })
   }
 
@@ -159,39 +218,53 @@ export function PatternConfigModal({ open, pattern, onClose, onSaved }: PatternC
           </div>
           <div className="space-y-2">
             <div className="flex gap-1 flex-wrap">
-              {Array.from({ length: qtdSemanas }, (_, i) => i + 1).map((w) => (
-                <button
-                  key={w}
-                  onClick={() => setActiveWeek(w)}
-                  className={cn(
-                    'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
-                    activeWeek === w
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-muted text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  Semana {w}
-                </button>
-              ))}
-            </div>
-            {week && (
-              <div className="flex gap-2 flex-wrap">
-                {DAY_KEYS.map((dk) => (
+              {Array.from({ length: qtdSemanas }, (_, i) => i + 1).map((w) => {
+                const letter = String.fromCharCode(65 + w - 1)
+                return (
                   <button
-                    key={dk}
-                    onClick={() => toggleDay(weekKey, dk)}
+                    key={w}
+                    onClick={() => setActiveWeek(w)}
                     className={cn(
-                      'flex flex-col items-center justify-center w-16 h-16 rounded-lg border-2 transition-colors text-sm font-bold',
-                      week[dk] === 'T'
-                        ? 'border-emerald-500 bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
-                        : 'border-red-400 bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300',
+                      'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                      activeWeek === w
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-muted text-muted-foreground hover:text-foreground',
                     )}
                   >
-                    <span className="text-[10px] font-normal">{DAY_LABELS[dk]}</span>
-                    <span>{week[dk]}</span>
+                    Semana {letter}
                   </button>
-                ))}
-              </div>
+                )
+              })}
+            </div>
+            {week && (
+              <>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Nome da Semana</Label>
+                  <Input
+                    value={week.nome || ''}
+                    onChange={(e) => handleWeekNameChange(weekKey, e.target.value)}
+                    placeholder={generateWeekName(activeWeek, week)}
+                    className={cn(inputCls, 'font-medium')}
+                  />
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {DAY_KEYS.map((dk) => (
+                    <button
+                      key={dk}
+                      onClick={() => toggleDay(weekKey, dk)}
+                      className={cn(
+                        'flex flex-col items-center justify-center w-16 h-16 rounded-lg border-2 transition-colors text-sm font-bold',
+                        week[dk] === 'T'
+                          ? 'border-emerald-500 bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                          : 'border-red-400 bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300',
+                      )}
+                    >
+                      <span className="text-[10px] font-normal">{DAY_LABELS[dk]}</span>
+                      <span>{week[dk]}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
           </div>
           <div className="flex justify-end gap-2 pt-2">
