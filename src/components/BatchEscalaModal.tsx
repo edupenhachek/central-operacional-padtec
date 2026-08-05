@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
+import { Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Select,
   SelectContent,
@@ -11,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { MultiSelect } from '@/components/MultiSelect'
 import { getUsers, type UserItem } from '@/services/users'
 import { generateScheduleRange } from '@/services/escala-matrix'
 import { getPatterns, type PadraoEscalaRecord } from '@/services/padroes-escala'
@@ -50,6 +51,7 @@ export function BatchEscalaModal({
   const [patterns, setPatterns] = useState<PadraoEscalaRecord[]>([])
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, boolean>>({})
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     if (open) {
@@ -66,6 +68,7 @@ export function BatchEscalaModal({
       setInitialCycle('')
       setTeamFilter('all')
       setErrors({})
+      setSearchQuery('')
     }
   }, [open, defaultStartDate, defaultEndDate])
 
@@ -78,6 +81,12 @@ export function BatchEscalaModal({
     () => filteredUsers.map((u) => ({ value: u.id, label: u.name || u.email })),
     [filteredUsers],
   )
+
+  const searchedOptions = useMemo(() => {
+    if (!searchQuery.trim()) return userOptions
+    const q = searchQuery.toLowerCase()
+    return userOptions.filter((u) => (u.label || '').toLowerCase().includes(q))
+  }, [userOptions, searchQuery])
 
   const patternOptions = useMemo(
     () => [FALLBACK_PATTERN_OPTION, ...patterns.map((p) => ({ value: p.id, label: p.nome }))],
@@ -101,6 +110,12 @@ export function BatchEscalaModal({
     } else {
       setInitialCycle('Semana 1')
     }
+  }
+
+  const toggleUser = (userId: string) => {
+    setSelectedUserIds((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId],
+    )
   }
 
   const handleSubmit = async () => {
@@ -180,12 +195,42 @@ export function BatchEscalaModal({
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold">Colaboradores {reqMark}</Label>
-            <MultiSelect
-              options={userOptions}
-              selected={selectedUserIds}
-              onChange={setSelectedUserIds}
-              placeholder="Selecionar colaboradores"
-            />
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              <Input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar colaborador..."
+                className="pl-8 h-9 text-sm bg-background dark:bg-slate-900/80 border-input"
+              />
+            </div>
+            <div
+              className={cn(
+                'max-h-[300px] overflow-y-auto smooth-scroll rounded-md border border-input p-1',
+                errors.users && 'border-red-500',
+              )}
+              style={{ scrollBehavior: 'smooth' }}
+            >
+              {searchedOptions.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">
+                  Nenhum colaborador encontrado.
+                </p>
+              ) : (
+                searchedOptions.map((u) => (
+                  <label
+                    key={u.value}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer text-sm"
+                  >
+                    <Checkbox
+                      checked={selectedUserIds.includes(u.value)}
+                      onCheckedChange={() => toggleUser(u.value)}
+                    />
+                    <span>{u.label}</span>
+                  </label>
+                ))
+              )}
+            </div>
             {errors.users && (
               <p className="text-xs text-red-500">Selecione ao menos um colaborador.</p>
             )}

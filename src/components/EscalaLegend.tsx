@@ -47,6 +47,21 @@ const LEGEND_ITEMS = [
   },
 ]
 
+const TURNO_ITEMS = [
+  { code: 'T1', desc: '06H00 às 15H00' },
+  { code: 'T2', desc: '08H00 às 17H00' },
+  { code: 'T3', desc: '09H00 às 18H00' },
+  { code: 'T4', desc: '12H00 às 21H00' },
+  { code: 'T5', desc: '15H00 às 00H00' },
+  { code: 'T6', desc: '18H00 às 03H00' },
+  { code: 'T7', desc: '21H00 às 06H00' },
+  { code: 'T8', desc: '06H15 às 15H15' },
+  { code: 'T9', desc: '23H30 às 06H30' },
+]
+
+const TURNO_BG = 'bg-emerald-500/25 dark:bg-emerald-500/30'
+const TURNO_TEXT = 'text-emerald-950 dark:text-emerald-100'
+
 export function EscalaLegend() {
   return (
     <Popover>
@@ -68,6 +83,21 @@ export function EscalaLegend() {
               <span className="text-xs text-muted-foreground">{item.desc}</span>
             </div>
           ))}
+        </div>
+        <div className="border-t mt-2 pt-2">
+          <p className="text-xs font-bold mb-2">Turnos (Horários)</p>
+          <div className="space-y-1.5">
+            {TURNO_ITEMS.map((item) => (
+              <div key={item.code} className="flex items-center gap-2">
+                <span
+                  className={`inline-flex items-center justify-center w-8 h-6 rounded text-[10px] font-bold ${TURNO_BG} ${TURNO_TEXT}`}
+                >
+                  {item.code}
+                </span>
+                <span className="text-xs text-muted-foreground">{item.desc}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </PopoverContent>
     </Popover>
