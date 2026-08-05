@@ -97,7 +97,7 @@ export const ESCALA_STATUS_OPTIONS = [
   'FÉRIAS',
   'ATESTADO',
   'TREINAMENTO',
-  'FOLGA COMPENSATÓRIA',
+  'LICENÇA',
 ] as const
 
 export const STATUS_CELL_LABELS: Record<string, string> = {
@@ -106,7 +106,8 @@ export const STATUS_CELL_LABELS: Record<string, string> = {
   ATESTADO: 'ATE',
   TREINAMENTO: 'TRE',
   'BANCO DE HORAS': 'BH',
-  'FOLGA COMPENSATÓRIA': 'FC',
+  LICENÇA: 'L',
+  'FOLGA COMPENSATÓRIA': 'L',
 }
 
 export const STATUS_CELL_COLORS: Record<string, string> = {
@@ -115,6 +116,7 @@ export const STATUS_CELL_COLORS: Record<string, string> = {
   ATESTADO: 'text-amber-950 dark:text-amber-100 font-bold',
   TREINAMENTO: 'text-blue-950 dark:text-blue-100 font-bold',
   'BANCO DE HORAS': 'text-yellow-950 dark:text-yellow-100 font-bold',
+  LICENÇA: 'text-slate-950 dark:text-slate-100 font-bold',
   'FOLGA COMPENSATÓRIA': 'text-slate-950 dark:text-slate-100 font-bold',
 }
 
@@ -124,6 +126,7 @@ export const STATUS_CELL_BG: Record<string, string> = {
   ATESTADO: 'bg-amber-200 dark:bg-amber-900/70',
   TREINAMENTO: 'bg-blue-200 dark:bg-blue-900/70',
   'BANCO DE HORAS': 'bg-yellow-200 dark:bg-yellow-900/70',
+  LICENÇA: 'bg-slate-200 dark:bg-slate-700/80',
   'FOLGA COMPENSATÓRIA': 'bg-slate-200 dark:bg-slate-700/80',
 }
 
@@ -227,7 +230,7 @@ export const BULK_STATUS_OPTIONS = [
   { value: 'B', label: 'Banco de Horas' },
   { value: 'Atestado', label: 'Atestado' },
   { value: 'Treinamento', label: 'Treinamento' },
-  { value: 'FC', label: 'Folga Compensatória' },
+  { value: 'Licença', label: 'Licença' },
 ] as const
 
 export function getCellDisplayValue(status: string, turno: string, userHorario: string): string {
@@ -241,7 +244,13 @@ export function getCellDisplayValue(status: string, turno: string, userHorario: 
   if (status === 'B' || status === 'BANCO DE HORAS') return 'B'
   if (status === 'ATESTADO' || status === 'Atestado') return 'At'
   if (status === 'TREINAMENTO' || status === 'Treinamento') return 'Tr'
-  if (status === 'FOLGA COMPENSATÓRIA' || status === 'FC') return 'FC'
+  if (
+    status === 'LICENÇA' ||
+    status === 'Licença' ||
+    status === 'FOLGA COMPENSATÓRIA' ||
+    status === 'FC'
+  )
+    return 'L'
   if (turno === 'FOLGA') return 'F'
   if (turno) return SHIFT_SHORT_LABELS[turno] || 'T'
   return status || ''
@@ -255,6 +264,8 @@ export function getCellBgByValue(displayValue: string, weekend: boolean): string
   if (displayValue.startsWith('B')) return 'bg-yellow-200 dark:bg-yellow-900/70'
   if (displayValue.startsWith('At')) return 'bg-amber-200 dark:bg-amber-900/70'
   if (displayValue.startsWith('Tr')) return 'bg-blue-200 dark:bg-blue-900/70'
+  if (displayValue.startsWith('L') && !displayValue.startsWith('Tr'))
+    return 'bg-slate-200 dark:bg-slate-700/80'
   if (displayValue.startsWith('FC')) return 'bg-slate-200 dark:bg-slate-700/80'
   return ''
 }
@@ -267,6 +278,8 @@ export function getCellColorByValue(displayValue: string): string {
   if (displayValue.startsWith('B')) return 'text-yellow-950 dark:text-yellow-100 font-bold'
   if (displayValue.startsWith('At')) return 'text-amber-950 dark:text-amber-100 font-bold'
   if (displayValue.startsWith('Tr')) return 'text-blue-950 dark:text-blue-100 font-bold'
+  if (displayValue.startsWith('L') && !displayValue.startsWith('Tr'))
+    return 'text-slate-950 dark:text-slate-100 font-bold'
   if (displayValue.startsWith('FC')) return 'text-slate-950 dark:text-slate-100 font-bold'
   return 'text-foreground font-bold'
 }

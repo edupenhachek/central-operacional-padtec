@@ -39,7 +39,8 @@ export function CellEditContent({
     if (s === 'B' || s === 'BANCO DE HORAS') return 'B'
     if (s === 'ATESTADO' || s === 'Atestado') return 'Atestado'
     if (s === 'TREINAMENTO' || s === 'Treinamento') return 'Treinamento'
-    if (s === 'FOLGA COMPENSATÓRIA' || s === 'FC') return 'FC'
+    if (s === 'LICENÇA' || s === 'Licença' || s === 'FOLGA COMPENSATÓRIA' || s === 'FC')
+      return 'Licença'
     if (currentTurno === 'FOLGA') return 'F'
     return 'T'
   }

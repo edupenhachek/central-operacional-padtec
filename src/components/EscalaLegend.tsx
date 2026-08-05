@@ -40,8 +40,8 @@ const LEGEND_ITEMS = [
     text: 'text-blue-950 dark:text-blue-100',
   },
   {
-    code: 'FC',
-    desc: 'Folga Compensatória',
+    code: 'L',
+    desc: 'Licença',
     bg: 'bg-slate-200 dark:bg-slate-700/80',
     text: 'text-slate-950 dark:text-slate-100',
   },
