@@ -10,6 +10,7 @@ import { MatrixGrid } from '@/components/MatrixGrid'
 import { EscalaLegend } from '@/components/EscalaLegend'
 import { ScheduleStandardsGuide } from '@/components/ScheduleStandardsGuide'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import {
@@ -128,7 +129,7 @@ export function OperationScheduleTab({
 
   const days = useMemo(() => getDaysInRange(range.start, range.end), [range.start, range.end])
   const periodLabel = getPeriodLabel(periodMode, Number(monthFilter), Number(yearFilter))
-  const teamLabel = projetoFilter === 'all' ? 'Todos' : projetoFilter
+  const [hasPending, setHasPending] = useState(false)
 
   return (
     <div className="space-y-4">
@@ -220,9 +221,22 @@ export function OperationScheduleTab({
           <Card>
             <CardHeader className="pb-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <CardTitle className="text-base font-bold flex items-center gap-2 flex-1 justify-center text-center">
-                  <CalendarDays className="w-5 h-5 text-blue-600" />
-                  Escala da Operação — {periodLabel} — {teamLabel}
+                <CardTitle className="text-base font-bold flex items-center justify-between w-full">
+                  <div className="flex items-center gap-2 shrink-0">
+                    <CalendarDays className="w-5 h-5 text-blue-600" />
+                    <span>Escala da Operação</span>
+                    <Badge variant="secondary">
+                      {projetoFilter === 'all' ? 'Geral' : projetoFilter}
+                    </Badge>
+                  </div>
+                  <div className="flex-1 text-center uppercase">{periodLabel}</div>
+                  <div className="shrink-0 min-w-[100px] text-right">
+                    {hasPending && (
+                      <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                        Alterações pendentes
+                      </span>
+                    )}
+                  </div>
                 </CardTitle>
                 <div className="flex items-center gap-2">
                   <div className="inline-flex gap-1 p-0.5 bg-muted rounded-md">
@@ -256,6 +270,7 @@ export function OperationScheduleTab({
                 canEdit={canManage}
                 holidays={holidays}
                 onCellSaved={loadData}
+                onPendingChangesChange={setHasPending}
               />
             </CardContent>
           </Card>
