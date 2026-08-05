@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   CalendarDays,
   Users,
@@ -8,6 +8,7 @@ import {
   Plane,
   CalendarRange,
   CalendarClock,
+  Plus,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { MyScheduleTab } from '@/components/MyScheduleTab'
@@ -16,6 +17,7 @@ import { TodayScheduleTab } from '@/components/TodayScheduleTab'
 import { PatternManagerTab } from '@/components/PatternManagerTab'
 import { VacationModal } from '@/components/VacationModal'
 import { HolidayModal } from '@/components/HolidayModal'
+import { BatchEscalaModal } from '@/components/BatchEscalaModal'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/use-auth'
 import { FOCAL_ROLES, type PeriodMode } from '@/lib/escala-utils'
@@ -35,8 +37,20 @@ export default function Escalas() {
   const [periodMode, setPeriodMode] = useState<PeriodMode>('mes')
   const [editMode, setEditMode] = useState(false)
   const [hasPendingChanges, setHasPendingChanges] = useState(false)
+  const [batchOpen, setBatchOpen] = useState(false)
 
   const canManage = user?.role ? FOCAL_ROLES.includes(user.role) : false
+
+  const batchDefaultDates = useMemo(() => {
+    const year = Number(yearFilter)
+    const month = Number(monthFilter)
+    const start = new Date(year, month, 1)
+    const end = new Date(year, month + 1, 0)
+    return {
+      start: start.toISOString().slice(0, 10),
+      end: end.toISOString().slice(0, 10),
+    }
+  }, [monthFilter, yearFilter])
 
   const handleToggleEditMode = () => {
     if (editMode && hasPendingChanges) {
@@ -94,23 +108,32 @@ export default function Escalas() {
               >
                 <Plane className="w-4 h-4" /> Lançar Férias
               </Button>
-              <Button
-                onClick={handleToggleEditMode}
-                className={cn(
-                  'text-white text-sm gap-2',
-                  editMode ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700',
-                )}
-              >
-                {editMode ? (
-                  <>
-                    <Check className="w-4 h-4" /> Finalizar Edição
-                  </>
-                ) : (
-                  <>
-                    <Pencil className="w-4 h-4" /> Editar Escala
-                  </>
-                )}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleToggleEditMode}
+                  className={cn(
+                    'text-white text-sm gap-2',
+                    editMode ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700',
+                  )}
+                >
+                  {editMode ? (
+                    <>
+                      <Check className="w-4 h-4" /> Finalizar Edição
+                    </>
+                  ) : (
+                    <>
+                      <Pencil className="w-4 h-4" /> Editar Escala
+                    </>
+                  )}
+                </Button>
+                <Button
+                  onClick={() => setBatchOpen(true)}
+                  variant="outline"
+                  className="text-sm gap-2"
+                >
+                  <Plus className="w-4 h-4" /> Gerar Escala
+                </Button>
+              </div>
             </>
           )}
         </div>
@@ -155,6 +178,13 @@ export default function Escalas() {
         year={Number(yearFilter)}
         canManage={canManage}
         onSaved={() => setRefreshTrigger((t) => t + 1)}
+      />
+      <BatchEscalaModal
+        open={batchOpen}
+        onClose={() => setBatchOpen(false)}
+        onSaved={() => setRefreshTrigger((t) => t + 1)}
+        defaultStartDate={batchDefaultDates.start}
+        defaultEndDate={batchDefaultDates.end}
       />
     </div>
   )
