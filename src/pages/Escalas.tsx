@@ -20,7 +20,7 @@ import { HolidayModal } from '@/components/HolidayModal'
 import { BatchEscalaModal } from '@/components/BatchEscalaModal'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/use-auth'
-import { FOCAL_ROLES, type PeriodMode } from '@/lib/escala-utils'
+import { FOCAL_ROLES, type PeriodMode, type PendingChange } from '@/lib/escala-utils'
 import { cn } from '@/lib/utils'
 
 type TabKey = 'operacao' | 'minha' | 'hoje' | 'padroes'
@@ -38,6 +38,8 @@ export default function Escalas() {
   const [editMode, setEditMode] = useState(false)
   const [hasPendingChanges, setHasPendingChanges] = useState(false)
   const [batchOpen, setBatchOpen] = useState(false)
+  const [generatedChanges, setGeneratedChanges] = useState<PendingChange[]>([])
+  const [generatedTrigger, setGeneratedTrigger] = useState(0)
 
   const canManage = user?.role ? FOCAL_ROLES.includes(user.role) : false
 
@@ -156,6 +158,8 @@ export default function Escalas() {
           onPeriodModeChange={setPeriodMode}
           onPendingChangesChange={setHasPendingChanges}
           refreshTrigger={refreshTrigger}
+          injectedChanges={generatedChanges}
+          injectedTrigger={generatedTrigger}
         />
       ) : (
         <MyScheduleTab
@@ -182,7 +186,10 @@ export default function Escalas() {
       <BatchEscalaModal
         open={batchOpen}
         onClose={() => setBatchOpen(false)}
-        onSaved={() => setRefreshTrigger((t) => t + 1)}
+        onSaved={(changes) => {
+          setGeneratedChanges(changes)
+          setGeneratedTrigger((t) => t + 1)
+        }}
         defaultStartDate={batchDefaultDates.start}
         defaultEndDate={batchDefaultDates.end}
       />

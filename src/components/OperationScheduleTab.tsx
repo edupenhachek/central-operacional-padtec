@@ -33,6 +33,7 @@ import {
   isCoordinator,
   feriadosToMap,
   type PeriodMode,
+  type PendingChange,
 } from '@/lib/escala-utils'
 import { cn } from '@/lib/utils'
 
@@ -48,6 +49,8 @@ interface OperationScheduleTabProps {
   onPeriodModeChange: (mode: PeriodMode) => void
   onPendingChangesChange?: (hasPending: boolean) => void
   refreshTrigger?: number
+  injectedChanges?: PendingChange[]
+  injectedTrigger?: number
 }
 
 export function OperationScheduleTab({
@@ -62,6 +65,8 @@ export function OperationScheduleTab({
   onPeriodModeChange,
   onPendingChangesChange,
   refreshTrigger,
+  injectedChanges,
+  injectedTrigger,
 }: OperationScheduleTabProps) {
   const { user } = useAuth()
   const [users, setUsers] = useState<UserItem[]>([])
@@ -279,6 +284,8 @@ export function OperationScheduleTab({
                   setHasPending(hasPending)
                   onPendingChangesChange?.(hasPending)
                 }}
+                injectedChanges={injectedChanges}
+                injectedTrigger={injectedTrigger}
               />
             </CardContent>
           </Card>
@@ -298,6 +305,8 @@ export function OperationScheduleTab({
                   holidays={holidays}
                   onCellSaved={loadData}
                   showFooter={false}
+                  injectedChanges={injectedChanges}
+                  injectedTrigger={injectedTrigger}
                 />
               </CardContent>
             </Card>

@@ -16,7 +16,11 @@ import {
 import { getUsers, type UserItem } from '@/services/users'
 import { generateScheduleRange } from '@/services/escala-matrix'
 import { getPatterns, type PadraoEscalaRecord } from '@/services/padroes-escala'
-import { FALLBACK_PATTERN_OPTION, getDynamicCycleOptions } from '@/lib/escala-utils'
+import {
+  FALLBACK_PATTERN_OPTION,
+  getDynamicCycleOptions,
+  type PendingChange,
+} from '@/lib/escala-utils'
 import { cn } from '@/lib/utils'
 
 const TEAM_OPTIONS = [
@@ -29,7 +33,7 @@ const TEAM_OPTIONS = [
 interface BatchEscalaModalProps {
   open: boolean
   onClose: () => void
-  onSaved: () => void
+  onSaved: (changes: PendingChange[]) => void
   defaultStartDate: string
   defaultEndDate: string
 }
@@ -148,7 +152,7 @@ export function BatchEscalaModal({
 
     setLoading(true)
     try {
-      const result = await generateScheduleRange(
+      const records = await generateScheduleRange(
         validUsers,
         startDate,
         endDate,
@@ -156,10 +160,16 @@ export function BatchEscalaModal({
         initialCycle,
         selectedPattern?.configuracao || null,
       )
-      if (result.failed > 0)
-        toast.warning(`${result.succeeded} plantões criados, ${result.failed} falharam.`)
-      else toast.success(`${result.succeeded} plantões gerados com sucesso!`)
-      onSaved()
+      const changes: PendingChange[] = records.map((r) => ({
+        userId: r.Usuario_ID,
+        dateStr: r.Data,
+        turno: r.Turno || '',
+        status: r.Status || '',
+        observacao: '',
+        projeto: r.Projeto || '',
+      }))
+      toast.success(`${changes.length} plantões gerados! Revise e salve as alterações.`)
+      onSaved(changes)
       onClose()
     } catch {
       toast.error('Erro ao gerar escala.')

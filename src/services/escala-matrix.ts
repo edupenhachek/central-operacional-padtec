@@ -90,10 +90,10 @@ export const generateScheduleRange = async (
   pattern: string,
   initialCycle: string,
   patternConfig?: PatternConfig | null,
-) => {
+): Promise<EscalaBatchRecord[]> => {
   const start = new Date(startDate + 'T00:00:00')
   const end = new Date(endDate + 'T00:00:00')
-  if (start > end) return { succeeded: 0, failed: 0 }
+  if (start > end) return []
 
   const records: EscalaBatchRecord[] = []
   let currentWeek = pattern === 'fixo-5x2' ? 1 : parseInitialWeek(initialCycle)
@@ -133,10 +133,7 @@ export const generateScheduleRange = async (
     current.setDate(current.getDate() + 1)
   }
 
-  const results = await Promise.allSettled(records.map((r) => upsertEscala(r)))
-  const succeeded = results.filter((r) => r.status === 'fulfilled').length
-  const failed = results.length - succeeded
-  return { succeeded, failed }
+  return records
 }
 
 export const batchUpsertEscalas = async (changes: PendingChange[]) => {

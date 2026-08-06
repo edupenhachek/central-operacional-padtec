@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { toast } from 'sonner'
-import { CloudUpload } from 'lucide-react'
+import { CloudUpload, Undo2 } from 'lucide-react'
 import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
@@ -39,6 +39,8 @@ interface MatrixGridProps {
   holidays?: Record<string, string>
   onCellSaved: () => void
   onPendingChangesChange?: (hasPending: boolean) => void
+  injectedChanges?: PendingChange[]
+  injectedTrigger?: number
 }
 
 export function MatrixGrid({
@@ -49,6 +51,8 @@ export function MatrixGrid({
   holidays = {},
   onCellSaved,
   onPendingChangesChange,
+  injectedChanges,
+  injectedTrigger = 0,
 }: MatrixGridProps) {
   const [editKey, setEditKey] = useState<string | null>(null)
   const [pendingChanges, setPendingChanges] = useState<Map<string, PendingChange>>(new Map())
@@ -87,6 +91,18 @@ export function MatrixGrid({
   useEffect(() => {
     onPendingChangesChange?.(pendingChanges.size > 0)
   }, [pendingChanges.size, onPendingChangesChange])
+
+  useEffect(() => {
+    if (!injectedTrigger) return
+    if (!injectedChanges || injectedChanges.length === 0) return
+    setPendingChanges((prev) => {
+      const m = new Map(prev)
+      for (const change of injectedChanges) {
+        m.set(`${change.userId}-${change.dateStr}`, change)
+      }
+      return m
+    })
+  }, [injectedTrigger])
 
   useEffect(() => {
     const handler = () => {
@@ -252,6 +268,14 @@ export function MatrixGrid({
     }
   }
 
+  const handleUndo = () => {
+    setPendingChanges(new Map())
+    setSelectedCells(new Set())
+    selectedCellsRef.current = new Set()
+    toast.info('Alterações descartadas.')
+    onCellSaved()
+  }
+
   if (sortedUsers.length === 0) {
     return (
       <p className="text-sm text-muted-foreground text-center py-8">
@@ -297,6 +321,17 @@ export function MatrixGrid({
                   Editar detalhes
                 </Button>
               </>
+            )}
+            {pendingChanges.size > 0 && (
+              <Button
+                onClick={handleUndo}
+                variant="outline"
+                size="sm"
+                className="gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+              >
+                <Undo2 className="w-4 h-4" />
+                Desfazer
+              </Button>
             )}
             <Button
               onClick={handleSave}
