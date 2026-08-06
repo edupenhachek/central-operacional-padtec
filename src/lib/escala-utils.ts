@@ -311,6 +311,28 @@ export const TURNO_SELECT_OPTIONS = Object.keys(SHIFT_SHORT_LABELS).map((k) => (
   label: `${SHIFT_SHORT_LABELS[k]} — ${k}`,
 }))
 
+export function navigateMonth(
+  direction: -1 | 1,
+  currentMonth: string,
+  currentYear: string,
+  onMonthChange: (v: string) => void,
+  onYearChange: (v: string) => void,
+): void {
+  const monthNum = Number(currentMonth)
+  let newMonth = monthNum + direction
+  let newYear = Number(currentYear)
+  if (newMonth < 0) {
+    newMonth = 11
+    newYear--
+  }
+  if (newMonth > 11) {
+    newMonth = 0
+    newYear++
+  }
+  onMonthChange(String(newMonth))
+  onYearChange(String(newYear))
+}
+
 export type PeriodMode = 'mes' | 'ponto-senior'
 
 export interface DateRange {

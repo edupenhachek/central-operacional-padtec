@@ -14,7 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { MONTH_OPTIONS, YEAR_OPTIONS, getDaysInMonth, feriadosToMap } from '@/lib/escala-utils'
+import {
+  MONTH_OPTIONS,
+  YEAR_OPTIONS,
+  getDaysInMonth,
+  feriadosToMap,
+  navigateMonth,
+} from '@/lib/escala-utils'
 import { getFeriadosForMonth } from '@/services/feriados'
 import type { UserItem } from '@/services/users'
 
@@ -36,21 +42,8 @@ export function MyScheduleTab({
   const [holidays, setHolidays] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
 
-  const navigateMonth = (direction: -1 | 1) => {
-    const currentMonth = Number(monthFilter)
-    let newMonth = currentMonth + direction
-    let newYear = Number(yearFilter)
-    if (newMonth < 0) {
-      newMonth = 11
-      newYear--
-    }
-    if (newMonth > 11) {
-      newMonth = 0
-      newYear++
-    }
-    onMonthChange(String(newMonth))
-    onYearChange(String(newYear))
-  }
+  const handleNavigateMonth = (direction: -1 | 1) =>
+    navigateMonth(direction, monthFilter, yearFilter, onMonthChange, onYearChange)
 
   const loadData = useCallback(async () => {
     if (!user?.id) return
@@ -113,7 +106,7 @@ export function MyScheduleTab({
               variant="outline"
               size="icon"
               className="h-9 w-9 shrink-0"
-              onClick={() => navigateMonth(-1)}
+              onClick={() => handleNavigateMonth(-1)}
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
@@ -145,7 +138,7 @@ export function MyScheduleTab({
               variant="outline"
               size="icon"
               className="h-9 w-9 shrink-0"
-              onClick={() => navigateMonth(1)}
+              onClick={() => handleNavigateMonth(1)}
             >
               <ChevronRight className="w-4 h-4" />
             </Button>
